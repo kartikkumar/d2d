@@ -8,9 +8,30 @@
 #include <cstdlib>
 #include <iostream>
 
-int main()
+#include <boost/timer/timer.hpp>  
+
+//! Execute D2D test app.
+int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
-  std::cout << "Hello world!" << std::endl;
- 
-    return EXIT_SUCCESS;
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Start timer. Timer automatically ends when this object goes out of scope.
+    boost::timer::auto_cpu_timer timer;
+
+    ///////////////////////////////////////////////////////////////////////////
+     
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Declare using-statements.
+    using std::cerr;
+    using std::cout;
+    using std::endl;
+
+    ///////////////////////////////////////////////////////////////////////////
+                
+    cout << "Timing information: ";
+
+    // If program is successfully completed, return 0.
+    return EXIT_SUCCESS; 
+>>>>>>> master
 }

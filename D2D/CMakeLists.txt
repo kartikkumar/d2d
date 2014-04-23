@@ -154,7 +154,7 @@ endif()
 # Find Boost libraries on local system.
 find_package(Boost 1.52.0 
              COMPONENTS 
-             date_time system unit_test_framework filesystem 
+             chrono system timer 
              REQUIRED)
 
 # Include Boost directories.
