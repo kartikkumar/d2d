@@ -25,7 +25,7 @@ macro(_sgp4_check_version)
                    "but at least version ${SGP4_FIND_VERSION} is required!")
   endif(NOT SGP4_VERSION_OK)
 
-  set(SGP4_LIBRARY "sgp4_s")
+  set(SGP4_LIBRARY "sgp4")
   set(SGP4_INCLUDE_DIR ${SGP4_BASE_PATH}/../)
   set(SGP4_LIBRARYDIR ${SGP4_BASE_PATH}/build/cpp/)
   link_directories(${SGP4_LIBRARYDIR})
@@ -63,9 +63,11 @@ endif(SGP4_BASE_PATH)
  #    References
  #      FindEigen3.cmake.
  #
- #    This script tries to find the SGP4 library. This module supports requiring a minimum 
- #    version, e.g. you can do version, e.g. you can do find_package(SGP4 3.1.2) to require
- #    version 3.1.2 or newer of SGP4.
+ #    This script tries to find the SGP4 library. Note that this is the original SGP4 library
+ #    released on CelesTrak (http://celestrak.com/publications/AIAA/2006-6753/).
+ #
+ #    This module supports requiring a minimum version, e.g. you can do version, e.g. you can do
+ #    find_package(SGP4 3.1.2) to require version 3.1.2 or newer of SGP4.
  #
  #    Once done, this will define:
  #

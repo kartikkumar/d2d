@@ -154,7 +154,7 @@ endif()
 # Find Boost libraries on local system.
 find_package(Boost 1.52.0 
              COMPONENTS 
-             chrono system timer 
+             chrono regex system timer 
              REQUIRED)
 
 # Include Boost directories.
@@ -224,11 +224,22 @@ endif( )
 find_package(SGP4 7.0 REQUIRED)
 
 # Include SGP4 directories.
-# Set CMake flag to suppress PaGMO warnings (platform-dependent solution).
+# Set CMake flag to suppress SGP4 warnings (platform-dependent solution).
 if(NOT APPLE)
   include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIR}")
 else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIR}\"")
+endif( )
+
+# Find SGP4DanRW library on local system.
+find_package(SGP4DanRW 1 REQUIRED)
+
+# Include SGP4DanRW directories.
+# Set CMake flag to suppress SGP4DanRW warnings (platform-dependent solution).
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${SGP4DANRW_INCLUDE_DIR}")
+else( )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4DANRW_INCLUDE_DIR}\"")
 endif( )
 
 # If documentation should be built, find Doxygen package and setup config file.
@@ -269,7 +280,10 @@ add_executable(d2d_testapp
                "${SOURCE_CODE}/d2d_testapp.cpp")
 setup_executable_target(d2d_testapp)
 target_link_libraries(d2d_testapp 
+                      ${SGP4DANRW_LIBRARY}
+                      ${SGP4_LIBRARY}
                       ${PAGMO_LIBRARY}
+                      tudat_gravitation tudat_input_output
                       ${TUDAT_CORE_LIBRARIES} 
                       ${SQLITECPP_LIBRARY}
                       ${SQLITE3_LIBRARY} 

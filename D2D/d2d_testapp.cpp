@@ -8,9 +8,18 @@
 #include <cstdlib>
 #include <iostream>
 
-#include <boost/timer/timer.hpp>  
+#include <boost/timer/timer.hpp>
 
+#include <Eigen/Core>  
+
+#include <libsgp4/Globals.h>
+  
 #include <sgp4/cpp/sgp4unit.h>
+
+#include <Tudat/Astrodynamics/Gravitation/centralGravityModel.h>
+#include <Tudat/InputOutput/fieldType.h>
+#include <Tudat/InputOutput/parser.h>
+
 
 //! Execute D2D test app.
 int main( const int numberOfInputs, const char* inputArguments[ ] )
@@ -28,6 +37,16 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     using std::cerr;
     using std::cout;
     using std::endl;
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Testing area
+
+    // sgp4( wgs84,  );
+
+    cout << kXKMPER << endl;
 
     ///////////////////////////////////////////////////////////////////////////
                 
