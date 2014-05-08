@@ -124,10 +124,10 @@ install(FILES ${PROJECT_ROOT}/COPYING ${PROJECT_ROOT}/README
 # # Set the main sub-directories.
 # set(ASTRODYNAMICSDIR "/Astrodynamics")
 
-# # Include the top-level directories.
-# include_directories(AFTER
-#   "${PROJECT_ROOT}"
-# )
+# Include the top-level directories.
+include_directories(AFTER
+  "${PROJECT_ROOT}"
+)
 
 # Find Eigen3 library on local system.
 find_package(Eigen3 REQUIRED)
@@ -220,16 +220,28 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${PAGMO_INCLUDE_DIR}\"")
 endif( )
 
-# Find SGP4 library on local system.
-find_package(SGP4 7.0 REQUIRED)
+# Find GSL library on local system.
+find_package(GSL 2.0 REQUIRED)
 
-# Include SGP4 directories.
-# Set CMake flag to suppress SGP4 warnings (platform-dependent solution).
+# Include GSL directories.
+# Set CMake flag to suppress GSL warnings (platform-dependent solution).
 if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIR}")
+  include_directories(SYSTEM AFTER "${GSL_INCLUDE_DIR}")
 else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIR}\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${GSL_INCLUDE_DIR}\"")
 endif( )
+
+
+# # Find SGP4 library on local system.
+# find_package(SGP4 7.0 REQUIRED)
+
+# # Include SGP4 directories.
+# # Set CMake flag to suppress SGP4 warnings (platform-dependent solution).
+# if(NOT APPLE)
+#   include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIR}")
+# else( )
+#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIR}\"")
+# endif( )
 
 # Find SGP4DanRW library on local system.
 find_package(SGP4DanRW 1 REQUIRED)
@@ -276,14 +288,13 @@ endif()
 # endforeach(CURRENT_SUBDIR)
 
 # Add SQLite database generator for test particle simulations.
-add_executable(d2d_testapp 
-               "${SOURCE_CODE}/d2d_testapp.cpp")
-setup_executable_target(d2d_testapp)
-target_link_libraries(d2d_testapp 
+add_executable(d2d "${SOURCE_CODE}/d2d.cpp")
+setup_executable_target(d2d)
+target_link_libraries(d2d 
+                      ${GSL_LIBRARIES}
                       ${SGP4DANRW_LIBRARY}
-                      ${SGP4_LIBRARY}
                       ${PAGMO_LIBRARY}
-                      tudat_gravitation tudat_input_output
+                      tudat_mission_segments tudat_input_output
                       ${TUDAT_CORE_LIBRARIES} 
                       ${SQLITECPP_LIBRARY}
                       ${SQLITE3_LIBRARY} 
