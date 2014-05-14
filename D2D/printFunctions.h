@@ -14,7 +14,7 @@ namespace d2d
 
 void printSolverStateTableHeader( )
 {
-      std::cout << "#" << "    " << std::endl;
+      std::cout << "#" << "    a    e    i    AoP  RAAN TA " << std::endl;
 }
 
 void printSolverState( size_t iteration, gsl_multiroot_fsolver* solver )
