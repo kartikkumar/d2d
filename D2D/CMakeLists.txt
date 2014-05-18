@@ -231,6 +231,17 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4DANRW_INCLUDE_DIR}\"")
 endif( )
 
+# Find Ceres library on local system.
+find_package(Ceres 1.9.0 REQUIRED) 
+
+# Include Ceres directories.
+# Set CMake flag to suppress Ceres warnings (platform-dependent solution).
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${CERES_INCLUDE_DIRS}")
+else( )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${CERES_INCLUDE_DIRS}\"")
+endif( )
+
 # If documentation should be built, find Doxygen package and setup config file.
 if(BUILD_DOCUMENTATION)
   find_package(Doxygen)
@@ -281,3 +292,15 @@ add_executable(gsl_multimin_test "${SOURCE_CODE}/gsl_multimin_test.cpp")
 setup_executable_target(gsl_multimin_test)
 target_link_libraries(gsl_multimin_test 
                       ${GSL_LIBRARIES})
+
+# Add Rosenbrock app.
+add_executable(rosenbrock "${SOURCE_CODE}/rosenbrock.cpp")
+setup_executable_target(rosenbrock)
+target_link_libraries(rosenbrock 
+                      ${GSL_LIBRARIES}
+                      ${SGP4DANRW_LIBRARY}
+                      tudat_mission_segments tudat_input_output
+                      ${TUDAT_CORE_LIBRARIES} 
+                      ${SQLITECPP_LIBRARY}
+                      ${SQLITE3_LIBRARY} 
+                      ${Boost_LIBRARIES})

@@ -35,10 +35,23 @@ struct CartesianToTwoLineElementsParameters
     int numberOfUnknowns;
 };
 
+void computeVectorDifference(
+    const Eigen::VectorXd state1, const Eigen::VectorXd state2, 
+    int numberOfUnknowns, gsl_vector* difference )
+{
+    // Compute difference and store in GSL vector.
+    for ( int i = 0; i < numberOfUnknowns; i++ )
+    {
+        gsl_vector_set( difference, i,  state1( i ) - state2( i ) );    
+    } 
+}
+
 int convertCartesianToTwoLineElements( 
     const gsl_vector* keplerianElements, 
     void* parameters, gsl_vector* cartesianToTwoLineElementsFunction )
 {
+    std::cout << gsl_vector_get( keplerianElements, 0 ) << std::endl;
+    
     ///////////////////////////////////////////////////////////////////////////
 
     // Declare using-statements.
@@ -102,53 +115,56 @@ int convertCartesianToTwoLineElements(
         static_cast< CartesianToTwoLineElementsParameters* >( 
                 parameters )->referenceTwoLineElements );
 
+std::cout << "old Line 2: " << referenceTwoLineElements.Line2( ) << std::endl;
+
     // Modify reference TLE based on Keplerian elements.
     string newTwoLineElementsLine1 = referenceTwoLineElements.Line1( );
     string newTwoLineElementsLine2 = referenceTwoLineElements.Line2( );
   
-    // Convert new inclination to formatted string.
-    const string newInclinationString
-      = boost::str( format( "%08.4f" ) 
-            % RadiansToDegrees( keplerianElementsVector( inclinationIndex ) ) );
+    // // Convert new inclination to formatted string.
+    // const string newInclinationString
+    //   = boost::str( format( "%08.4f" ) 
+    //         % RadiansToDegrees( keplerianElementsVector( inclinationIndex ) ) );
 
-    // Replace new inclination [deg] in TLE line 2.
-    newTwoLineElementsLine2.replace( 8, 8, newInclinationString );
+    // // Replace new inclination [deg] in TLE line 2.
+    // newTwoLineElementsLine2.replace( 8, 8, newInclinationString );
 
-    // Convert new right ascension of ascending node to formatted string.
-    const string newRightAscensionOfAscendingNodeString
-      = boost::str( format( "%08.4f" ) 
-            % RadiansToDegrees( keplerianElementsVector( longitudeOfAscendingNodeIndex ) ) );
+    // // Convert new right ascension of ascending node to formatted string.
+    // const string newRightAscensionOfAscendingNodeString
+    //   = boost::str( format( "%08.4f" ) 
+    //         % RadiansToDegrees( keplerianElementsVector( longitudeOfAscendingNodeIndex ) ) );
 
-    // Replace new right ascension of ascending node [deg] in TLE line 2.
-    newTwoLineElementsLine2.replace( 17, 8, newRightAscensionOfAscendingNodeString );
+    // // Replace new right ascension of ascending node [deg] in TLE line 2.
+    // newTwoLineElementsLine2.replace( 17, 8, newRightAscensionOfAscendingNodeString );
 
-    // Convert new eccentricity to formatted string.
-    const string newEccentricityString
-      = boost::str( format( "%7.0f" ) % ( keplerianElementsVector( eccentricityIndex ) * 1.0e7 ) );
+    // // Convert new eccentricity to formatted string.
+    // const string newEccentricityString
+    //   = boost::str( format( "%07.0f" ) 
+    //                     % ( keplerianElementsVector( eccentricityIndex ) * 1.0e7 ) );
 
-    // Replace new eccentricity [-] in TLE line 2.
-    newTwoLineElementsLine2.replace( 26, 7, newEccentricityString );
+    // // Replace new eccentricity [-] in TLE line 2.
+    // newTwoLineElementsLine2.replace( 26, 7, newEccentricityString );
 
-    // Convert new argument of periapsis to formatted string.
-    const string newArgumentOfPeriapsisString
-      = boost::str( format( "%08.4f" ) 
-            % RadiansToDegrees( keplerianElementsVector( argumentOfPeriapsisIndex ) ) );
+    // // Convert new argument of periapsis to formatted string.
+    // const string newArgumentOfPeriapsisString
+    //   = boost::str( format( "%08.4f" ) 
+    //         % RadiansToDegrees( keplerianElementsVector( argumentOfPeriapsisIndex ) ) );
 
-    // Replace new argument of periapsis [deg] in TLE line 2.
-    newTwoLineElementsLine2.replace( 34, 8, newArgumentOfPeriapsisString );    
+    // // Replace new argument of periapsis [deg] in TLE line 2.
+    // newTwoLineElementsLine2.replace( 34, 8, newArgumentOfPeriapsisString );    
 
-    // Convert new mean anomaly to formatted string.
-    const string newMeanAnomalyString
-      = boost::str( format( "%08.4f" ) % RadiansToDegrees( meanAnomaly ) );
+    // // Convert new mean anomaly to formatted string.
+    // const string newMeanAnomalyString
+    //   = boost::str( format( "%08.4f" ) % RadiansToDegrees( meanAnomaly ) );
 
-    // Replace new mean anomaly [deg] in TLE line 2.
-    newTwoLineElementsLine2.replace( 43, 8, newMeanAnomalyString ); 
+    // // Replace new mean anomaly [deg] in TLE line 2.
+    // newTwoLineElementsLine2.replace( 43, 8, newMeanAnomalyString ); 
 
-    // Convert new revolutions/day to formatted string.
-    const string newRevolutionsPerDayString = boost::str( format( "%11.8f" ) % revolutionsPerDay );
+    // // Convert new revolutions/day to formatted string.
+    // const string newRevolutionsPerDayString = boost::str( format( "%11.8f" ) % revolutionsPerDay );
 
-    // Replace new mean anomaly [deg] in TLE line 2.
-    newTwoLineElementsLine2.replace( 52, 11, newRevolutionsPerDayString );     
+    // // Replace new mean anomaly [deg] in TLE line 2.
+    // newTwoLineElementsLine2.replace( 52, 11, newRevolutionsPerDayString );     
 
 std::cout << "new Line 2: " << newTwoLineElementsLine2 << std::endl;
 
@@ -162,10 +178,10 @@ std::cout << "new Line 2: " << newTwoLineElementsLine2 << std::endl;
     // Compute non-linear function.
 
     // Set up SGP4 propagator for new TLE.
-    SGP4 sgp4( newTwoLineElements );
+    SGP4 sgp4NewObject( newTwoLineElements );
 
     // Convert new TLE to Cartesian state by propagating by 0.0.
-    Eci newState = sgp4.FindPosition( 0.0 ); 
+    Eci newState = sgp4NewObject.FindPosition( 0.0 ); 
 
     // Set number of unknowns (size of Cartesian state).
     const int numberOfUnknowns 
@@ -186,14 +202,13 @@ std::cout << "new Line 2: " << newTwoLineElementsLine2 << std::endl;
                                     newState.Velocity( ).y * 1.0e3,
                                     newState.Velocity( ).z * 1.0e3 ).finished( );
 
-std::cout << "Diff: \n" << newStateVector - targetState << std::endl;
+// std::cout << "New: \n" << newStateVector << std::endl;
+
+// std::cout << "Diff: \n" << newStateVector - targetState << std::endl;
 
     // Evaluate set of non-linear functions to solve.
-    for ( int i = 0; i < numberOfUnknowns; i++ )
-    {
-        gsl_vector_set( cartesianToTwoLineElementsFunction, 
-                        i,  newStateVector( i ) - targetState( i ) );    
-    }
+    computeVectorDifference( 
+        newStateVector, targetState, numberOfUnknowns, cartesianToTwoLineElementsFunction );
 
     ///////////////////////////////////////////////////////////////////////////
 

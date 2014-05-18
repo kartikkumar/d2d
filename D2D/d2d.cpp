@@ -150,14 +150,92 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const Eigen::VectorXd departureStateInitialGuess 
         = ( Eigen::VectorXd( 6 ) 
                 << initialPosition,
-                   lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
+                   // lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
+                   initialVelocity ).finished( );
 
     // Convert post-maneuver state in Cartesian elements to Keplerian elements.
     Eigen::VectorXd departureStateInKeplerianElements
         = convertCartesianToKeplerianElements(
-            departureStateInitialGuess, earthGravitationalParameter );         
+            departureStateInitialGuess, earthGravitationalParameter );  
 
     ///////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////
+
+    // Set up non-linear solver to compute modified TLE.
+
+    // Set number of unknowns (6 state variables).
+    const int numberOfUnknowns = 6;
+
+    // Set up parameters for non-linear function.
+    CartesianToTwoLineElementsParameters parameters 
+        = { 
+            earthGravitationalParameter,
+            tleObject1,
+            departureStateInitialGuess,
+            numberOfUnknowns
+          };
+
+    // Set up non-linear function.
+    gsl_multiroot_function cartesianToTwoLineElementsFunction
+        = {
+             &convertCartesianToTwoLineElements, 
+             numberOfUnknowns, 
+             &parameters
+          };
+
+    // Set initial guess.
+    gsl_vector* initialGuess = gsl_vector_alloc( numberOfUnknowns );
+    for ( unsigned int i = 0; i < numberOfUnknowns; i++ )
+    {
+        gsl_vector_set( initialGuess, i, departureStateInKeplerianElements[ i ]);      
+    }
+
+    // Set up non-linear solver type (derivative free).
+    const gsl_multiroot_fsolver_type* solverType = gsl_multiroot_fsolver_hybrids;
+
+    // Allocate memory for solver.
+    gsl_multiroot_fsolver* solver = gsl_multiroot_fsolver_alloc( solverType, numberOfUnknowns );
+
+    // Set solver to use non-linear function with initial guess vector.
+    gsl_multiroot_fsolver_set( solver, &cartesianToTwoLineElementsFunction, initialGuess );
+
+    // Declare current solver status and iteration counter.
+    int solverStatus;
+    size_t iteration = 0;
+
+    // Print current state of solver.
+    printSolverStateTableHeader( );
+    printSolverState( iteration, solver );
+
+    if ( GSL_EBADFUNC == gsl_multiroot_fsolver_iterate( solver ) )
+        std::cout << "Oops!" << std::endl;
+    // do
+    // {
+    //     iteration++;
+    //     solverStatus = gsl_multiroot_fsolver_iterate( solver );
+
+    //     printSolverState( iteration, solver );
+
+    //     // Check if solver is stuck; if it is stuck, break from loop.
+    //     if ( solverStatus )   
+    //     {
+    //         cout << "ERROR: Non-linear solver is stuck!" << endl;
+    //         break;
+    //     }
+
+    //     solverStatus = gsl_multiroot_test_residual( solver->f, solverTolerance );
+    // }
+    // while ( solverStatus == GSL_CONTINUE && iteration < 1 );
+
+    // // Print final status of non-linear solver.
+    // cout << endl;
+    // cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << endl;
+    // cout << endl;
+
+    // Free up memory.
+    gsl_multiroot_fsolver_free( solver );
+    gsl_vector_free( initialGuess );
 
     // ///////////////////////////////////////////////////////////////////////////
 
