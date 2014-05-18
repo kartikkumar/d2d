@@ -1,7 +1,7 @@
- #    Copyright (c) 2014, Dinamica Srl
- #    Copyright (c) 2014, K. Kumar (kumar@dinamicatech.com)
- #    All rights reserved.
- #    See COPYING for license details.
+# Copyright (c) 2014, Dinamica Srl
+# Copyright (c) 2014, K. Kumar (kumar@dinamicatech.com)
+# All rights reserved.
+# See COPYING for license details.
 
 # Specify minimum CMake version required.
 cmake_minimum_required(VERSION 2.6)
@@ -154,7 +154,7 @@ endif()
 # Find Boost libraries on local system.
 find_package(Boost 1.52.0 
              COMPONENTS 
-             chrono regex system timer 
+             regex system timer chrono 
              REQUIRED)
 
 # Include Boost directories.
@@ -209,19 +209,8 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITECPP_INCLUDE_DIR}\"")
 endif( )
 
-# Find PaGMO library on local system.
-find_package(PaGMO 2.0 REQUIRED)
-
-# Include PaGMO directories.
-# Set CMake flag to suppress PaGMO warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${PAGMO_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${PAGMO_INCLUDE_DIR}\"")
-endif( )
-
-# Find GSL library on local system.
-find_package(GSL 2.0 REQUIRED)
+## Find GSL library on local system.
+find_package(GSL REQUIRED)
 
 # Include GSL directories.
 # Set CMake flag to suppress GSL warnings (platform-dependent solution).
@@ -230,18 +219,6 @@ if(NOT APPLE)
 else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${GSL_INCLUDE_DIR}\"")
 endif( )
-
-
-# # Find SGP4 library on local system.
-# find_package(SGP4 7.0 REQUIRED)
-
-# # Include SGP4 directories.
-# # Set CMake flag to suppress SGP4 warnings (platform-dependent solution).
-# if(NOT APPLE)
-#   include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIR}")
-# else( )
-#   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIR}\"")
-# endif( )
 
 # Find SGP4DanRW library on local system.
 find_package(SGP4DanRW 1 REQUIRED)
@@ -287,15 +264,20 @@ endif()
 #   add_subdirectory("${SOURCE_CODE}${CURRENT_SUBDIR}")
 # endforeach(CURRENT_SUBDIR)
 
-# Add SQLite database generator for test particle simulations.
+# Add D2D app.
 add_executable(d2d "${SOURCE_CODE}/d2d.cpp")
 setup_executable_target(d2d)
 target_link_libraries(d2d 
                       ${GSL_LIBRARIES}
                       ${SGP4DANRW_LIBRARY}
-                      ${PAGMO_LIBRARY}
                       tudat_mission_segments tudat_input_output
                       ${TUDAT_CORE_LIBRARIES} 
                       ${SQLITECPP_LIBRARY}
                       ${SQLITE3_LIBRARY} 
                       ${Boost_LIBRARIES})
+
+# Add GSL test app.
+add_executable(gsl_multimin_test "${SOURCE_CODE}/gsl_multimin_test.cpp")
+setup_executable_target(gsl_multimin_test)
+target_link_libraries(gsl_multimin_test 
+                      ${GSL_LIBRARIES})
