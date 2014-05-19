@@ -165,11 +165,22 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${Boost_INCLUDE_DIRS}\"")
 endif( )
 
+# Find NLOPTlibrary on local system.
+find_package(Nlopt 2 REQUIRED)
+
+# Include NLOPT directories.
+# Set CMake flag to suppress NLOPT warnings (platform-dependent solution).
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${NLOPT_INCLUDE_DIR}")
+else( )
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${NLOPT_INCLUDE_DIR}\"")
+endif( )
+
 # Find Tudat Core library on local system.
 find_package(TudatCore 2 REQUIRED)
 
-# Include TudatCore directories.
-# Set CMake flag to suppress TudatCore warnings (platform-dependent solution).
+# Include Tudat Core directories.
+# Set CMake flag to suppress Tudat Core warnings (platform-dependent solution).
 if(NOT APPLE)
   include_directories(SYSTEM AFTER "${TUDAT_CORE_INCLUDE_DIR}")
 else( )
@@ -207,17 +218,6 @@ if(NOT APPLE)
   include_directories(SYSTEM AFTER "${SQLITECPP_INCLUDE_DIR}")
 else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITECPP_INCLUDE_DIR}\"")
-endif( )
-
-# Find PaGMO library on local system.
-find_package(PaGMO 2.0 REQUIRED)
-
-# Include PaGMO directories.
-# Set CMake flag to suppress PaGMO warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${PAGMO_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${PAGMO_INCLUDE_DIR}\"")
 endif( )
 
 # Find SGP4DanRW library on local system.
@@ -268,10 +268,14 @@ endif()
 add_executable(d2d "${SOURCE_CODE}/d2d.cpp")
 setup_executable_target(d2d)
 target_link_libraries(d2d 
-                      ${PAGMO_LIBRARY}
+                      ${NLOPT_LIBRARIES}
                       ${SGP4DANRW_LIBRARY}
-                      tudat_mission_segments tudat_input_output
+                      tudat_mission_segments
                       ${TUDAT_CORE_LIBRARIES} 
-                      ${SQLITECPP_LIBRARY}
-                      ${SQLITE3_LIBRARY} 
                       ${Boost_LIBRARIES})
+
+# Add NLOPT example app.
+add_executable(nlopt_example "${SOURCE_CODE}/nlopt_example.cpp")
+setup_executable_target(nlopt_example)
+target_link_libraries(nlopt_example
+                      ${NLOPT_LIBRARIES})

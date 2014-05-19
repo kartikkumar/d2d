@@ -9,15 +9,16 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include <boost/timer/timer.hpp>
 
 #include <Eigen/Core> 
 
+#include <nlopt.hpp>
+
 #include <libsgp4/Eci.h>
-#include <libsgp4/DateTime.h>
-// #include <libsgp4/Globals.h>
-// #include <libsgp4/OrbitalElements.h>  
+#include <libsgp4/DateTime.h>  
 #include <libsgp4/SGP4.h>
 #include <libsgp4/Tle.h>
 
@@ -26,8 +27,7 @@
 
 #include <Tudat/Astrodynamics/MissionSegments/lambertTargeterIzzo.h>
 
-// #include <D2D/convertCartesianToTwoLineElements.h>
-// #include <D2D/printFunctions.h>
+#include <D2D/cartesianToTwoLineElementsObjectiveFunction.h>
 
 //! Execute D2D test app.
 int main( const int numberOfInputs, const char* inputArguments[ ] )
@@ -51,7 +51,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     using namespace tudat::basic_astrodynamics::unit_conversions;
     using namespace tudat::mission_segments;
 
-    // using namespace d2d;
+    using namespace d2d;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -81,6 +81,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         = "1 06800U 72091  B 79098.71793498  .00418782 +00000-0 +00000-0 0 03921";
     const string line2Object2 
         = "2 06800 001.9047 136.0594 0024458 068.9289 290.1247 15.83301112263179";
+
+    // Set minimization tolerance.
+    const double minimizationTolerance = 1.0e-8;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -130,12 +133,12 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     LambertTargeterIzzo lambertTargeter( 
         initialPosition, finalPosition, timeOfFlight, earthGravitationalParameter );
 
-    // Compute Delta V at initial position [ms^-1].
-    cout << "Delta V_i: " 
-         << std::fabs( 
-                lambertTargeter.getInertialVelocityAtDeparture( ).norm( ) 
-                - initialVelocity.norm( ) )
-         << " m/s" << endl;
+    // // Compute Delta V at initial position [ms^-1].
+    // cout << "Delta V_i: " 
+    //      << std::fabs( 
+    //             lambertTargeter.getInertialVelocityAtDeparture( ).norm( ) 
+    //             - initialVelocity.norm( ) )
+    //      << " m/s" << endl;
 
     // Set guess for initial Cartesian state after departure.
     const Eigen::VectorXd departureState 
@@ -144,165 +147,61 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                    // lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
                    initialVelocity ).finished( );
 
-    // Convert post-maneuver state in Cartesian elements to Keplerian elements.
-    Eigen::VectorXd departureStateInKeplerianElements
-        = convertCartesianToKeplerianElements( departureState, earthGravitationalParameter );  
-
     ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
 
     // Compute modified TLE.
 
-    // // Set up parameters for non-linear function.
-    // CartesianToTwoLineElementsParameters parameters 
-    //     = { 
-    //         earthGravitationalParameter,
-    //         tleObject1,
-    //         departureStateInitialGuess,
-    //         numberOfUnknowns
-    //       };
+    // Set up derivative-free optimizer.
+    nlopt::opt optimizer( nlopt::LN_COBYLA, 6 );
 
-    // // Set up non-linear function.
-    // gsl_multiroot_function cartesianToTwoLineElementsFunction
-    //     = {
-    //          &convertCartesianToTwoLineElements, 
-    //          numberOfUnknowns, 
-    //          &parameters
-    //       };
+    // Set up parameters for non-linear function.
+    CartesianToTwoLineElementsParameters parameters( 
+        earthGravitationalParameter, departureState.segment( 0, 3 ).norm( ), 
+        departureState.segment( 3, 3 ).norm( ), tleObject1 );
 
-    // // Set initial guess.
-    // gsl_vector* initialGuess = gsl_vector_alloc( numberOfUnknowns );
-    // for ( unsigned int i = 0; i < numberOfUnknowns; i++ )
-    // {
-    //     gsl_vector_set( initialGuess, i, departureStateInKeplerianElements[ i ]);      
-    // }
+    // Set objective function.
+    optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
 
-    // // Set up non-linear solver type (derivative free).
-    // const gsl_multiroot_fsolver_type* solverType = gsl_multiroot_fsolver_hybrids;
+    // Set tolerance.
+    optimizer.set_xtol_rel( minimizationTolerance );
 
-    // // Allocate memory for solver.
-    // gsl_multiroot_fsolver* solver = gsl_multiroot_fsolver_alloc( solverType, numberOfUnknowns );
+    // Set initial step size.
+    optimizer.set_initial_step( 1.0e-2 );
 
-    // // Set solver to use non-linear function with initial guess vector.
-    // gsl_multiroot_fsolver_set( solver, &cartesianToTwoLineElementsFunction, initialGuess );
+    // Set initial guess (normalized Cartesian state).
+    Eigen::VectorXd departureStateNormalized = departureState;
+    departureStateNormalized.segment( 0, 3 ).normalize( );
+    departureStateNormalized.segment( 3, 3 ).normalize( );
+    std::vector< double > state( 6 );
+    Eigen::Map< Eigen::VectorXd >( state.data( ), 6, 1 ) = departureState;
 
-    // // Declare current solver status and iteration counter.
-    // int solverStatus;
-    // size_t iteration = 0;
+    // Execute optimizer.
+    double minimumFunctionValue;
+    nlopt::result result = optimizer.optimize( state, minimumFunctionValue );
 
-    // // Print current state of solver.
-    // printSolverStateTableHeader( );
-    // printSolverState( iteration, solver );
+    // Print output statements.
+    if ( result < 0 ) 
+    {
+        cout << "nlopt failed!" << endl;
+    }
+    else 
+    {
+        cout << "found minimum at f(" << state.at( 0 ) << ") = " << minimumFunctionValue
+             << endl;
+    }
 
-    // if ( GSL_EBADFUNC == gsl_multiroot_fsolver_iterate( solver ) )
-    //     std::cout << "Oops!" << std::endl;
-    // // do
-    // // {
-    // //     iteration++;
-    // //     solverStatus = gsl_multiroot_fsolver_iterate( solver );
+    std::cout << "# of iterations: " << counter << std::endl;
 
-    // //     printSolverState( iteration, solver );
-
-    // //     // Check if solver is stuck; if it is stuck, break from loop.
-    // //     if ( solverStatus )   
-    // //     {
-    // //         cout << "ERROR: Non-linear solver is stuck!" << endl;
-    // //         break;
-    // //     }
-
-    // //     solverStatus = gsl_multiroot_test_residual( solver->f, solverTolerance );
-    // // }
-    // // while ( solverStatus == GSL_CONTINUE && iteration < 1 );
-
-    // // // Print final status of non-linear solver.
-    // // cout << endl;
-    // // cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << endl;
-    // // cout << endl;
-
-    // // Free up memory.
-    // gsl_multiroot_fsolver_free( solver );
-    // gsl_vector_free( initialGuess );
-
-    // // ///////////////////////////////////////////////////////////////////////////
-
-    // // // Set up non-linear solver to compute modified TLE.
-
-    // // // Set number of unknowns (6 state variables).
-    // // const int numberOfUnknowns = 6;
-
-    // // // Set up parameters for non-linear function.
-    // // CartesianToTwoLineElementsParameters parameters 
-    // //     = { 
-    // //         earthGravitationalParameter,
-    // //         tleObject1,
-    // //         departureStateInitialGuess,
-    // //         numberOfUnknowns
-    // //       };
-
-    // // // Set up non-linear function.
-    // // gsl_multiroot_function cartesianToTwoLineElementsFunction
-    // //     = {
-    // //          &convertCartesianToTwoLineElements, 
-    // //          numberOfUnknowns, 
-    // //          &parameters
-    // //       };
-
-    // // // Set initial guess.
-    // // gsl_vector* initialGuess = gsl_vector_alloc( numberOfUnknowns );
-    // // for ( unsigned int i = 0; i < numberOfUnknowns; i++ )
-    // // {
-    // //     gsl_vector_set( initialGuess, i, departureStateInKeplerianElements[ i ]);      
-    // // }
-
-    // // // Set up non-linear solver type (derivative free).
-    // // const gsl_multiroot_fsolver_type* solverType = gsl_multiroot_fsolver_hybrids;
-
-    // // // Allocate memory for solver.
-    // // gsl_multiroot_fsolver* solver = gsl_multiroot_fsolver_alloc( solverType, numberOfUnknowns );
-
-    // // // Set solver to use non-linear function with initial guess vector.
-    // // gsl_multiroot_fsolver_set( solver, &cartesianToTwoLineElementsFunction, initialGuess );
-
-    // // // Declare current solver status and iteration counter.
-    // // int solverStatus;
-    // // size_t iteration = 0;
-
-    // // // Print current state of solver.
-    // // printSolverStateTableHeader( );
-    // // printSolverState( iteration, solver );
-
-    // // do
-    // // {
-    // //     iteration++;
-    // //     solverStatus = gsl_multiroot_fsolver_iterate( solver );
-
-    // //     printSolverState( iteration, solver );
-
-    // //     // Check if solver is stuck; if it is stuck, break from loop.
-    // //     if ( solverStatus )   
-    // //     {
-    // //         cout << "ERROR: Non-linear solver is stuck!" << endl;
-    // //         break;
-    // //     }
-
-    // //     solverStatus = gsl_multiroot_test_residual( solver->f, solverTolerance );
-    // // }
-    // // while ( solverStatus == GSL_CONTINUE && iteration < 1 );
-
-    // // // Print final status of non-linear solver.
-    // // cout << endl;
-    // // cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << endl;
-    // // cout << endl;
-
-    // // // Free up memory.
-    // // gsl_multiroot_fsolver_free( solver );
-    // // gsl_vector_free( initialGuess );
-
+    /////////////////////////////////////////////////////////////////////////
+  
     /////////////////////////////////////////////////////////////////////////
                 
     cout << "Timing information: ";
 
     // If program is successfully completed, return 0.
     return EXIT_SUCCESS; 
+
+    /////////////////////////////////////////////////////////////////////////
 }
