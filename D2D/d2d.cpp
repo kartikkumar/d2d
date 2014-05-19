@@ -24,6 +24,7 @@
 
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/orbitalElementConversions.h>
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/unitConversions.h>
+#include <TudatCore/Mathematics/BasicMathematics/mathematicalConstants.h>
 
 #include <Tudat/Astrodynamics/MissionSegments/lambertTargeterIzzo.h>
 
@@ -49,6 +50,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     using namespace tudat::basic_astrodynamics::orbital_element_conversions;
     using namespace tudat::basic_astrodynamics::unit_conversions;
+    using namespace tudat::basic_mathematics::mathematical_constants; 
     using namespace tudat::mission_segments;
 
     using namespace d2d;
@@ -147,6 +149,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                    // lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
                    initialVelocity ).finished( );
 
+    // Convert state to Keplerian elements.
+    const Eigen::VectorXd departureStateInKeplerianElements
+        = convertCartesianToKeplerianElements( 
+            departureState, earthGravitationalParameter );
+
     ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
@@ -158,8 +165,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Set up parameters for non-linear function.
     CartesianToTwoLineElementsParameters parameters( 
-        earthGravitationalParameter, departureState.segment( 0, 3 ).norm( ), 
-        departureState.segment( 3, 3 ).norm( ), tleObject1 );
+        earthGravitationalParameter, tleObject1, departureState );
 
     // Set objective function.
     optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
@@ -167,32 +173,54 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Set tolerance.
     optimizer.set_xtol_rel( minimizationTolerance );
 
+    // Set lower bounds.
+    std::vector< double > lowerBounds( 6, -HUGE_VAL );
+    lowerBounds.at( semiMajorAxisIndex ) =  0.0;
+    lowerBounds.at( eccentricityIndex ) =  0.0;
+    lowerBounds.at( inclinationIndex ) =  0.0;
+    lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
+    lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
+    lowerBounds.at( trueAnomalyIndex ) =  0.0;
+
+    optimizer.set_lower_bounds( lowerBounds );
+
+    // Set upper bounds.
+    std::vector< double > upperBounds( 6, HUGE_VAL );
+    lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
+    upperBounds.at( eccentricityIndex ) =  1.0;
+    upperBounds.at( inclinationIndex ) =  PI;
+    upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
+    upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
+    upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
+
+    optimizer.set_upper_bounds( upperBounds );
+
+    // Set initial guess.
+    std::vector< double > stateInKeplerianElements( 6 );
+    Eigen::Map< Eigen::VectorXd >( 
+        stateInKeplerianElements.data( ), 6, 1 ) = departureStateInKeplerianElements;
+
     // Set initial step size.
-    optimizer.set_initial_step( 1.0e-2 );
-
-    // Set initial guess (normalized Cartesian state).
-    Eigen::VectorXd departureStateNormalized = departureState;
-    departureStateNormalized.segment( 0, 3 ).normalize( );
-    departureStateNormalized.segment( 3, 3 ).normalize( );
-    std::vector< double > state( 6 );
-    Eigen::Map< Eigen::VectorXd >( state.data( ), 6, 1 ) = departureState;
-
+    optimizer.set_initial_step( 0.1 );
+    
     // Execute optimizer.
     double minimumFunctionValue;
-    nlopt::result result = optimizer.optimize( state, minimumFunctionValue );
+    nlopt::result result = optimizer.optimize( stateInKeplerianElements, minimumFunctionValue );
 
     // Print output statements.
     if ( result < 0 ) 
     {
-        cout << "nlopt failed!" << endl;
+        cout << "NLOPT failed!" << endl;
     }
     else 
     {
-        cout << "found minimum at f(" << state.at( 0 ) << ") = " << minimumFunctionValue
-             << endl;
+        cout << "found minimum = " << minimumFunctionValue << endl;
     }
 
-    std::cout << "# of iterations: " << counter << std::endl;
+    // Print number of iterations taken by optimizer.
+    cout << endl;
+    cout << "# of iterations: " << cartesianToTwoLineElementsOptmizerIterations << endl;
+    cout << endl;
 
     /////////////////////////////////////////////////////////////////////////
   

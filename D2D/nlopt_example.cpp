@@ -41,6 +41,7 @@ int main( )
 
 	std::vector< double > lb( 2 );
 	lb[ 0 ] = -HUGE_VAL; lb[ 1 ] = 0;
+	opt.set_lower_bounds( lb );
 
 	opt.set_min_objective( my_func, NULL );
 
