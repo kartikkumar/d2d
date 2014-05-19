@@ -7,7 +7,6 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <cstdio>
 #include <iostream>
 #include <string>
 
@@ -15,24 +14,20 @@
 
 #include <Eigen/Core> 
 
-#include <gsl/gsl_multimin.h>
-#include <gsl/gsl_vector.h>
-
 #include <libsgp4/Eci.h>
 #include <libsgp4/DateTime.h>
-#include <libsgp4/Globals.h>
-#include <libsgp4/OrbitalElements.h>  
+// #include <libsgp4/Globals.h>
+// #include <libsgp4/OrbitalElements.h>  
 #include <libsgp4/SGP4.h>
 #include <libsgp4/Tle.h>
 
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/orbitalElementConversions.h>
+#include <TudatCore/Astrodynamics/BasicAstrodynamics/unitConversions.h>
 
 #include <Tudat/Astrodynamics/MissionSegments/lambertTargeterIzzo.h>
-#include <Tudat/InputOutput/fieldType.h>
-#include <Tudat/InputOutput/parser.h>
 
-#include <D2D/convertCartesianToTwoLineElements.h>
-#include <D2D/printFunctions.h>
+// #include <D2D/convertCartesianToTwoLineElements.h>
+// #include <D2D/printFunctions.h>
 
 //! Execute D2D test app.
 int main( const int numberOfInputs, const char* inputArguments[ ] )
@@ -46,16 +41,17 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
      
     ///////////////////////////////////////////////////////////////////////////
 
-    // Declare using-statements.
-    using std::cerr;
+    // // Declare using-statements.
+    // using std::cerr;
     using std::cout;
     using std::endl;
     using std::string;
 
     using namespace tudat::basic_astrodynamics::orbital_element_conversions;
+    using namespace tudat::basic_astrodynamics::unit_conversions;
     using namespace tudat::mission_segments;
 
-    using namespace d2d;
+    // using namespace d2d;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -86,9 +82,6 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const string line2Object2 
         = "2 06800 001.9047 136.0594 0024458 068.9289 290.1247 15.83301112263179";
 
-    // Set tolerance for non-linear solver.
-    const double solverTolerance = 1.0e-7;
-
     ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
@@ -97,13 +90,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Compute final epoch.
     const DateTime finalEpoch( initialEpoch );
-    finalEpoch.AddSeconds( timeOfFlight );
-
-    ///////////////////////////////////////////////////////////////////////////
-
-    ///////////////////////////////////////////////////////////////////////////         
-
-    // Compute setup parameters for SGP4 solver.
+    finalEpoch.AddSeconds( timeOfFlight );    
 
     // Create TLE objects from strings.
     Tle tleObject1( nameObject1, line1Object1, line2Object1 );
@@ -118,22 +105,26 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     Eci finalState = sgp4Object2.FindPosition( finalEpoch );
 
     // Compute initial position [m] and velocity [ms^-1].
-    Eigen::Vector3d initialPosition( initialState.Position( ).x * 1.0e3, 
-                                     initialState.Position( ).y * 1.0e3,
-                                     initialState.Position( ).z * 1.0e3 );
+    const Eigen::Vector3d initialPosition( 
+        convertKilometersToMeters( initialState.Position( ).x ), 
+        convertKilometersToMeters( initialState.Position( ).y ),
+        convertKilometersToMeters( initialState.Position( ).z ) );
 
-    Eigen::Vector3d initialVelocity( initialState.Velocity( ).x * 1.0e3, 
-                                     initialState.Velocity( ).y * 1.0e3,
-                                     initialState.Velocity( ).z * 1.0e3 );
+    const Eigen::Vector3d initialVelocity( 
+        convertKilometersToMeters( initialState.Velocity( ).x ), 
+        convertKilometersToMeters( initialState.Velocity( ).y ),
+        convertKilometersToMeters( initialState.Velocity( ).z ) );
 
-    // Compute final position [m] and velocity [ms^-1].
-    Eigen::Vector3d finalPosition( finalState.Position( ).x * 1.0e3, 
-                                   finalState.Position( ).y * 1.0e3,
-                                   finalState.Position( ).z * 1.0e3 );
+    // // Compute final position [m] and velocity [ms^-1].
+    const Eigen::Vector3d finalPosition( 
+        convertKilometersToMeters( finalState.Position( ).x ), 
+        convertKilometersToMeters( finalState.Position( ).y ),
+        convertKilometersToMeters( finalState.Position( ).z ) );
 
-    Eigen::Vector3d finalVelocity( finalState.Velocity( ).x * 1.0e3, 
-                                   finalState.Velocity( ).y * 1.0e3,
-                                   finalState.Velocity( ).z * 1.0e3 );
+    const Eigen::Vector3d finalVelocity( 
+        convertKilometersToMeters( finalState.Velocity( ).x ), 
+        convertKilometersToMeters( finalState.Velocity( ).y ),
+        convertKilometersToMeters( finalState.Velocity( ).z ) );
 
     // Set up Lambert targeter. This automatically triggers the solver to execute.
     LambertTargeterIzzo lambertTargeter( 
@@ -147,7 +138,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
          << " m/s" << endl;
 
     // Set guess for initial Cartesian state after departure.
-    const Eigen::VectorXd departureStateInitialGuess 
+    const Eigen::VectorXd departureState 
         = ( Eigen::VectorXd( 6 ) 
                 << initialPosition,
                    // lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
@@ -155,94 +146,13 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Convert post-maneuver state in Cartesian elements to Keplerian elements.
     Eigen::VectorXd departureStateInKeplerianElements
-        = convertCartesianToKeplerianElements(
-            departureStateInitialGuess, earthGravitationalParameter );  
+        = convertCartesianToKeplerianElements( departureState, earthGravitationalParameter );  
 
     ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // Set up non-linear solver to compute modified TLE.
-
-    // Set number of unknowns (6 state variables).
-    const int numberOfUnknowns = 6;
-
-    // Set up parameters for non-linear function.
-    CartesianToTwoLineElementsParameters parameters 
-        = { 
-            earthGravitationalParameter,
-            tleObject1,
-            departureStateInitialGuess,
-            numberOfUnknowns
-          };
-
-    // Set up non-linear function.
-    gsl_multiroot_function cartesianToTwoLineElementsFunction
-        = {
-             &convertCartesianToTwoLineElements, 
-             numberOfUnknowns, 
-             &parameters
-          };
-
-    // Set initial guess.
-    gsl_vector* initialGuess = gsl_vector_alloc( numberOfUnknowns );
-    for ( unsigned int i = 0; i < numberOfUnknowns; i++ )
-    {
-        gsl_vector_set( initialGuess, i, departureStateInKeplerianElements[ i ]);      
-    }
-
-    // Set up non-linear solver type (derivative free).
-    const gsl_multiroot_fsolver_type* solverType = gsl_multiroot_fsolver_hybrids;
-
-    // Allocate memory for solver.
-    gsl_multiroot_fsolver* solver = gsl_multiroot_fsolver_alloc( solverType, numberOfUnknowns );
-
-    // Set solver to use non-linear function with initial guess vector.
-    gsl_multiroot_fsolver_set( solver, &cartesianToTwoLineElementsFunction, initialGuess );
-
-    // Declare current solver status and iteration counter.
-    int solverStatus;
-    size_t iteration = 0;
-
-    // Print current state of solver.
-    printSolverStateTableHeader( );
-    printSolverState( iteration, solver );
-
-    if ( GSL_EBADFUNC == gsl_multiroot_fsolver_iterate( solver ) )
-        std::cout << "Oops!" << std::endl;
-    // do
-    // {
-    //     iteration++;
-    //     solverStatus = gsl_multiroot_fsolver_iterate( solver );
-
-    //     printSolverState( iteration, solver );
-
-    //     // Check if solver is stuck; if it is stuck, break from loop.
-    //     if ( solverStatus )   
-    //     {
-    //         cout << "ERROR: Non-linear solver is stuck!" << endl;
-    //         break;
-    //     }
-
-    //     solverStatus = gsl_multiroot_test_residual( solver->f, solverTolerance );
-    // }
-    // while ( solverStatus == GSL_CONTINUE && iteration < 1 );
-
-    // // Print final status of non-linear solver.
-    // cout << endl;
-    // cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << endl;
-    // cout << endl;
-
-    // Free up memory.
-    gsl_multiroot_fsolver_free( solver );
-    gsl_vector_free( initialGuess );
-
-    // ///////////////////////////////////////////////////////////////////////////
-
-    // // Set up non-linear solver to compute modified TLE.
-
-    // // Set number of unknowns (6 state variables).
-    // const int numberOfUnknowns = 6;
+    // Compute modified TLE.
 
     // // Set up parameters for non-linear function.
     // CartesianToTwoLineElementsParameters parameters 
@@ -285,34 +195,111 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // printSolverStateTableHeader( );
     // printSolverState( iteration, solver );
 
-    // do
-    // {
-    //     iteration++;
-    //     solverStatus = gsl_multiroot_fsolver_iterate( solver );
+    // if ( GSL_EBADFUNC == gsl_multiroot_fsolver_iterate( solver ) )
+    //     std::cout << "Oops!" << std::endl;
+    // // do
+    // // {
+    // //     iteration++;
+    // //     solverStatus = gsl_multiroot_fsolver_iterate( solver );
 
-    //     printSolverState( iteration, solver );
+    // //     printSolverState( iteration, solver );
 
-    //     // Check if solver is stuck; if it is stuck, break from loop.
-    //     if ( solverStatus )   
-    //     {
-    //         cout << "ERROR: Non-linear solver is stuck!" << endl;
-    //         break;
-    //     }
+    // //     // Check if solver is stuck; if it is stuck, break from loop.
+    // //     if ( solverStatus )   
+    // //     {
+    // //         cout << "ERROR: Non-linear solver is stuck!" << endl;
+    // //         break;
+    // //     }
 
-    //     solverStatus = gsl_multiroot_test_residual( solver->f, solverTolerance );
-    // }
-    // while ( solverStatus == GSL_CONTINUE && iteration < 1 );
+    // //     solverStatus = gsl_multiroot_test_residual( solver->f, solverTolerance );
+    // // }
+    // // while ( solverStatus == GSL_CONTINUE && iteration < 1 );
 
-    // // Print final status of non-linear solver.
-    // cout << endl;
-    // cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << endl;
-    // cout << endl;
+    // // // Print final status of non-linear solver.
+    // // cout << endl;
+    // // cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << endl;
+    // // cout << endl;
 
     // // Free up memory.
     // gsl_multiroot_fsolver_free( solver );
     // gsl_vector_free( initialGuess );
 
     // // ///////////////////////////////////////////////////////////////////////////
+
+    // // // Set up non-linear solver to compute modified TLE.
+
+    // // // Set number of unknowns (6 state variables).
+    // // const int numberOfUnknowns = 6;
+
+    // // // Set up parameters for non-linear function.
+    // // CartesianToTwoLineElementsParameters parameters 
+    // //     = { 
+    // //         earthGravitationalParameter,
+    // //         tleObject1,
+    // //         departureStateInitialGuess,
+    // //         numberOfUnknowns
+    // //       };
+
+    // // // Set up non-linear function.
+    // // gsl_multiroot_function cartesianToTwoLineElementsFunction
+    // //     = {
+    // //          &convertCartesianToTwoLineElements, 
+    // //          numberOfUnknowns, 
+    // //          &parameters
+    // //       };
+
+    // // // Set initial guess.
+    // // gsl_vector* initialGuess = gsl_vector_alloc( numberOfUnknowns );
+    // // for ( unsigned int i = 0; i < numberOfUnknowns; i++ )
+    // // {
+    // //     gsl_vector_set( initialGuess, i, departureStateInKeplerianElements[ i ]);      
+    // // }
+
+    // // // Set up non-linear solver type (derivative free).
+    // // const gsl_multiroot_fsolver_type* solverType = gsl_multiroot_fsolver_hybrids;
+
+    // // // Allocate memory for solver.
+    // // gsl_multiroot_fsolver* solver = gsl_multiroot_fsolver_alloc( solverType, numberOfUnknowns );
+
+    // // // Set solver to use non-linear function with initial guess vector.
+    // // gsl_multiroot_fsolver_set( solver, &cartesianToTwoLineElementsFunction, initialGuess );
+
+    // // // Declare current solver status and iteration counter.
+    // // int solverStatus;
+    // // size_t iteration = 0;
+
+    // // // Print current state of solver.
+    // // printSolverStateTableHeader( );
+    // // printSolverState( iteration, solver );
+
+    // // do
+    // // {
+    // //     iteration++;
+    // //     solverStatus = gsl_multiroot_fsolver_iterate( solver );
+
+    // //     printSolverState( iteration, solver );
+
+    // //     // Check if solver is stuck; if it is stuck, break from loop.
+    // //     if ( solverStatus )   
+    // //     {
+    // //         cout << "ERROR: Non-linear solver is stuck!" << endl;
+    // //         break;
+    // //     }
+
+    // //     solverStatus = gsl_multiroot_test_residual( solver->f, solverTolerance );
+    // // }
+    // // while ( solverStatus == GSL_CONTINUE && iteration < 1 );
+
+    // // // Print final status of non-linear solver.
+    // // cout << endl;
+    // // cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << endl;
+    // // cout << endl;
+
+    // // // Free up memory.
+    // // gsl_multiroot_fsolver_free( solver );
+    // // gsl_vector_free( initialGuess );
+
+    /////////////////////////////////////////////////////////////////////////
                 
     cout << "Timing information: ";
 

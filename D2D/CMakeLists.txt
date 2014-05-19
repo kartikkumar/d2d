@@ -209,15 +209,15 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITECPP_INCLUDE_DIR}\"")
 endif( )
 
-## Find GSL library on local system.
-find_package(GSL REQUIRED)
+# Find PaGMO library on local system.
+find_package(PaGMO 2.0 REQUIRED)
 
-# Include GSL directories.
-# Set CMake flag to suppress GSL warnings (platform-dependent solution).
+# Include PaGMO directories.
+# Set CMake flag to suppress PaGMO warnings (platform-dependent solution).
 if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${GSL_INCLUDE_DIR}")
+  include_directories(SYSTEM AFTER "${PAGMO_INCLUDE_DIR}")
 else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${GSL_INCLUDE_DIR}\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${PAGMO_INCLUDE_DIR}\"")
 endif( )
 
 # Find SGP4DanRW library on local system.
@@ -229,17 +229,6 @@ if(NOT APPLE)
   include_directories(SYSTEM AFTER "${SGP4DANRW_INCLUDE_DIR}")
 else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4DANRW_INCLUDE_DIR}\"")
-endif( )
-
-# Find Ceres library on local system.
-find_package(Ceres 1.9.0 REQUIRED) 
-
-# Include Ceres directories.
-# Set CMake flag to suppress Ceres warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${CERES_INCLUDE_DIRS}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${CERES_INCLUDE_DIRS}\"")
 endif( )
 
 # If documentation should be built, find Doxygen package and setup config file.
@@ -279,25 +268,7 @@ endif()
 add_executable(d2d "${SOURCE_CODE}/d2d.cpp")
 setup_executable_target(d2d)
 target_link_libraries(d2d 
-                      ${GSL_LIBRARIES}
-                      ${SGP4DANRW_LIBRARY}
-                      tudat_mission_segments tudat_input_output
-                      ${TUDAT_CORE_LIBRARIES} 
-                      ${SQLITECPP_LIBRARY}
-                      ${SQLITE3_LIBRARY} 
-                      ${Boost_LIBRARIES})
-
-# Add GSL test app.
-add_executable(gsl_multimin_test "${SOURCE_CODE}/gsl_multimin_test.cpp")
-setup_executable_target(gsl_multimin_test)
-target_link_libraries(gsl_multimin_test 
-                      ${GSL_LIBRARIES})
-
-# Add Rosenbrock app.
-add_executable(rosenbrock "${SOURCE_CODE}/rosenbrock.cpp")
-setup_executable_target(rosenbrock)
-target_link_libraries(rosenbrock 
-                      ${GSL_LIBRARIES}
+                      ${PAGMO_LIBRARY}
                       ${SGP4DANRW_LIBRARY}
                       tudat_mission_segments tudat_input_output
                       ${TUDAT_CORE_LIBRARIES} 
