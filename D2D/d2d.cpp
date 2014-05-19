@@ -201,7 +201,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         stateInKeplerianElements.data( ), 6, 1 ) = departureStateInKeplerianElements;
 
     // Set initial step size.
-    optimizer.set_initial_step( 0.1 );
+    // optimizer.set_initial_step( 0.01 );
     
     // Execute optimizer.
     double minimumFunctionValue;

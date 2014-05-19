@@ -139,8 +139,8 @@ std::cout << "old Line 2: " << referenceTwoLineElements.Line2( ) << std::endl;
     // Convert new right ascension of ascending node to formatted string.
     const string newRightAscensionOfAscendingNodeString
       = boost::str( format( "%08.4f" ) 
-            % computeModulo( convertRadiansToDegrees( 
-                stateVectorInKeplerianElements( longitudeOfAscendingNodeIndex ) ), 2.0 * PI ) );
+            % convertRadiansToDegrees( computeModulo(  
+                stateVectorInKeplerianElements( longitudeOfAscendingNodeIndex ), 2.0 * PI ) ) );
 
     // Replace new right ascension of ascending node [deg] in TLE line 2.
     newTwoLineElementsLine2.replace( 17, 8, newRightAscensionOfAscendingNodeString );
@@ -157,17 +157,18 @@ std::cout << "e: " <<  stateVectorInKeplerianElements( eccentricityIndex ) << st
     // Convert new argument of periapsis to formatted string.
     const string newArgumentOfPeriapsisString
       = boost::str( format( "%08.4f" ) 
-                      % computeModulo( 
-                          convertRadiansToDegrees( 
+                      % convertRadiansToDegrees( 
+                          computeModulo(
                             stateVectorInKeplerianElements( 
-                              argumentOfPeriapsisIndex ) ), 2.0 * PI ) );
+                              argumentOfPeriapsisIndex ), 2.0 * PI ) ) );
 
     // Replace new argument of periapsis [deg] in TLE line 2.
     newTwoLineElementsLine2.replace( 34, 8, newArgumentOfPeriapsisString );    
 
     // Convert new mean anomaly to formatted string.
     const string newMeanAnomalyString
-      = boost::str( format( "%08.4f" ) % convertRadiansToDegrees( meanAnomaly ) );
+      = boost::str( format( "%08.4f" ) 
+          % convertRadiansToDegrees( computeModulo( meanAnomaly, 2.0 * PI ) ) );
 
     // Replace new mean anomaly [deg] in TLE line 2.
     newTwoLineElementsLine2.replace( 43, 8, newMeanAnomalyString ); 
