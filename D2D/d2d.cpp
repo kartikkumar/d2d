@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include <boost/format.hpp>
 #include <boost/timer/timer.hpp>
 
 #include <Eigen/Core> 
@@ -23,7 +24,9 @@
 #include <libsgp4/Tle.h>
 
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/orbitalElementConversions.h>
+#include <TudatCore/Astrodynamics/BasicAstrodynamics/physicalConstants.h>  
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/unitConversions.h>
+#include <TudatCore/Mathematics/BasicMathematics/basicMathematicsFunctions.h>  
 #include <TudatCore/Mathematics/BasicMathematics/mathematicalConstants.h>
 
 #include <Tudat/Astrodynamics/MissionSegments/lambertTargeterIzzo.h>
@@ -42,14 +45,15 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
      
     ///////////////////////////////////////////////////////////////////////////
 
-    // // Declare using-statements.
-    // using std::cerr;
+    // Declare using-statements.
     using std::cout;
     using std::endl;
     using std::string;
 
     using namespace tudat::basic_astrodynamics::orbital_element_conversions;
     using namespace tudat::basic_astrodynamics::unit_conversions;
+    using namespace tudat::basic_astrodynamics::physical_constants; 
+    using namespace tudat::basic_mathematics; 
     using namespace tudat::basic_mathematics::mathematical_constants; 
     using namespace tudat::mission_segments;
 
@@ -65,8 +69,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double earthGravitationalParameter = 398600.8 * 1.0e9;
     
     // Set initial epoch.
-    const DateTime initialEpoch( 1979, 4, 15 );
-
+    const DateTime initialEpoch( 1979, 8, 15, 12, 7, 4 );
+    
     // Set time-of-flight [s].
     const double timeOfFlight = 1325.0;
 
@@ -93,6 +97,15 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Compute derived parameters.
 
+    // cout << boost::str( boost::format( "%02i" ) % ( computeModulo( initialEpoch.Year( ), 100.0 ) ) )
+    //      << boost::str( boost::format( "%012.8f" ) 
+    //         % ( initialEpoch.DayOfYear( initialEpoch.Year( ), 
+    //                                     initialEpoch.Month( ), 
+    //                                     initialEpoch.Day( ) ) 
+    //         + ( initialEpoch.Hour( ) * 3600.0 
+    //             + initialEpoch.Minute( ) * 60.0 
+    //             + initialEpoch.Second( ) ) / JULIAN_DAY ) ) << endl;
+         
     // Compute final epoch.
     const DateTime finalEpoch( initialEpoch );
     finalEpoch.AddSeconds( timeOfFlight );    
@@ -175,7 +188,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Set lower bounds.
     std::vector< double > lowerBounds( 6, -HUGE_VAL );
-    lowerBounds.at( semiMajorAxisIndex ) =  0.0;
+    lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
     lowerBounds.at( eccentricityIndex ) =  0.0;
     lowerBounds.at( inclinationIndex ) =  0.0;
     lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
@@ -201,8 +214,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         stateInKeplerianElements.data( ), 6, 1 ) = departureStateInKeplerianElements;
 
     // Set initial step size.
-    // optimizer.set_initial_step( 0.01 );
-    
+    optimizer.set_initial_step( 0.01 );
+
     // Execute optimizer.
     double minimumFunctionValue;
     nlopt::result result = optimizer.optimize( stateInKeplerianElements, minimumFunctionValue );

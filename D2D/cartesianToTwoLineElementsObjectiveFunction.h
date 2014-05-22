@@ -146,7 +146,7 @@ std::cout << "old Line 2: " << referenceTwoLineElements.Line2( ) << std::endl;
     newTwoLineElementsLine2.replace( 17, 8, newRightAscensionOfAscendingNodeString );
 
     // Convert new eccentricity to formatted string.
-std::cout << "e: " <<  stateVectorInKeplerianElements( eccentricityIndex ) << std::endl;
+// std::cout << "e: " <<  stateVectorInKeplerianElements( eccentricityIndex ) << std::endl;
     const string newEccentricityString
       = boost::str( format( "%07.0f" ) 
                         % ( stateVectorInKeplerianElements( eccentricityIndex ) * 1.0e7 ) );
@@ -216,6 +216,22 @@ std::cout << "new Line 2: " << newTwoLineElementsLine2 << std::endl;
     ///////////////////////////////////////////////////////////////////////////
 
     // Return value of objective function.
+    std::cout << newStateVector[ 0 ] << ", "
+              << newStateVector[ 1 ] << ", "
+              << newStateVector[ 2 ] << ", "
+              << newStateVector[ 3 ] << ", "
+              << newStateVector[ 4 ] << ", "
+              << newStateVector[ 5 ] << std::endl;
+
+    std::cout << targetState[ 0 ] << ", "
+              << targetState[ 1 ] << ", "
+              << targetState[ 2 ] << ", "
+              << targetState[ 3 ] << ", "
+              << targetState[ 4 ] << ", "
+              << targetState[ 5 ] << std::endl;
+
+exit( 0 );
+
     return ( newStateVector - targetState ).norm( );
 
     ///////////////////////////////////////////////////////////////////////////
