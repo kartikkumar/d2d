@@ -20,6 +20,7 @@
 
 #include <libsgp4/Eci.h>
 #include <libsgp4/DateTime.h>  
+#include <libsgp4/Globals.h>    
 #include <libsgp4/SGP4.h>
 #include <libsgp4/Tle.h>
 
@@ -49,6 +50,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     using std::cout;
     using std::endl;
     using std::string;
+    using std::vector;
 
     using namespace tudat::basic_astrodynamics::orbital_element_conversions;
     using namespace tudat::basic_astrodynamics::unit_conversions;
@@ -64,12 +66,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     ///////////////////////////////////////////////////////////////////////////
 
     // Input deck.
-
-    // Set Earth gravitational parameter [kg m^3 s^-2].
-    const double earthGravitationalParameter = 398600.8 * 1.0e9;
     
-    // Set initial epoch.
-    const DateTime initialEpoch( 1979, 8, 15, 12, 7, 4 );
+    // Set depature epoch.
+    const DateTime departureEpoch( 1979, 4, 14 );
     
     // Set time-of-flight [s].
     const double timeOfFlight = 1325.0;
@@ -94,91 +93,110 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
-
+         
     // Compute derived parameters.
 
-    // cout << boost::str( boost::format( "%02i" ) % ( computeModulo( initialEpoch.Year( ), 100.0 ) ) )
-    //      << boost::str( boost::format( "%012.8f" ) 
-    //         % ( initialEpoch.DayOfYear( initialEpoch.Year( ), 
-    //                                     initialEpoch.Month( ), 
-    //                                     initialEpoch.Day( ) ) 
-    //         + ( initialEpoch.Hour( ) * 3600.0 
-    //             + initialEpoch.Minute( ) * 60.0 
-    //             + initialEpoch.Second( ) ) / JULIAN_DAY ) ) << endl;
-         
-    // Compute final epoch.
-    const DateTime finalEpoch( initialEpoch );
-    finalEpoch.AddSeconds( timeOfFlight );    
+    // Set Earth gravitational parameter [m^3 s^-2].
+    const double earthGravitationalParameter = kMU * 1.0e9;
+
+    // Compute arrival epoch.
+    const DateTime arrivalEpoch( departureEpoch );
+    arrivalEpoch.AddSeconds( timeOfFlight );    
 
     // Create TLE objects from strings.
-    Tle tleObject1( nameObject1, line1Object1, line2Object1 );
-    Tle tleObject2( nameObject2, line1Object2, line2Object2 );
+    const Tle tleObject1( nameObject1, line1Object1, line2Object1 );
+    const Tle tleObject2( nameObject2, line1Object2, line2Object2 );
 
     // Set up SGP4 propagator objects.
-    SGP4 sgp4Object1( tleObject1 );
-    SGP4 sgp4Object2( tleObject2 );
+    const SGP4 sgp4Object1( tleObject1 );
+    const SGP4 sgp4Object2( tleObject2 );
 
-    // Compute Cartesian states of objects at initial and final epochs.
-    Eci initialState = sgp4Object1.FindPosition( initialEpoch );
-    Eci finalState = sgp4Object2.FindPosition( finalEpoch );
+    // Compute Cartesian states of objects at departure and arrival epochs.
+    const Eci departureState = sgp4Object1.FindPosition( 0.0 );
+    const Eci arrivalState = sgp4Object2.FindPosition( arrivalEpoch );
 
-    // Compute initial position [m] and velocity [ms^-1].
-    const Eigen::Vector3d initialPosition( 
-        convertKilometersToMeters( initialState.Position( ).x ), 
-        convertKilometersToMeters( initialState.Position( ).y ),
-        convertKilometersToMeters( initialState.Position( ).z ) );
+    // Compute departure position [m] and velocity [ms^-1].
+    const Eigen::Vector3d depaturePosition( 
+        convertKilometersToMeters( departureState.Position( ).x ), 
+        convertKilometersToMeters( departureState.Position( ).y ),
+        convertKilometersToMeters( departureState.Position( ).z ) );
 
-    const Eigen::Vector3d initialVelocity( 
-        convertKilometersToMeters( initialState.Velocity( ).x ), 
-        convertKilometersToMeters( initialState.Velocity( ).y ),
-        convertKilometersToMeters( initialState.Velocity( ).z ) );
+    const Eigen::Vector3d departureVelocity( 
+        convertKilometersToMeters( departureState.Velocity( ).x ), 
+        convertKilometersToMeters( departureState.Velocity( ).y ),
+        convertKilometersToMeters( departureState.Velocity( ).z ) );
 
-    // // Compute final position [m] and velocity [ms^-1].
-    const Eigen::Vector3d finalPosition( 
-        convertKilometersToMeters( finalState.Position( ).x ), 
-        convertKilometersToMeters( finalState.Position( ).y ),
-        convertKilometersToMeters( finalState.Position( ).z ) );
+    // Compute arrival position [m] and velocity [ms^-1].
+    const Eigen::Vector3d arrivalPosition( 
+        convertKilometersToMeters( arrivalState.Position( ).x ), 
+        convertKilometersToMeters( arrivalState.Position( ).y ),
+        convertKilometersToMeters( arrivalState.Position( ).z ) );
 
-    const Eigen::Vector3d finalVelocity( 
-        convertKilometersToMeters( finalState.Velocity( ).x ), 
-        convertKilometersToMeters( finalState.Velocity( ).y ),
-        convertKilometersToMeters( finalState.Velocity( ).z ) );
+    const Eigen::Vector3d arrivalVelocity( 
+        convertKilometersToMeters( arrivalState.Velocity( ).x ), 
+        convertKilometersToMeters( arrivalState.Velocity( ).y ),
+        convertKilometersToMeters( arrivalState.Velocity( ).z ) );
 
     // Set up Lambert targeter. This automatically triggers the solver to execute.
     LambertTargeterIzzo lambertTargeter( 
-        initialPosition, finalPosition, timeOfFlight, earthGravitationalParameter );
+        depaturePosition, arrivalPosition, timeOfFlight, earthGravitationalParameter );
 
-    // // Compute Delta V at initial position [ms^-1].
-    // cout << "Delta V_i: " 
+    // // Compute Delta V at departure position [ms^-1].
+    // cout << "Delta V_dep: " 
     //      << std::fabs( 
     //             lambertTargeter.getInertialVelocityAtDeparture( ).norm( ) 
-    //             - initialVelocity.norm( ) )
+    //             - departureVelocity.norm( ) )
     //      << " m/s" << endl;
 
-    // Set guess for initial Cartesian state after departure.
-    const Eigen::VectorXd departureState 
+    // Set guess for Cartesian state at departure after executing maneuver.
+    const Eigen::VectorXd departureStateAfterManeuver 
         = ( Eigen::VectorXd( 6 ) 
-                << initialPosition,
+                << depaturePosition,
                    // lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
-                   initialVelocity ).finished( );
+                   departureVelocity ).finished( );
 
-    // Convert state to Keplerian elements.
-    const Eigen::VectorXd departureStateInKeplerianElements
+std::cout << departureStateAfterManeuver << std::endl;
+std::cout << std::endl;
+
+    // Convert departure state after maneuver to Keplerian elements.
+    const Eigen::VectorXd departureStateAfterManeuverInKeplerianElements
         = convertCartesianToKeplerianElements( 
-            departureState, earthGravitationalParameter );
+            departureStateAfterManeuver, earthGravitationalParameter );
+
+std::cout << departureStateAfterManeuverInKeplerianElements << std::endl;
+std::cout << std::endl;
+
+exit( 0 );
+
+    // Set up reference TLE at departure epoch.
+
+    // Update Line 1 for object 1 to departure epoch.
+    const string departureEpochString 
+        = boost::str( boost::format( "%02i" ) % ( computeModulo( departureEpoch.Year( ), 100.0 ) ) )
+          + boost::str( boost::format( "%012.8f" ) 
+            % ( departureEpoch.DayOfYear( departureEpoch.Year( ), 
+                                        departureEpoch.Month( ), 
+                                        departureEpoch.Day( ) ) 
+                + ( departureEpoch.Hour( ) * 3600.0 
+                    + departureEpoch.Minute( ) * 60.0 
+                    + departureEpoch.Second( ) ) / JULIAN_DAY ) );
+    string departureLine1Object1 = line1Object1;
+    departureLine1Object1.replace( 18, 14, departureEpochString );
+
+    const Tle departureReferenceTleObject1( nameObject1, departureLine1Object1, line2Object1 );
 
     ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // Compute modified TLE.
+    // Compute TLE for object 1 at departure epoch.
 
     // Set up derivative-free optimizer.
     nlopt::opt optimizer( nlopt::LN_COBYLA, 6 );
 
-    // Set up parameters for non-linear function.
-    CartesianToTwoLineElementsParameters parameters( 
-        earthGravitationalParameter, tleObject1, departureState );
+    // Set up parameters for objective function.
+    ObjectiveFunctionParameters parameters( 
+        earthGravitationalParameter, departureReferenceTleObject1, departureStateAfterManeuver );
 
     // Set objective function.
     optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
@@ -186,39 +204,39 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Set tolerance.
     optimizer.set_xtol_rel( minimizationTolerance );
 
-    // Set lower bounds.
-    std::vector< double > lowerBounds( 6, -HUGE_VAL );
-    lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
-    lowerBounds.at( eccentricityIndex ) =  0.0;
-    lowerBounds.at( inclinationIndex ) =  0.0;
-    lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
-    lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
-    lowerBounds.at( trueAnomalyIndex ) =  0.0;
+    // // Set lower bounds.
+    // std::vector< double > lowerBounds( 6, -HUGE_VAL );
+    // lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
+    // lowerBounds.at( eccentricityIndex ) =  0.0;
+    // lowerBounds.at( inclinationIndex ) =  0.0;
+    // lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
+    // lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
+    // lowerBounds.at( trueAnomalyIndex ) =  0.0;
 
-    optimizer.set_lower_bounds( lowerBounds );
+    // optimizer.set_lower_bounds( lowerBounds );
 
-    // Set upper bounds.
-    std::vector< double > upperBounds( 6, HUGE_VAL );
-    lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
-    upperBounds.at( eccentricityIndex ) =  1.0;
-    upperBounds.at( inclinationIndex ) =  PI;
-    upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
-    upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
-    upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
+    // // Set upper bounds.
+    // std::vector< double > upperBounds( 6, HUGE_VAL );
+    // lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
+    // upperBounds.at( eccentricityIndex ) =  1.0;
+    // upperBounds.at( inclinationIndex ) =  PI;
+    // upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
+    // upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
+    // upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
 
-    optimizer.set_upper_bounds( upperBounds );
+    // optimizer.set_upper_bounds( upperBounds );
 
-    // Set initial guess.
-    std::vector< double > stateInKeplerianElements( 6 );
-    Eigen::Map< Eigen::VectorXd >( 
-        stateInKeplerianElements.data( ), 6, 1 ) = departureStateInKeplerianElements;
+    // Set initial guess for decision vector to Keplerian elements at departure after maneuver.
+    vector< double > decisionVector( 6 );
+    Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) 
+        = departureStateAfterManeuverInKeplerianElements;
 
     // Set initial step size.
     optimizer.set_initial_step( 0.01 );
 
     // Execute optimizer.
     double minimumFunctionValue;
-    nlopt::result result = optimizer.optimize( stateInKeplerianElements, minimumFunctionValue );
+    nlopt::result result = optimizer.optimize( decisionVector, minimumFunctionValue );
 
     // Print output statements.
     if ( result < 0 ) 
@@ -232,7 +250,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Print number of iterations taken by optimizer.
     cout << endl;
-    cout << "# of iterations: " << cartesianToTwoLineElementsOptmizerIterations << endl;
+    cout << "# of iterations: " << optimizerIterations << endl;
     cout << endl;
 
     /////////////////////////////////////////////////////////////////////////

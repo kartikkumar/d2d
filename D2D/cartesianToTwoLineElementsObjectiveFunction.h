@@ -28,16 +28,17 @@ namespace d2d
 {
 
 //! Number of iterations taken by optimizer to convert Cartesian to TLE elements.
-static double cartesianToTwoLineElementsOptmizerIterations = 0;
+static double optimizerIterations = 0;
 
-struct CartesianToTwoLineElementsParameters
+//! Container of parameters used by objective function to convert Cartesian state to TLE elements.
+struct ObjectiveFunctionParameters
 { 
 public:
 
     //! Constructor taking parameter values.
-    CartesianToTwoLineElementsParameters( const double anEarthGravitationalParameter,
-                                          const Tle someReferenceTwoLineElements,
-                                          const Eigen::VectorXd aTargetState )
+    ObjectiveFunctionParameters( const double anEarthGravitationalParameter,
+                                 const Tle someReferenceTwoLineElements,
+                                 const Eigen::VectorXd aTargetState )
         : earthGravitationalParameter( anEarthGravitationalParameter ),
           referenceTwoLineElements( someReferenceTwoLineElements ),
           targetState( aTargetState )
@@ -58,12 +59,12 @@ private:
 };
 
 double cartesianToTwoLineElementsObjectiveFunction( 
-    const std::vector< double >& stateInKeplerianElements, 
+    const std::vector< double >& decisionVector, 
     std::vector< double >& gradient, void* parameters )
 
 {    
     // Increment iterations counter.
-    ++cartesianToTwoLineElementsOptmizerIterations;
+    ++optimizerIterations;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -85,27 +86,26 @@ double cartesianToTwoLineElementsObjectiveFunction(
 
     // Store Earth gravitational parameter.
     const double earthGravitationalParameter 
-        = static_cast< CartesianToTwoLineElementsParameters* >( 
-            parameters )->earthGravitationalParameter;
+        = static_cast< ObjectiveFunctionParameters* >( parameters )->earthGravitationalParameter;
 
-    // Map state to Eigen vector.
-    Eigen::Map< const Eigen::VectorXd > stateVectorInKeplerianElements( 
-        &stateInKeplerianElements[ 0 ], 6, 1 );
+    // Map decision vector to state in Keplerian elements.
+    Eigen::Map< const Eigen::VectorXd > stateInKeplerianElements( &decisionVector[ 0 ], 6, 1 );
 
     // Compute eccentric anomaly from true anomaly [rad].
     const double eccentricAnomaly 
-      = convertTrueAnomalyToEccentricAnomaly( 
-          stateVectorInKeplerianElements( trueAnomalyIndex ),
-          stateVectorInKeplerianElements( eccentricityIndex ) );
+      = convertTrueAnomalyToEccentricAnomaly( stateInKeplerianElements( trueAnomalyIndex ),
+                                              stateInKeplerianElements( eccentricityIndex ) );
+
+std::cout << stateInKeplerianElements( eccentricityIndex ) << std::endl;
 
     // Compute mean anomaly from eccentric anomaly [rad].
     const double meanAnomaly
       = convertEccentricAnomalyToMeanAnomaly( 
-          eccentricAnomaly, stateVectorInKeplerianElements( eccentricityIndex ) );
+          eccentricAnomaly, stateInKeplerianElements( eccentricityIndex ) );
 
     // Compute orbital mean motion [rad/s] from semi-major axis.
     const double meanMotion
-      = computeKeplerMeanMotion( stateVectorInKeplerianElements( semiMajorAxisIndex ),
+      = computeKeplerMeanMotion( stateInKeplerianElements( semiMajorAxisIndex ),
                                  earthGravitationalParameter );
 
     // Compute revolutions/day from orbital mean motion [rad/s].
@@ -119,7 +119,7 @@ double cartesianToTwoLineElementsObjectiveFunction(
 
     // Set reference TLE object.
     Tle referenceTwoLineElements( 
-        static_cast< CartesianToTwoLineElementsParameters* >( 
+        static_cast< ObjectiveFunctionParameters* >( 
                 parameters )->referenceTwoLineElements );
 
 std::cout << "old Line 2: " << referenceTwoLineElements.Line2( ) << std::endl;
@@ -131,7 +131,7 @@ std::cout << "old Line 2: " << referenceTwoLineElements.Line2( ) << std::endl;
     // Convert new inclination to formatted string.
     const string newInclinationString
       = boost::str( format( "%08.4f" ) 
-            % convertRadiansToDegrees( stateVectorInKeplerianElements( inclinationIndex ) ) );
+            % convertRadiansToDegrees( stateInKeplerianElements( inclinationIndex ) ) );
 
     // Replace new inclination [deg] in TLE line 2.
     newTwoLineElementsLine2.replace( 8, 8, newInclinationString );
@@ -140,16 +140,15 @@ std::cout << "old Line 2: " << referenceTwoLineElements.Line2( ) << std::endl;
     const string newRightAscensionOfAscendingNodeString
       = boost::str( format( "%08.4f" ) 
             % convertRadiansToDegrees( computeModulo(  
-                stateVectorInKeplerianElements( longitudeOfAscendingNodeIndex ), 2.0 * PI ) ) );
+                stateInKeplerianElements( longitudeOfAscendingNodeIndex ), 2.0 * PI ) ) );
 
     // Replace new right ascension of ascending node [deg] in TLE line 2.
     newTwoLineElementsLine2.replace( 17, 8, newRightAscensionOfAscendingNodeString );
 
     // Convert new eccentricity to formatted string.
-// std::cout << "e: " <<  stateVectorInKeplerianElements( eccentricityIndex ) << std::endl;
     const string newEccentricityString
       = boost::str( format( "%07.0f" ) 
-                        % ( stateVectorInKeplerianElements( eccentricityIndex ) * 1.0e7 ) );
+                        % ( stateInKeplerianElements( eccentricityIndex ) * 1.0e7 ) );
 
     // Replace new eccentricity [-] in TLE line 2.
     newTwoLineElementsLine2.replace( 26, 7, newEccentricityString );
@@ -159,7 +158,7 @@ std::cout << "old Line 2: " << referenceTwoLineElements.Line2( ) << std::endl;
       = boost::str( format( "%08.4f" ) 
                       % convertRadiansToDegrees( 
                           computeModulo(
-                            stateVectorInKeplerianElements( 
+                            stateInKeplerianElements( 
                               argumentOfPeriapsisIndex ), 2.0 * PI ) ) );
 
     // Replace new argument of periapsis [deg] in TLE line 2.
@@ -188,18 +187,17 @@ std::cout << "new Line 2: " << newTwoLineElementsLine2 << std::endl;
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // Compute non-linear function.
+    // Compute .
 
     // Set up SGP4 propagator for new TLE.
-    SGP4 sgp4NewObject( newTwoLineElements );
+    const SGP4 sgp4NewObject( newTwoLineElements );
 
     // Convert new TLE to Cartesian state by propagating by 0.0.
-    Eci newState = sgp4NewObject.FindPosition( 0.0 ); 
+    const Eci newState = sgp4NewObject.FindPosition( 0.0 ); 
 
     // Set target Cartesian state.
     const Eigen::VectorXd targetState
-        = static_cast< CartesianToTwoLineElementsParameters* >( 
-            parameters )->targetState;
+        = static_cast< ObjectiveFunctionParameters* >( parameters )->targetState;
 
     // Set new Cartesian state, computed from new TLE.
     const Eigen::VectorXd newStateVector
@@ -216,23 +214,20 @@ std::cout << "new Line 2: " << newTwoLineElementsLine2 << std::endl;
     ///////////////////////////////////////////////////////////////////////////
 
     // Return value of objective function.
-    std::cout << newStateVector[ 0 ] << ", "
-              << newStateVector[ 1 ] << ", "
-              << newStateVector[ 2 ] << ", "
-              << newStateVector[ 3 ] << ", "
-              << newStateVector[ 4 ] << ", "
-              << newStateVector[ 5 ] << std::endl;
-
-    std::cout << targetState[ 0 ] << ", "
-              << targetState[ 1 ] << ", "
-              << targetState[ 2 ] << ", "
-              << targetState[ 3 ] << ", "
-              << targetState[ 4 ] << ", "
-              << targetState[ 5 ] << std::endl;
-
-exit( 0 );
-
-    return ( newStateVector - targetState ).norm( );
+    std::cout << "Obj: " << ( newStateVector - targetState ).norm( ) << std::endl;
+    std::cout << "new: " << newStateVector[ 0 ] << " "
+                         << newStateVector[ 1 ] << " "
+                         << newStateVector[ 2 ] << " "
+                         << newStateVector[ 3 ] << " "
+                         << newStateVector[ 4 ] << " "
+                         << newStateVector[ 5 ] << std::endl;
+    std::cout << "tar: " << targetState[ 0 ] << " "
+                         << targetState[ 1 ] << " "
+                         << targetState[ 2 ] << " "
+                         << targetState[ 3 ] << " "
+                         << targetState[ 4 ] << " "
+                         << targetState[ 5 ] << std::endl;                         
+    return ( newStateVector - targetState ).squaredNorm( );
 
     ///////////////////////////////////////////////////////////////////////////
 }
