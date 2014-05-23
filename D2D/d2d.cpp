@@ -155,105 +155,114 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                    // lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
                    departureVelocity ).finished( );
 
-std::cout << departureStateAfterManeuver << std::endl;
-std::cout << std::endl;
-
-    // Convert departure state after maneuver to Keplerian elements.
-    const Eigen::VectorXd departureStateAfterManeuverInKeplerianElements
+    // Compute true anomaly at departure epoch [rad].
+    const double trueAnomaly 
         = convertCartesianToKeplerianElements( 
-            departureStateAfterManeuver, earthGravitationalParameter );
+                departureStateAfterManeuver, earthGravitationalParameter )[ trueAnomalyIndex ];
 
-std::cout << departureStateAfterManeuverInKeplerianElements << std::endl;
+    // Compute eccentric anomaly from true anomaly [rad].
+    const double eccentricAnomaly 
+      = convertTrueAnomalyToEccentricAnomaly( trueAnomaly, tleObject1.Eccentricity( ) );
+
+    // Compute mean anomaly from eccentric anomaly [deg].
+    const double meanAnomaly
+      = computeModulo( 
+            convertRadiansToDegrees( 
+                convertEccentricAnomalyToMeanAnomaly( 
+                    eccentricAnomaly, tleObject1.Eccentricity( ) ) ), 360.0 );
+
+std::cout << "M: " << tleObject1.MeanAnomaly( true ) << std::endl;
+std::cout << "M_new: " << meanAnomaly << std::endl;
 std::cout << std::endl;
 
 exit( 0 );
 
-    // Set up reference TLE at departure epoch.
+    // // Set up reference TLE at departure epoch.
 
-    // Update Line 1 for object 1 to departure epoch.
-    const string departureEpochString 
-        = boost::str( boost::format( "%02i" ) % ( computeModulo( departureEpoch.Year( ), 100.0 ) ) )
-          + boost::str( boost::format( "%012.8f" ) 
-            % ( departureEpoch.DayOfYear( departureEpoch.Year( ), 
-                                        departureEpoch.Month( ), 
-                                        departureEpoch.Day( ) ) 
-                + ( departureEpoch.Hour( ) * 3600.0 
-                    + departureEpoch.Minute( ) * 60.0 
-                    + departureEpoch.Second( ) ) / JULIAN_DAY ) );
-    string departureLine1Object1 = line1Object1;
-    departureLine1Object1.replace( 18, 14, departureEpochString );
+    // // Update Line 1 for object 1 to departure epoch.
+    // const string departureEpochString 
+    //     = boost::str( boost::format( "%02i" ) % ( computeModulo( departureEpoch.Year( ), 100.0 ) ) )
+    //       + boost::str( boost::format( "%012.8f" ) 
+    //         % ( departureEpoch.DayOfYear( departureEpoch.Year( ), 
+    //                                     departureEpoch.Month( ), 
+    //                                     departureEpoch.Day( ) ) 
+    //             + ( departureEpoch.Hour( ) * 3600.0 
+    //                 + departureEpoch.Minute( ) * 60.0 
+    //                 + departureEpoch.Second( ) ) / JULIAN_DAY ) );
+    // string departureLine1Object1 = line1Object1;
+    // departureLine1Object1.replace( 18, 14, departureEpochString );
 
-    const Tle departureReferenceTleObject1( nameObject1, departureLine1Object1, line2Object1 );
+    // const Tle departureReferenceTleObject1( nameObject1, departureLine1Object1, line2Object1 );
 
-    ///////////////////////////////////////////////////////////////////////////
+    // ///////////////////////////////////////////////////////////////////////////
 
-    ///////////////////////////////////////////////////////////////////////////
+    // ///////////////////////////////////////////////////////////////////////////
 
-    // Compute TLE for object 1 at departure epoch.
+    // // Compute TLE for object 1 at departure epoch.
 
-    // Set up derivative-free optimizer.
-    nlopt::opt optimizer( nlopt::LN_COBYLA, 6 );
+    // // Set up derivative-free optimizer.
+    // nlopt::opt optimizer( nlopt::LN_COBYLA, 6 );
 
-    // Set up parameters for objective function.
-    ObjectiveFunctionParameters parameters( 
-        earthGravitationalParameter, departureReferenceTleObject1, departureStateAfterManeuver );
+    // // Set up parameters for objective function.
+    // ObjectiveFunctionParameters parameters( 
+    //     earthGravitationalParameter, departureReferenceTleObject1, departureStateAfterManeuver );
 
-    // Set objective function.
-    optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
+    // // Set objective function.
+    // optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
 
-    // Set tolerance.
-    optimizer.set_xtol_rel( minimizationTolerance );
+    // // Set tolerance.
+    // optimizer.set_xtol_rel( minimizationTolerance );
 
-    // // Set lower bounds.
-    // std::vector< double > lowerBounds( 6, -HUGE_VAL );
-    // lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
-    // lowerBounds.at( eccentricityIndex ) =  0.0;
-    // lowerBounds.at( inclinationIndex ) =  0.0;
-    // lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
-    // lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
-    // lowerBounds.at( trueAnomalyIndex ) =  0.0;
+    // // // Set lower bounds.
+    // // std::vector< double > lowerBounds( 6, -HUGE_VAL );
+    // // lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
+    // // lowerBounds.at( eccentricityIndex ) =  0.0;
+    // // lowerBounds.at( inclinationIndex ) =  0.0;
+    // // lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
+    // // lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
+    // // lowerBounds.at( trueAnomalyIndex ) =  0.0;
 
-    // optimizer.set_lower_bounds( lowerBounds );
+    // // optimizer.set_lower_bounds( lowerBounds );
 
-    // // Set upper bounds.
-    // std::vector< double > upperBounds( 6, HUGE_VAL );
-    // lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
-    // upperBounds.at( eccentricityIndex ) =  1.0;
-    // upperBounds.at( inclinationIndex ) =  PI;
-    // upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
-    // upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
-    // upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
+    // // // Set upper bounds.
+    // // std::vector< double > upperBounds( 6, HUGE_VAL );
+    // // lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
+    // // upperBounds.at( eccentricityIndex ) =  1.0;
+    // // upperBounds.at( inclinationIndex ) =  PI;
+    // // upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
+    // // upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
+    // // upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
 
-    // optimizer.set_upper_bounds( upperBounds );
+    // // optimizer.set_upper_bounds( upperBounds );
 
-    // Set initial guess for decision vector to Keplerian elements at departure after maneuver.
-    vector< double > decisionVector( 6 );
-    Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) 
-        = departureStateAfterManeuverInKeplerianElements;
+    // // Set initial guess for decision vector to Keplerian elements at departure after maneuver.
+    // vector< double > decisionVector( 6 );
+    // Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) 
+    //     = departureStateAfterManeuverInKeplerianElements;
 
-    // Set initial step size.
-    optimizer.set_initial_step( 0.01 );
+    // // Set initial step size.
+    // optimizer.set_initial_step( 0.01 );
 
-    // Execute optimizer.
-    double minimumFunctionValue;
-    nlopt::result result = optimizer.optimize( decisionVector, minimumFunctionValue );
+    // // Execute optimizer.
+    // double minimumFunctionValue;
+    // nlopt::result result = optimizer.optimize( decisionVector, minimumFunctionValue );
 
-    // Print output statements.
-    if ( result < 0 ) 
-    {
-        cout << "NLOPT failed!" << endl;
-    }
-    else 
-    {
-        cout << "found minimum = " << minimumFunctionValue << endl;
-    }
+    // // Print output statements.
+    // if ( result < 0 ) 
+    // {
+    //     cout << "NLOPT failed!" << endl;
+    // }
+    // else 
+    // {
+    //     cout << "found minimum = " << minimumFunctionValue << endl;
+    // }
 
-    // Print number of iterations taken by optimizer.
-    cout << endl;
-    cout << "# of iterations: " << optimizerIterations << endl;
-    cout << endl;
+    // // Print number of iterations taken by optimizer.
+    // cout << endl;
+    // cout << "# of iterations: " << optimizerIterations << endl;
+    // cout << endl;
 
-    /////////////////////////////////////////////////////////////////////////
+    // /////////////////////////////////////////////////////////////////////////
   
     /////////////////////////////////////////////////////////////////////////
                 
