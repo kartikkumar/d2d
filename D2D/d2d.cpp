@@ -229,27 +229,27 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Set tolerance.
     optimizer.set_xtol_rel( minimizationTolerance );
 
-    // // // Set lower bounds.
-    // // std::vector< double > lowerBounds( 6, -HUGE_VAL );
-    // // lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
-    // // lowerBounds.at( eccentricityIndex ) =  0.0;
-    // // lowerBounds.at( inclinationIndex ) =  0.0;
-    // // lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
-    // // lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
-    // // lowerBounds.at( trueAnomalyIndex ) =  0.0;
+    // Set lower bounds.
+    std::vector< double > lowerBounds( 6, -HUGE_VAL );
+    // lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
+    lowerBounds.at( eccentricityIndex ) =  0.0;
+    // lowerBounds.at( inclinationIndex ) =  0.0;
+    // lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
+    // lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
+    // lowerBounds.at( trueAnomalyIndex ) =  0.0;
 
-    // // optimizer.set_lower_bounds( lowerBounds );
+    optimizer.set_lower_bounds( lowerBounds );
 
-    // // // Set upper bounds.
-    // // std::vector< double > upperBounds( 6, HUGE_VAL );
-    // // lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
-    // // upperBounds.at( eccentricityIndex ) =  1.0;
-    // // upperBounds.at( inclinationIndex ) =  PI;
-    // // upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
-    // // upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
-    // // upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
+    // Set upper bounds.
+    std::vector< double > upperBounds( 6, HUGE_VAL );
+    // lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
+    upperBounds.at( eccentricityIndex ) =  1.0;
+    // upperBounds.at( inclinationIndex ) =  PI;
+    // upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
+    // upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
+    // upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
 
-    // // optimizer.set_upper_bounds( upperBounds );
+    optimizer.set_upper_bounds( upperBounds );
 
     // Set initial guess for decision vector to the TLE mean elements at departure.
     vector< double > decisionVector( 6 );

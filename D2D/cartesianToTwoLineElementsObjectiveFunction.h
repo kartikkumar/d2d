@@ -22,7 +22,6 @@
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/orbitalElementConversions.h>
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/physicalConstants.h>
 #include <TudatCore/Mathematics/BasicMathematics/basicMathematicsFunctions.h> 
-#include <TudatCore/Mathematics/BasicMathematics/mathematicalConstants.h>
   
 namespace d2d
 {
@@ -89,13 +88,12 @@ double cartesianToTwoLineElementsObjectiveFunction(
     using namespace tudat::basic_astrodynamics::unit_conversions;
     using namespace tudat::basic_astrodynamics::physical_constants;   
     using namespace tudat::basic_mathematics; 
-    using namespace tudat::basic_mathematics::mathematical_constants; 
 
     ///////////////////////////////////////////////////////////////////////////
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // Generate new TLE based on osculating Keplerian elements.
+    // Generate new TLE and compute Cartesian elements at departure epoch.
 
     // Map decision vector to TLE mean elements.
     Eigen::Map< const Eigen::VectorXd > newTleMeanElements( &decisionVector[ 0 ], 6, 1 );
@@ -117,100 +115,90 @@ std::cout << "old Line 2: " << referenceTle.Line2( ) << std::endl;
     // Replace new inclination [deg] in TLE line 2.
     newTleLine2.replace( 8, 8, newTleInclinationString );
 
-//     // Convert new right ascension of ascending node to formatted string.
-//     const string newRightAscensionOfAscendingNodeString
-//       = boost::str( format( "%08.4f" ) 
-//             % convertRadiansToDegrees( computeModulo(  
-//                 stateInKeplerianElements( longitudeOfAscendingNodeIndex ), 2.0 * PI ) ) );
+    // Convert new right ascension of ascending node to formatted string.
+    const string newRightAscensionOfAscendingNodeString
+      = boost::str( format( "%08.4f" ) 
+          % computeModulo( newTleMeanElements( tleRightAscensingNodeIndex ), 360.0 ) );
 
-//     // Replace new right ascension of ascending node [deg] in TLE line 2.
-//     newTleLine2.replace( 17, 8, newRightAscensionOfAscendingNodeString );
+    // Replace new right ascension of ascending node [deg] in TLE line 2.
+    newTleLine2.replace( 17, 8, newRightAscensionOfAscendingNodeString );
 
-//     // Convert new eccentricity to formatted string.
-//     const string newEccentricityString
-//       = boost::str( format( "%07.0f" ) 
-//                         % ( stateInKeplerianElements( eccentricityIndex ) * 1.0e7 ) );
+    // Convert new eccentricity to formatted string.
+    const string newEccentricityString
+      = boost::str( format( "%07.0f" ) % ( newTleMeanElements( tlEccentricityIndex ) * 1.0e7 ) );
 
-//     // Replace new eccentricity [-] in TLE line 2.
-//     newTleLine2.replace( 26, 7, newEccentricityString );
+    // Replace new eccentricity [-] in TLE line 2.
+    newTleLine2.replace( 26, 7, newEccentricityString );
 
-//     // Convert new argument of periapsis to formatted string.
-//     const string newArgumentOfPeriapsisString
-//       = boost::str( format( "%08.4f" ) 
-//                       % convertRadiansToDegrees( 
-//                           computeModulo(
-//                             stateInKeplerianElements( 
-//                               argumentOfPeriapsisIndex ), 2.0 * PI ) ) );
+    // Convert new argument of periapsis to formatted string.
+    const string newArgumentOfPeriapsisString
+      = boost::str( format( "%08.4f" ) 
+          % computeModulo( newTleMeanElements( tleArgumentPerigeeIndex ), 360.0 ) );
 
-//     // Replace new argument of periapsis [deg] in TLE line 2.
-//     newTleLine2.replace( 34, 8, newArgumentOfPeriapsisString );    
+    // Replace new argument of periapsis [deg] in TLE line 2.
+    newTleLine2.replace( 34, 8, newArgumentOfPeriapsisString );    
 
-//     // Convert new mean anomaly to formatted string.
-//     const string newMeanAnomalyString
-//       = boost::str( format( "%08.4f" ) 
-//           % convertRadiansToDegrees( computeModulo( meanAnomaly, 2.0 * PI ) ) );
+    // Convert new mean anomaly to formatted string.
+    const string newMeanAnomalyString
+      = boost::str( format( "%08.4f" ) 
+          % computeModulo( newTleMeanElements( tleMeanAnomalyIndex ), 360.0 ) );
 
-//     // Replace new mean anomaly [deg] in TLE line 2.
-//     newTleLine2.replace( 43, 8, newMeanAnomalyString ); 
+    // Replace new mean anomaly [deg] in TLE line 2.
+    newTleLine2.replace( 43, 8, newMeanAnomalyString ); 
 
-//     // Convert new revolutions/day to formatted string.
-//     const string newRevolutionsPerDayString = boost::str( format( "%11.8f" ) % revolutionsPerDay );
+    // Convert new revolutions/day to formatted string.
+    const string newRevolutionsPerDayString 
+      = boost::str( format( "%11.8f" ) % newTleMeanElements( tleMeanMotion ) );
 
-//     // Replace new mean anomaly [deg] in TLE line 2.
-//     newTleLine2.replace( 52, 11, newRevolutionsPerDayString );     
+    // Replace new mean anomaly [deg] in TLE line 2.
+    newTleLine2.replace( 52, 11, newRevolutionsPerDayString );     
 
 std::cout << "new Line 2: " << newTleLine2 << std::endl;
-exit( 0 );
-//     // Set new TLE object.
-//     const Tle newTwoLineElements( newTleLine1, newTleLine2 );
 
-//     ///////////////////////////////////////////////////////////////////////////   
+    // Set new TLE object.
+    const Tle newTwoLineElements( newTleLine1, newTleLine2 );
 
-//     ///////////////////////////////////////////////////////////////////////////
+    // Set up SGP4 propagator for new TLE.
+    const SGP4 sgp4NewObject( newTwoLineElements );
 
-//     // Compute .
+    // Convert new TLE to Cartesian state by propagating by 0.0.
+    const Eci newState = sgp4NewObject.FindPosition( 0.0 ); 
 
-//     // Set up SGP4 propagator for new TLE.
-//     const SGP4 sgp4NewObject( newTwoLineElements );
+    // Set target Cartesian state.
+    const Eigen::VectorXd targetState
+        = static_cast< ObjectiveFunctionParameters* >( parameters )->targetState;
 
-//     // Convert new TLE to Cartesian state by propagating by 0.0.
-//     const Eci newState = sgp4NewObject.FindPosition( 0.0 ); 
+    // Set new Cartesian state, computed from new TLE.
+    const Eigen::VectorXd newStateVector
+        = ( Eigen::VectorXd( 6 ) 
+              << convertKilometersToMeters( newState.Position( ).x ),
+                 convertKilometersToMeters( newState.Position( ).x ),
+                 convertKilometersToMeters( newState.Position( ).y ),
+                 convertKilometersToMeters( newState.Velocity( ).x ),
+                 convertKilometersToMeters( newState.Velocity( ).y ),
+                 convertKilometersToMeters( newState.Velocity( ).z ) ).finished( );
 
-//     // Set target Cartesian state.
-//     const Eigen::VectorXd targetState
-//         = static_cast< ObjectiveFunctionParameters* >( parameters )->targetState;
+    ///////////////////////////////////////////////////////////////////////////
 
-//     // Set new Cartesian state, computed from new TLE.
-//     const Eigen::VectorXd newStateVector
-//         = ( Eigen::VectorXd( 6 ) 
-//               << convertKilometersToMeters( newState.Position( ).x ),
-//                  convertKilometersToMeters( newState.Position( ).x ),
-//                  convertKilometersToMeters( newState.Position( ).y ),
-//                  convertKilometersToMeters( newState.Velocity( ).x ),
-//                  convertKilometersToMeters( newState.Velocity( ).y ),
-//                  convertKilometersToMeters( newState.Velocity( ).z ) ).finished( );
+    ///////////////////////////////////////////////////////////////////////////
 
-//     ///////////////////////////////////////////////////////////////////////////
+    // Return value of objective function.
+    std::cout << "Obj: " << ( newStateVector - targetState ).norm( ) << std::endl;
+    std::cout << "new: " << newStateVector[ 0 ] << " "
+                         << newStateVector[ 1 ] << " "
+                         << newStateVector[ 2 ] << " "
+                         << newStateVector[ 3 ] << " "
+                         << newStateVector[ 4 ] << " "
+                         << newStateVector[ 5 ] << std::endl;
+    std::cout << "tar: " << targetState[ 0 ] << " "
+                         << targetState[ 1 ] << " "
+                         << targetState[ 2 ] << " "
+                         << targetState[ 3 ] << " "
+                         << targetState[ 4 ] << " "
+                         << targetState[ 5 ] << std::endl;                         
+    return ( newStateVector - targetState ).squaredNorm( );
 
-//     ///////////////////////////////////////////////////////////////////////////
-
-//     // Return value of objective function.
-//     std::cout << "Obj: " << ( newStateVector - targetState ).norm( ) << std::endl;
-//     std::cout << "new: " << newStateVector[ 0 ] << " "
-//                          << newStateVector[ 1 ] << " "
-//                          << newStateVector[ 2 ] << " "
-//                          << newStateVector[ 3 ] << " "
-//                          << newStateVector[ 4 ] << " "
-//                          << newStateVector[ 5 ] << std::endl;
-//     std::cout << "tar: " << targetState[ 0 ] << " "
-//                          << targetState[ 1 ] << " "
-//                          << targetState[ 2 ] << " "
-//                          << targetState[ 3 ] << " "
-//                          << targetState[ 4 ] << " "
-//                          << targetState[ 5 ] << std::endl;                         
-//     return ( newStateVector - targetState ).squaredNorm( );
-
-//     ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 }
 
 } // namespace d2d
