@@ -5,6 +5,9 @@
   * See COPYING for license details.
   */
 
+#include <iomanip>
+#include <limits>
+
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
@@ -68,10 +71,10 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Input deck.
     
     // Set depature epoch.
-    const DateTime departureEpoch( 1979, 4, 14 );
+    const DateTime departureEpoch( 1979, 4, 15 );
     
     // Set time-of-flight [s].
-    const double timeOfFlight = 1325.0;
+//    const double timeOfFlight = 1325.0;
 
     // Set TLE strings for 1st debris object.
     const string nameObject1 = "0 SCOUT D-1 R/B";
@@ -81,14 +84,14 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         = "2 06800 001.9018 086.9961 0020515 168.0311 195.7657 15.89181450264090";
 
     // Set TLE strings for 2nd debris object.
-    const string nameObject2 = "0 SCOUT D-1 R/B";
-    const string line1Object2 
-        = "1 06800U 72091  B 79098.71793498  .00418782 +00000-0 +00000-0 0 03921";
-    const string line2Object2 
-        = "2 06800 001.9047 136.0594 0024458 068.9289 290.1247 15.83301112263179";
+//    const string nameObject2 = "0 SCOUT D-1 R/B";
+//    const string line1Object2 
+//        = "1 06800U 72091  B 79098.71793498  .00418782 +00000-0 +00000-0 0 03921";
+//    const string line2Object2 
+//        = "2 06800 001.9047 136.0594 0024458 068.9289 290.1247 15.83301112263179";
 
     // Set minimization tolerance.
-    const double minimizationTolerance = 1.0e-8;
+   const double minimizationTolerance = 1.0e-8;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -100,20 +103,21 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double earthGravitationalParameter = kMU * 1.0e9;
 
     // Compute arrival epoch.
-    const DateTime arrivalEpoch( departureEpoch );
-    arrivalEpoch.AddSeconds( timeOfFlight );    
+//    const DateTime arrivalEpoch( departureEpoch );
+//    arrivalEpoch.AddSeconds( timeOfFlight );    
 
     // Create TLE objects from strings.
     const Tle tleObject1( nameObject1, line1Object1, line2Object1 );
-    const Tle tleObject2( nameObject2, line1Object2, line2Object2 );
+//    const Tle tleObject2( nameObject2, line1Object2, line2Object2 );
 
     // Set up SGP4 propagator objects.
     const SGP4 sgp4Object1( tleObject1 );
-    const SGP4 sgp4Object2( tleObject2 );
+//    const SGP4 sgp4Object2( tleObject2 );
 
     // Compute Cartesian states of objects at departure and arrival epochs.
+    // const Eci departureState = sgp4Object1.FindPosition( departureEpoch );
     const Eci departureState = sgp4Object1.FindPosition( 0.0 );
-    const Eci arrivalState = sgp4Object2.FindPosition( arrivalEpoch );
+    // const Eci arrivalState = sgp4Object2.FindPosition( arrivalEpoch );
 
     // Compute departure position [m] and velocity [ms^-1].
     const Eigen::Vector3d depaturePosition( 
@@ -127,19 +131,19 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         convertKilometersToMeters( departureState.Velocity( ).z ) );
 
     // Compute arrival position [m] and velocity [ms^-1].
-    const Eigen::Vector3d arrivalPosition( 
-        convertKilometersToMeters( arrivalState.Position( ).x ), 
-        convertKilometersToMeters( arrivalState.Position( ).y ),
-        convertKilometersToMeters( arrivalState.Position( ).z ) );
+//    const Eigen::Vector3d arrivalPosition( 
+//        convertKilometersToMeters( arrivalState.Position( ).x ), 
+//        convertKilometersToMeters( arrivalState.Position( ).y ),
+//        convertKilometersToMeters( arrivalState.Position( ).z ) );
 
-    const Eigen::Vector3d arrivalVelocity( 
-        convertKilometersToMeters( arrivalState.Velocity( ).x ), 
-        convertKilometersToMeters( arrivalState.Velocity( ).y ),
-        convertKilometersToMeters( arrivalState.Velocity( ).z ) );
+//    const Eigen::Vector3d arrivalVelocity( 
+//        convertKilometersToMeters( arrivalState.Velocity( ).x ), 
+//        convertKilometersToMeters( arrivalState.Velocity( ).y ),
+//        convertKilometersToMeters( arrivalState.Velocity( ).z ) );
 
     // Set up Lambert targeter. This automatically triggers the solver to execute.
-    LambertTargeterIzzo lambertTargeter( 
-        depaturePosition, arrivalPosition, timeOfFlight, earthGravitationalParameter );
+//    LambertTargeterIzzo lambertTargeter( 
+//        depaturePosition, arrivalPosition, timeOfFlight, earthGravitationalParameter );
 
     // // Compute Delta V at departure position [ms^-1].
     // cout << "Delta V_dep: " 
@@ -156,62 +160,74 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                    departureVelocity ).finished( );
 
     // Compute true anomaly at departure epoch [rad].
-    const double trueAnomaly 
+    const double departureTrueAnomaly 
         = convertCartesianToKeplerianElements( 
                 departureStateAfterManeuver, earthGravitationalParameter )[ trueAnomalyIndex ];
 
     // Compute eccentric anomaly from true anomaly [rad].
-    const double eccentricAnomaly 
-      = convertTrueAnomalyToEccentricAnomaly( trueAnomaly, tleObject1.Eccentricity( ) );
+    const double departureEccentricAnomaly 
+        = convertTrueAnomalyToEccentricAnomaly( departureTrueAnomaly, tleObject1.Eccentricity( ) );
 
     // Compute mean anomaly from eccentric anomaly [deg].
-    const double meanAnomaly
-      = computeModulo( 
+    const double departureMeanAnomaly
+        = computeModulo( 
             convertRadiansToDegrees( 
                 convertEccentricAnomalyToMeanAnomaly( 
-                    eccentricAnomaly, tleObject1.Eccentricity( ) ) ), 360.0 );
+                    departureEccentricAnomaly, tleObject1.Eccentricity( ) ) ), 360.0 );
 
-std::cout << "M: " << tleObject1.MeanAnomaly( true ) << std::endl;
-std::cout << "M_new: " << meanAnomaly << std::endl;
-std::cout << std::endl;
+    // Set initial guess for TLE mean elements at departure.
+    const Eigen::VectorXd departureTLEMeanElementsGuess
+        = ( Eigen::VectorXd( 6 ) << tleObject1.Inclination( true ),
+                                    tleObject1.RightAscendingNode( true ),
+                                    tleObject1.Eccentricity( ),
+                                    tleObject1.ArgumentPerigee( true ),
+                                    departureMeanAnomaly,
+                                    tleObject1.MeanMotion( ) ).finished( );
 
-exit( 0 );
+    // Set up reference TLE at departure epoch.
 
-    // // Set up reference TLE at departure epoch.
+    // Update Line 1 for object 1 at departure epoch.
+    const string departureEpochString 
+        = boost::str( 
+            boost::format( "%02i" ) % ( computeModulo( departureEpoch.Year( ), 100.0 ) ) )
+            + boost::str( boost::format( "%012.8f" ) 
+                % ( departureEpoch.DayOfYear( departureEpoch.Year( ), 
+                                              departureEpoch.Month( ), 
+                                              departureEpoch.Day( ) ) 
+                  + ( departureEpoch.Hour( ) * 3600.0 
+                      + departureEpoch.Minute( ) * 60.0 
+                      + departureEpoch.Second( ) ) / JULIAN_DAY ) );
+    string departureLine1Object1 = line1Object1;
+    departureLine1Object1.replace( 18, 14, departureEpochString );
 
-    // // Update Line 1 for object 1 to departure epoch.
-    // const string departureEpochString 
-    //     = boost::str( boost::format( "%02i" ) % ( computeModulo( departureEpoch.Year( ), 100.0 ) ) )
-    //       + boost::str( boost::format( "%012.8f" ) 
-    //         % ( departureEpoch.DayOfYear( departureEpoch.Year( ), 
-    //                                     departureEpoch.Month( ), 
-    //                                     departureEpoch.Day( ) ) 
-    //             + ( departureEpoch.Hour( ) * 3600.0 
-    //                 + departureEpoch.Minute( ) * 60.0 
-    //                 + departureEpoch.Second( ) ) / JULIAN_DAY ) );
-    // string departureLine1Object1 = line1Object1;
-    // departureLine1Object1.replace( 18, 14, departureEpochString );
+    // Update Line 2 for object 1 at departure epoch.
+    const string departureMeanAnomalyString
+        = boost::str( boost::format( "%08.4f" ) % departureMeanAnomaly );
+    string departureLine2Object1 = line2Object1;
+    departureLine2Object1.replace( 43, 8, departureMeanAnomalyString );
 
-    // const Tle departureReferenceTleObject1( nameObject1, departureLine1Object1, line2Object1 );
+    // Create reference TLE for object 1 at departure.
+    const Tle departureReferenceTleObject1( 
+        nameObject1, departureLine1Object1, departureLine2Object1 );
 
-    // ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
-    // ///////////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////////////////
 
-    // // Compute TLE for object 1 at departure epoch.
+    // Compute TLE for object 1 at departure epoch.
 
-    // // Set up derivative-free optimizer.
-    // nlopt::opt optimizer( nlopt::LN_COBYLA, 6 );
+    // Set up derivative-free optimizer.
+    nlopt::opt optimizer( nlopt::LN_COBYLA, 6 );
 
-    // // Set up parameters for objective function.
-    // ObjectiveFunctionParameters parameters( 
-    //     earthGravitationalParameter, departureReferenceTleObject1, departureStateAfterManeuver );
+    // Set up parameters for objective function.
+    ObjectiveFunctionParameters parameters( 
+        earthGravitationalParameter, departureReferenceTleObject1, departureStateAfterManeuver );
 
-    // // Set objective function.
-    // optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
+    // Set objective function.
+    optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
 
-    // // Set tolerance.
-    // optimizer.set_xtol_rel( minimizationTolerance );
+    // Set tolerance.
+    optimizer.set_xtol_rel( minimizationTolerance );
 
     // // // Set lower bounds.
     // // std::vector< double > lowerBounds( 6, -HUGE_VAL );
@@ -235,34 +251,33 @@ exit( 0 );
 
     // // optimizer.set_upper_bounds( upperBounds );
 
-    // // Set initial guess for decision vector to Keplerian elements at departure after maneuver.
-    // vector< double > decisionVector( 6 );
-    // Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) 
-    //     = departureStateAfterManeuverInKeplerianElements;
+    // Set initial guess for decision vector to the TLE mean elements at departure.
+    vector< double > decisionVector( 6 );
+    Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) = departureTLEMeanElementsGuess;
 
     // // Set initial step size.
     // optimizer.set_initial_step( 0.01 );
 
-    // // Execute optimizer.
-    // double minimumFunctionValue;
-    // nlopt::result result = optimizer.optimize( decisionVector, minimumFunctionValue );
+    // Execute optimizer.
+    double minimumFunctionValue;
+    nlopt::result result = optimizer.optimize( decisionVector, minimumFunctionValue );
 
-    // // Print output statements.
-    // if ( result < 0 ) 
-    // {
-    //     cout << "NLOPT failed!" << endl;
-    // }
-    // else 
-    // {
-    //     cout << "found minimum = " << minimumFunctionValue << endl;
-    // }
+    // Print output statements.
+    if ( result < 0 ) 
+    {
+        cout << "NLOPT failed!" << endl;
+    }
+    else 
+    {
+        cout << "found minimum = " << minimumFunctionValue << endl;
+    }
 
-    // // Print number of iterations taken by optimizer.
-    // cout << endl;
-    // cout << "# of iterations: " << optimizerIterations << endl;
-    // cout << endl;
+    // Print number of iterations taken by optimizer.
+    cout << endl;
+    cout << "# of iterations: " << optimizerIterations << endl;
+    cout << endl;
 
-    // /////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////////////////////
   
     /////////////////////////////////////////////////////////////////////////
                 
