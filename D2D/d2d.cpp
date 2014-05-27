@@ -71,17 +71,17 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Input deck.
     
     // Set depature epoch.
-    const DateTime departureEpoch( 1979, 4, 15 );
+    const DateTime departureEpoch( 2014, 5, 23, 16, 0, 0 );
     
     // Set time-of-flight [s].
 //    const double timeOfFlight = 1325.0;
 
     // Set TLE strings for 1st debris object.
-    const string nameObject1 = "0 SCOUT D-1 R/B";
+    const string nameObject1 = "0 VANGUARD 1";
     const string line1Object1 
-        = "1 06800U 72091  B 79104.50192675  .00554509 +00000-0 +00000-0 0 03968";
+        = "1 00005U 58002B   14143.59770889 -.00000036  00000-0 -22819-4 0  2222";
     const string line2Object1 
-        = "2 06800 001.9018 086.9961 0020515 168.0311 195.7657 15.89181450264090";
+        = "2 00005 034.2431 215.7533 1849786 098.8024 282.5368 10.84391811964621";
 
     // Set TLE strings for 2nd debris object.
 //    const string nameObject2 = "0 SCOUT D-1 R/B";
@@ -91,7 +91,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 //        = "2 06800 001.9047 136.0594 0024458 068.9289 290.1247 15.83301112263179";
 
     // Set minimization tolerance.
-   const double minimizationTolerance = 1.0e-8;
+   // const double minimizationTolerance = 1.0e-3;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -103,7 +103,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const double earthGravitationalParameter = kMU * 1.0e9;
 
     // Compute arrival epoch.
-//    const DateTime arrivalEpoch( departureEpoch );
+   const DateTime arrivalEpoch( departureEpoch );
 //    arrivalEpoch.AddSeconds( timeOfFlight );    
 
     // Create TLE objects from strings.
@@ -115,8 +115,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 //    const SGP4 sgp4Object2( tleObject2 );
 
     // Compute Cartesian states of objects at departure and arrival epochs.
-    // const Eci departureState = sgp4Object1.FindPosition( departureEpoch );
-    const Eci departureState = sgp4Object1.FindPosition( 0.0 );
+    const Eci departureState = sgp4Object1.FindPosition( departureEpoch );
     // const Eci arrivalState = sgp4Object2.FindPosition( arrivalEpoch );
 
     // Compute departure position [m] and velocity [ms^-1].
@@ -152,63 +151,24 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     //             - departureVelocity.norm( ) )
     //      << " m/s" << endl;
 
-    // Set guess for Cartesian state at departure after executing maneuver.
+    // Set Cartesian state at departure after executing maneuver.
     const Eigen::VectorXd departureStateAfterManeuver 
         = ( Eigen::VectorXd( 6 ) 
                 << depaturePosition,
                    // lambertTargeter.getInertialVelocityAtDeparture( ) ).finished( );
-                   departureVelocity ).finished( );
+                   departureVelocity 
+                   // + Eigen::Vector3d( 50.0, 25.0, -10.0 ) 
+                   ).finished( );
 
-    // Compute true anomaly at departure epoch [rad].
-    const double departureTrueAnomaly 
-        = convertCartesianToKeplerianElements( 
-                departureStateAfterManeuver, earthGravitationalParameter )[ trueAnomalyIndex ];
-
-    // Compute eccentric anomaly from true anomaly [rad].
-    const double departureEccentricAnomaly 
-        = convertTrueAnomalyToEccentricAnomaly( departureTrueAnomaly, tleObject1.Eccentricity( ) );
-
-    // Compute mean anomaly from eccentric anomaly [deg].
-    const double departureMeanAnomaly
-        = computeModulo( 
-            convertRadiansToDegrees( 
-                convertEccentricAnomalyToMeanAnomaly( 
-                    departureEccentricAnomaly, tleObject1.Eccentricity( ) ) ), 360.0 );
-
-    // Set initial guess for TLE mean elements at departure.
-    const Eigen::VectorXd departureTLEMeanElementsGuess
-        = ( Eigen::VectorXd( 6 ) << tleObject1.Inclination( true ),
-                                    tleObject1.RightAscendingNode( true ),
-                                    tleObject1.Eccentricity( ),
-                                    tleObject1.ArgumentPerigee( true ),
-                                    departureMeanAnomaly,
-                                    tleObject1.MeanMotion( ) ).finished( );
-
-    // Set up reference TLE at departure epoch.
-
-    // Update Line 1 for object 1 at departure epoch.
-    const string departureEpochString 
-        = boost::str( 
-            boost::format( "%02i" ) % ( computeModulo( departureEpoch.Year( ), 100.0 ) ) )
-            + boost::str( boost::format( "%012.8f" ) 
-                % ( departureEpoch.DayOfYear( departureEpoch.Year( ), 
-                                              departureEpoch.Month( ), 
-                                              departureEpoch.Day( ) ) 
-                  + ( departureEpoch.Hour( ) * 3600.0 
-                      + departureEpoch.Minute( ) * 60.0 
-                      + departureEpoch.Second( ) ) / JULIAN_DAY ) );
-    string departureLine1Object1 = line1Object1;
-    departureLine1Object1.replace( 18, 14, departureEpochString );
-
-    // Update Line 2 for object 1 at departure epoch.
-    const string departureMeanAnomalyString
-        = boost::str( boost::format( "%08.4f" ) % departureMeanAnomaly );
-    string departureLine2Object1 = line2Object1;
-    departureLine2Object1.replace( 43, 8, departureMeanAnomalyString );
-
-    // Create reference TLE for object 1 at departure.
-    const Tle departureReferenceTleObject1( 
-        nameObject1, departureLine1Object1, departureLine2Object1 );
+    // Set initial guess for TLE mean elements.
+    const Eigen::VectorXd newTleMeanElementsGuess
+        = ( Eigen::VectorXd( 6 )
+                << tleObject1.Inclination( true ), 
+                   tleObject1.RightAscendingNode( true ),
+                   tleObject1.Eccentricity( ),
+                   tleObject1.ArgumentPerigee( true ),
+                   tleObject1.MeanAnomaly( true ),
+                   tleObject1.MeanMotion( ) ).finished( );
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -217,46 +177,46 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Compute TLE for object 1 at departure epoch.
 
     // Set up derivative-free optimizer.
-    nlopt::opt optimizer( nlopt::LN_COBYLA, 6 );
+    nlopt::opt optimizer( nlopt::LN_BOBYQA, 6 );
 
     // Set up parameters for objective function.
     ObjectiveFunctionParameters parameters( 
-        earthGravitationalParameter, departureReferenceTleObject1, departureStateAfterManeuver );
+        earthGravitationalParameter, tleObject1, departureStateAfterManeuver, departureEpoch );
 
     // Set objective function.
     optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
 
     // Set tolerance.
-    optimizer.set_xtol_rel( minimizationTolerance );
+    // optimizer.set_xtol_rel( minimizationTolerance );
 
     // Set lower bounds.
-    std::vector< double > lowerBounds( 6, -HUGE_VAL );
-    // lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
-    lowerBounds.at( eccentricityIndex ) =  0.0;
-    // lowerBounds.at( inclinationIndex ) =  0.0;
-    // lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
-    // lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
-    // lowerBounds.at( trueAnomalyIndex ) =  0.0;
+    // std::vector< double > lowerBounds( 6, -HUGE_VAL );
+    // // lowerBounds.at( semiMajorAxisIndex ) =  6.0e6;
+    // lowerBounds.at( eccentricityIndex ) =  0.0;
+    // // lowerBounds.at( inclinationIndex ) =  0.0;
+    // // lowerBounds.at( argumentOfPeriapsisIndex ) =  0.0;
+    // // lowerBounds.at( longitudeOfAscendingNodeIndex ) =  0.0;
+    // // lowerBounds.at( trueAnomalyIndex ) =  0.0;
 
-    optimizer.set_lower_bounds( lowerBounds );
+    // optimizer.set_lower_bounds( lowerBounds );
 
     // Set upper bounds.
-    std::vector< double > upperBounds( 6, HUGE_VAL );
-    // lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
-    upperBounds.at( eccentricityIndex ) =  1.0;
-    // upperBounds.at( inclinationIndex ) =  PI;
-    // upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
-    // upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
-    // upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
+    // std::vector< double > upperBounds( 6, HUGE_VAL );
+    // // lowerBounds.at( semiMajorAxisIndex ) =  5.0e7;    
+    // upperBounds.at( eccentricityIndex ) =  1.0;
+    // // upperBounds.at( inclinationIndex ) =  PI;
+    // // upperBounds.at( argumentOfPeriapsisIndex ) =  2.0 * PI;
+    // // upperBounds.at( longitudeOfAscendingNodeIndex ) = 2.0 * PI;
+    // // upperBounds.at( trueAnomalyIndex ) = 2.0 * PI;
 
-    optimizer.set_upper_bounds( upperBounds );
+    // optimizer.set_upper_bounds( upperBounds );
 
     // Set initial guess for decision vector to the TLE mean elements at departure.
     vector< double > decisionVector( 6 );
-    Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) = departureTLEMeanElementsGuess;
+    Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) = newTleMeanElementsGuess;
 
-    // // Set initial step size.
-    // optimizer.set_initial_step( 0.01 );
+    // Set initial step size.
+    // optimizer.set_initial_step( 0.1 );
 
     // Execute optimizer.
     double minimumFunctionValue;

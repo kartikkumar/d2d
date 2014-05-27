@@ -14,6 +14,7 @@
 #include <Eigen/Core>
 
 #include <libsgp4/Eci.h>
+#include <libsgp4/DateTime.h>  
 #include <libsgp4/SGP4.h>
 #include <libsgp4/Tle.h>
 
@@ -48,10 +49,12 @@ public:
     //! Constructor taking parameter values.
     ObjectiveFunctionParameters( const double anEarthGravitationalParameter,
                                  const Tle someReferenceTle,
-                                 const Eigen::VectorXd aTargetState )
+                                 const Eigen::VectorXd aTargetState,
+                                 const DateTime aTargetEpoch )
         : earthGravitationalParameter( anEarthGravitationalParameter ),
           referenceTle( someReferenceTle ),
-          targetState( aTargetState )
+          targetState( aTargetState ),
+          targetEpoch( aTargetEpoch )
     { }
 
     //! Earth gravitational parameter [kg m^3 s^-2].
@@ -61,7 +64,10 @@ public:
     const Tle referenceTle;
 
     //! Target state in Cartesian elements.
-    Eigen::VectorXd targetState;
+    const Eigen::VectorXd targetState;
+
+    //! Target epoch.
+    const DateTime targetEpoch;
 
 protected:
 
@@ -93,7 +99,7 @@ double cartesianToTwoLineElementsObjectiveFunction(
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // Generate new TLE and compute Cartesian elements at departure epoch.
+    // Generate new TLE and compute Cartesian elements at target epoch.
 
     // Map decision vector to TLE mean elements.
     Eigen::Map< const Eigen::VectorXd > newTleMeanElements( &decisionVector[ 0 ], 6, 1 );
@@ -161,8 +167,10 @@ std::cout << "new Line 2: " << newTleLine2 << std::endl;
     // Set up SGP4 propagator for new TLE.
     const SGP4 sgp4NewObject( newTwoLineElements );
 
-    // Convert new TLE to Cartesian state by propagating by 0.0.
-    const Eci newState = sgp4NewObject.FindPosition( 0.0 ); 
+    // Convert new TLE to Cartesian state by propagating to target epoch.
+    const Eci newState 
+      = sgp4NewObject.FindPosition( 
+          static_cast< ObjectiveFunctionParameters* >( parameters )->targetEpoch ); 
 
     // Set target Cartesian state.
     const Eigen::VectorXd targetState
@@ -172,8 +180,8 @@ std::cout << "new Line 2: " << newTleLine2 << std::endl;
     const Eigen::VectorXd newStateVector
         = ( Eigen::VectorXd( 6 ) 
               << convertKilometersToMeters( newState.Position( ).x ),
-                 convertKilometersToMeters( newState.Position( ).x ),
                  convertKilometersToMeters( newState.Position( ).y ),
+                 convertKilometersToMeters( newState.Position( ).z ),
                  convertKilometersToMeters( newState.Velocity( ).x ),
                  convertKilometersToMeters( newState.Velocity( ).y ),
                  convertKilometersToMeters( newState.Velocity( ).z ) ).finished( );
@@ -195,7 +203,8 @@ std::cout << "new Line 2: " << newTleLine2 << std::endl;
                          << targetState[ 2 ] << " "
                          << targetState[ 3 ] << " "
                          << targetState[ 4 ] << " "
-                         << targetState[ 5 ] << std::endl;                         
+                         << targetState[ 5 ] << std::endl;   
+
     return ( newStateVector - targetState ).squaredNorm( );
 
     ///////////////////////////////////////////////////////////////////////////
