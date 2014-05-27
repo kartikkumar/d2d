@@ -91,7 +91,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 //        = "2 06800 001.9047 136.0594 0024458 068.9289 290.1247 15.83301112263179";
 
     // Set minimization tolerance.
-   // const double minimizationTolerance = 1.0e-3;
+   const double minimizationTolerance = 1.0e-3;
 
     ///////////////////////////////////////////////////////////////////////////
 
@@ -187,7 +187,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     optimizer.set_min_objective( cartesianToTwoLineElementsObjectiveFunction, &parameters );
 
     // Set tolerance.
-    // optimizer.set_xtol_rel( minimizationTolerance );
+    optimizer.set_xtol_rel( minimizationTolerance );
 
     // Set lower bounds.
     // std::vector< double > lowerBounds( 6, -HUGE_VAL );
@@ -216,7 +216,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) = newTleMeanElementsGuess;
 
     // Set initial step size.
-    // optimizer.set_initial_step( 0.1 );
+    optimizer.set_initial_step( 1.0e-6 );
 
     // Execute optimizer.
     double minimumFunctionValue;
