@@ -85,9 +85,9 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
                 << convertKilometersToMeters( propagatedState.Position( ).x ),
                    convertKilometersToMeters( propagatedState.Position( ).y ),
                    convertKilometersToMeters( propagatedState.Position( ).z ),
-                   convertKilometersToMeters( propagatedState.Velocity( ).x ),
-                   convertKilometersToMeters( propagatedState.Velocity( ).y ),
-                   convertKilometersToMeters( propagatedState.Velocity( ).z ) ).finished( );
+                   convertKilometersToMeters( propagatedState.Velocity( ).x ) + 100.0,
+                   convertKilometersToMeters( propagatedState.Velocity( ).y ) - 25.0,
+                   convertKilometersToMeters( propagatedState.Velocity( ).z ) + 125.0 ).finished( );
 
     // Convert target Cartesian state to a new TLE object.
     convertCartesianStateToTwoLineElements( 

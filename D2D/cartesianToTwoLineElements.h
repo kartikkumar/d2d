@@ -9,6 +9,8 @@
 
 #include <Eigen/Core>
  
+#include <gsl/gsl_vector.h>
+
 #include <libsgp4/Tle.h>
 
 namespace d2d
@@ -26,8 +28,7 @@ public:
         const Eigen::VectorXd aTargetState )
         : referenceTle( someReferenceTle ),
           earthGravitationalParameter( anEarthGravitationalParameter ),
-          targetState( aTargetState ),
-          iterationCounter( 0 )
+          targetState( aTargetState )
     { }
 
     //! Reference TLE.
@@ -38,9 +39,6 @@ public:
 
     //! Target state in Cartesian elements.
     const Eigen::VectorXd targetState;
-
-    //! Iteration counter.
-    int iterationCounter;
 
 protected:
 
@@ -61,24 +59,23 @@ const Tle updateTleMeanElements(
     const Eigen::VectorXd newKeplerianElements, 
     const Tle oldTle, const double earthGravitationalParameter );
 
-//! Compute objective function for converting from Cartesian state to TLE.
+//! Evaluate system of non-linear equations for converting from Cartesian state to TLE.
 /*!
- * Computes objective function used by optimizer to find TLE corresponding with target Cartesian 
- * state. The objective function used is:
+ * Evaluates system of non-linear equations to find TLE corresponding with target Cartesian 
+ * state. The system of non-linear equations used is:
  *  \f[ 
- *      J = \sum_{i=1}^{6} x_{i}^{new} - x_{i}^{target}
+ *      F = 0 = \bar{x}^{new} - \bar{x}^{target}
  *  \f]
- * where \f$x_{i}^{new}\f$ is the \f$i^{th}\f$ Cartesian coordinate of the new Cartesian state 
- * computed by updating the TLE mean elements (decision variables) and propagating the TLE using 
- * the SGP4 propagator, and \f$x_{i}^{target}\f$ is the \f$i^{th}\f$ Cartesian coordinate of the 
- * target Cartesian state.
- * \param decisionVector Vector of decision variables used by the optimizer.
- * \param gradient Jacobian (set to NULL for derivative-free algorithms).
+ * where \f$\bar{x}^{new}\f$ is the new Cartesian state computed by updating the TLE mean elements 
+ * and propagating the TLE using the SGP4 propagator, and \f$\bar{x}^{target}\f$ is the target
+ * Cartesian state.
+ * \param indepedentVariables Vector of independent variables used by the root-finder.
  * \param parameters Parameters required to compute the objective function.
+ * \param functionValues Vector of computed function values. 
  */
-double computeCartesianToTwoLineElementsObjective( const std::vector< double >& decisionVector,
-                                                   std::vector< double >& gradient, 
-                                                   void* parameters );
+int evaluateCartesianToTwoLineElementsSystem( const gsl_vector* independentVariables, 
+                                              void* parameters, 
+                                              gsl_vector* functionValues );
 
 //! Convert Cartesian state to TLE (Two Line Elements).
 /*!
@@ -87,7 +84,7 @@ double computeCartesianToTwoLineElementsObjective( const std::vector< double >& 
  * \param targetEpoch Epoch associated with target Cartesian state.
  * \param referenceTle Reference Two Line Elements.
  * \param earthGravitationalParameter Earth gravitational parameter [m^3 s^-2].
- * \param optimizerTolerance Optimizer tolerance.
+ * \param tolerance Tolerance.
  * \return TLE object that generates target Cartesian state when propagated with SGP4 propagator to
  *           target epoch.
  */
@@ -95,6 +92,6 @@ const Tle convertCartesianStateToTwoLineElements( const Eigen::VectorXd targetSt
                                                   const DateTime targetEpoch,
                                                   const Tle referenceTle,
                                                   const double earthGravitationalParameter,
-                                                  const double optimizerTolerance = 1.0e-6 );
+                                                  const double tolerance = 1.0e-6 );
 
 } // namespace d2d

@@ -5,12 +5,14 @@
   * See COPYING for license details.
   */
 
+#include <iomanip>
 #include <iostream>
+#include <limits>
 
 #include <libsgp4/Eci.h>  
 #include <libsgp4/SGP4.h> 
 
-#include <nlopt.hpp>
+#include <gsl/gsl_multiroots.h>
 
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/astrodynamicsFunctions.h>
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/orbitalElementConversions.h>
@@ -20,6 +22,7 @@
 #include <TudatCore/Mathematics/BasicMathematics/mathematicalConstants.h> 
 
 #include "D2D/cartesianToTwoLineElements.h"
+#include "D2D/printFunctions.h"
 
 namespace d2d
 {
@@ -87,17 +90,19 @@ const Tle updateTleMeanElements(
     return newTle;
 }
 
-//! Compute objective function for converting from Cartesian state to TLE.
-double computeCartesianToTwoLineElementsObjective( const std::vector< double >& decisionVector,
-                                                   std::vector< double >& gradient, 
-                                                   void* parameters )
+//! Evaluate system of non-linear equations for converting from Cartesian state to TLE.
+int evaluateCartesianToTwoLineElementsSystem( const gsl_vector* independentVariables, 
+                                              void* parameters, gsl_vector* functionValues )
 {
     // Declare using-statements.
     using namespace tudat::basic_astrodynamics::unit_conversions;
 
-    // Store Keplerian elements in decision vector.
-    Eigen::Map< const Eigen::VectorXd > currentStateInKeplerianElements(
-        &decisionVector[ 0 ], 6, 1 );
+    // Store Keplerian elements in vector of independent variables.
+    Eigen::VectorXd currentStateInKeplerianElements( 6 );
+    for ( unsigned int i = 0; i < 6; i++ )
+    {
+        currentStateInKeplerianElements[ i ] = gsl_vector_get( independentVariables, i );
+    }
 
     // Store old TLE.
     const Tle oldTle = static_cast< CartesianToTwoLineElementsObjectiveParameters* >( 
@@ -130,12 +135,16 @@ double computeCartesianToTwoLineElementsObjective( const std::vector< double >& 
     const Eigen::VectorXd targetState
         = static_cast< CartesianToTwoLineElementsObjectiveParameters* >( parameters )->targetState;
 
-    // Increment iteration counter.
-    static_cast< CartesianToTwoLineElementsObjectiveParameters* >( 
-        parameters )->iterationCounter++;
+    // Evaluate system of non-linear equations and store function values.
+    for ( unsigned int i = 0; i < 6; i++ )
+    {
+        // gsl_vector_set( functionValues, i, ( newState[ i ] - targetState[ i ] ) 
+        //                                    * ( newState[ i ] - targetState[ i ] ) );
+        gsl_vector_set( functionValues, i, ( newState[ i ] - targetState[ i ] ) );        
+    }
 
-    // Return objective function.
-    return ( newState - targetState ).squaredNorm( );
+    // Return success.
+    return GSL_SUCCESS;
 }
 
 //! Convert Cartesian state to TLE (Two Line Elements).
@@ -143,12 +152,11 @@ const Tle convertCartesianStateToTwoLineElements( const Eigen::VectorXd targetSt
                                                   const DateTime targetEpoch,
                                                   const Tle referenceTle,
                                                   const double earthGravitationalParameter,
-                                                  const double optimizerTolerance )
+                                                  const double tolerance )
 {
     // Declare using-statements.
     using namespace tudat::basic_astrodynamics::orbital_element_conversions;
     using namespace tudat::basic_astrodynamics::unit_conversions;
-    using namespace nlopt;
 
     // Store reference TLE as new TLE.
     Tle newTle = referenceTle;
@@ -180,38 +188,64 @@ const Tle convertCartesianStateToTwoLineElements( const Eigen::VectorXd targetSt
     CartesianToTwoLineElementsObjectiveParameters parameters( 
         newTle, earthGravitationalParameter, targetState );
 
-    // Set up derivative-free optimizer.
-    opt optimizer( LN_COBYLA, 6 );
+    // Set up function.
+    gsl_multiroot_function cartesianToTwoLineElementsFunction
+        = {
+             &evaluateCartesianToTwoLineElementsSystem, 
+             6, 
+             &parameters
+          };
 
-    // Set objective function.
-    optimizer.set_min_objective( computeCartesianToTwoLineElementsObjective, &parameters );
-
-    // Set tolerance.
-    optimizer.set_xtol_rel( optimizerTolerance );
-
-    // Set initial guess for decision vector.
-    std::vector< double > decisionVector( 6 );
-    Eigen::Map< Eigen::VectorXd >( decisionVector.data( ), 6, 1 ) 
-        = currentStateInKeplerianElements;
-
-    // Set initial step size.
-    optimizer.set_initial_step( 1.0e-4 );
-
-    // Execute optimizer.
-    double minimumFunctionValue;
-    result result = optimizer.optimize( decisionVector, minimumFunctionValue );
-
-    // Print output statements.
-    if ( result < 0 ) 
+    // Set initial guess.
+    gsl_vector* initialGuess = gsl_vector_alloc( 6 );
+    for ( unsigned int i = 0; i < 6; i++ )
     {
-        std::cerr << "NLOPT failed!" << std::endl;
+        gsl_vector_set( initialGuess, i, currentStateInKeplerianElements[ i ] );      
     }
-    
-    else 
+
+    // Set up solver type (derivative free).
+    const gsl_multiroot_fsolver_type* solverType = gsl_multiroot_fsolver_hybrids;
+
+    // Allocate memory for solver.
+    gsl_multiroot_fsolver* solver = gsl_multiroot_fsolver_alloc( solverType, 6 );
+
+    // Set solver to use function with initial guess.
+    gsl_multiroot_fsolver_set( solver, &cartesianToTwoLineElementsFunction, initialGuess );
+
+    // Declare current solver status and iteration counter.
+    int solverStatus;
+    int iterationCounter = 0;
+
+    // Print current state of solver.
+    printSolverStateTableHeader( );
+    printSolverState( iterationCounter, solver );
+
+    do
     {
-        std::cerr << "Minimum = " << minimumFunctionValue << std::endl;
-        std::cerr << "# iterations = " << parameters.iterationCounter << std::endl;
-    }
+        solverStatus = gsl_multiroot_fsolver_iterate( solver );
+
+        // Check if solver is stuck; if it is stuck, break from loop.
+        if ( solverStatus )   
+        {
+            std::cerr << "ERROR: Non-linear solver is stuck!" << std::endl;
+            break;
+        }
+
+        printSolverState( iterationCounter, solver );
+        ++iterationCounter;
+
+        solverStatus = gsl_multiroot_test_residual( solver->f, tolerance );
+
+    } while ( solverStatus == GSL_CONTINUE && iterationCounter < 100 );
+
+    // Print final status of solver.
+    std::cout << std::endl;
+    std::cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << std::endl;
+    std::cout << std::endl;
+
+    // Free up memory.
+    gsl_multiroot_fsolver_free( solver );
+    gsl_vector_free( initialGuess );
 
     // TEMP
     return referenceTle;

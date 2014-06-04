@@ -162,15 +162,15 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${Boost_INCLUDE_DIRS}\"")
 endif( )
 
-# Find NLOPT library on local system.
-find_package(Nlopt 2 REQUIRED)
+# Find GSL library on local system.
+find_package(GSL REQUIRED)
 
-# Include NLOPT directories.
-# Set CMake flag to suppress NLOPT warnings (platform-dependent solution).
+# Include GSL directories.
+# Set CMake flag to suppress GSL warnings (platform-dependent solution).
 if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${NLOPT_INCLUDE_DIR}")
+  include_directories(SYSTEM AFTER "${GSL_INCLUDE_DIRS}")
 else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${NLOPT_INCLUDE_DIR}\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${GSL_INCLUDE_DIRS}\"")
 endif( )
 
 # Find Tudat Core library on local system.
@@ -245,14 +245,14 @@ add_executable(d2d "${SOURCE_CODE}/d2d.cpp")
 setup_executable_target(d2d)
 target_link_libraries(d2d 
                       d2d_functions
-                      ${NLOPT_LIBRARIES}
+                      ${GSL_LIBRARIES}
                       ${SGP4DANRW_LIBRARY}
                       tudat_mission_segments
                       ${TUDAT_CORE_LIBRARIES} 
                       ${Boost_LIBRARIES})
-
-# Add NLOPT example app.
-add_executable(nlopt_example "${SOURCE_CODE}/nlopt_example.cpp")
-setup_executable_target(nlopt_example)
-target_link_libraries(nlopt_example
-                      ${NLOPT_LIBRARIES})
+                   
+# Add Rosenbrock app.
+add_executable(rosenbrock "${SOURCE_CODE}/rosenbrock.cpp")
+setup_executable_target(rosenbrock)
+target_link_libraries(rosenbrock 
+                      ${GSL_LIBRARIES})                      
