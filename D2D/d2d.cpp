@@ -8,7 +8,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <string>
-#include <vector>
 
 #include <boost/timer/timer.hpp>
 
@@ -20,16 +19,9 @@
 #include <libsgp4/SGP4.h>  
 #include <libsgp4/Tle.h>
 
-#include <nlopt.hpp>
-
-#include <TudatCore/Astrodynamics/BasicAstrodynamics/astrodynamicsFunctions.h>
-#include <TudatCore/Astrodynamics/BasicAstrodynamics/orbitalElementConversions.h>
-#include <TudatCore/Astrodynamics/BasicAstrodynamics/physicalConstants.h>  
 #include <TudatCore/Astrodynamics/BasicAstrodynamics/unitConversions.h>  
-#include <TudatCore/Mathematics/BasicMathematics/basicMathematicsFunctions.h>  
-#include <TudatCore/Mathematics/BasicMathematics/mathematicalConstants.h> 
 
-#include <D2D/cartesianToTwoLineElementsObjective.h> 
+#include "D2D/cartesianToTwoLineElementsObjective.h"
 
 //! Execute D2D application.
 int main( const int numberOfInputs, const char* inputArguments[ ] )
@@ -60,8 +52,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Input deck.
 
-    // // Departure epoch.
-    // DateTime departureEpoch( );
+    // Target epoch.
+    DateTime targetEpoch( 2014, 5, 29 );
     
     // Set TLE strings for 1st debris object.
     const string nameObject1 = "0 VANGUARD 1";
@@ -84,8 +76,8 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     const SGP4 sgp4( tleObject1 );
 
     // Propagate TLE to epoch of TLE.
-    DateTime departureEpoch = tleObject1.Epoch( );
-    Eci propagatedState = sgp4.FindPosition( departureEpoch );
+    targetEpoch = tleObject1.Epoch( );
+    Eci propagatedState = sgp4.FindPosition( targetEpoch );
 
     // Store propagated state as target Cartesian state.
     const Eigen::VectorXd targetState 
@@ -99,7 +91,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     // Convert target Cartesian state to a new TLE object.
     convertCartesianStateToTwoLineElements( 
-        targetState, tleObject1.Epoch( ), tleObject1, earthGravitationalParameter );
+        targetState, targetEpoch, tleObject1, earthGravitationalParameter );
 
     //////////////////////////////////////////////////////////////////////////////////////////////
 

@@ -10,7 +10,7 @@ cmake_minimum_required(VERSION 2.6)
 project(D2D)
 
 # Set module path to local CMake scripts.
-set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/../CMakeModules)
+set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../CMakeModules)
 
 # Define the directory with the source code.
 set(SOURCE_CODE "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -121,9 +121,6 @@ install(FILES ${PROJECT_ROOT}/COPYING ${PROJECT_ROOT}/README
               ${PROJECT_ROOT}/UserSettings.txt.example
         DESTINATION "${D2D_DISTRIBUTION_PATH}")
 
-# # Set the main sub-directories.
-# set(ASTRODYNAMICSDIR "/Astrodynamics")
-
 # Include the top-level directories.
 include_directories(AFTER
   "${PROJECT_ROOT}"
@@ -165,7 +162,7 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${Boost_INCLUDE_DIRS}\"")
 endif( )
 
-# Find NLOPTlibrary on local system.
+# Find NLOPT library on local system.
 find_package(Nlopt 2 REQUIRED)
 
 # Include NLOPT directories.
@@ -198,28 +195,6 @@ else( )
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_INCLUDE_DIR}\"")
 endif( )
 
-# Find Assist library on local system.
-find_package(Assist 1.2 REQUIRED)
-
-# Include Assist directories.
-# Set CMake flag to suppress Assist warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${ASSIST_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${ASSIST_INCLUDE_DIR}\"")
-endif( )
-
-# Find SQLiteCpp library on local system.
-find_package(SQLiteCpp 0.070 REQUIRED)
-
-# Include SQLiteCpp directories.
-# Set CMake flag to suppress SQLiteCpp warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${SQLITECPP_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITECPP_INCLUDE_DIR}\"")
-endif( )
-
 # Find SGP4DanRW library on local system.
 find_package(SGP4DanRW 1 REQUIRED)
 
@@ -245,7 +220,7 @@ if(BUILD_DOCUMENTATION)
                  ${PROJECT_BINARY_DIR}/Doxyfile @ONLY IMMEDIATE)
 
   # Add a custom target to run Doxygen when ever the project is built.
-  # IF you do NOT want the documentation to be generated EVERY time you build the project
+  # If you do NOT want the documentation to be generated EVERY time you build the project
   # then leave out the 'ALL' keyword from the above command.
   add_custom_target (docs ALL COMMAND ${DOXYGEN_EXECUTABLE} 
                      ${PROJECT_BINARY_DIR}/Doxyfile 
@@ -256,18 +231,20 @@ if(BUILD_DOCUMENTATION)
           DESTINATION "${D2D_DISTRIBUTION_PATH}")
 endif()
 
-# # Set sub-directories.
-# set(SUBDIRS ${ASTRODYNAMICSDIR})
+# Add source files for D2D static library.
+set(D2D_SOURCES
+  "${SOURCE_CODE}/cartesianToTwoLineElementsObjective.cpp"
+)
 
-# # Add sub-directories to CMake process.
-# foreach(CURRENT_SUBDIR ${SUBDIRS})
-#   add_subdirectory("${SOURCE_CODE}${CURRENT_SUBDIR}")
-# endforeach(CURRENT_SUBDIR)
+# Add static library.
+add_library(d2d_functions STATIC ${D2D_SOURCES})
+setup_library_target(d2d_functions)
 
 # Add D2D app.
 add_executable(d2d "${SOURCE_CODE}/d2d.cpp")
 setup_executable_target(d2d)
 target_link_libraries(d2d 
+                      d2d_functions
                       ${NLOPT_LIBRARIES}
                       ${SGP4DANRW_LIBRARY}
                       tudat_mission_segments
