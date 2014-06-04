@@ -250,9 +250,4 @@ target_link_libraries(d2d
                       tudat_mission_segments
                       ${TUDAT_CORE_LIBRARIES} 
                       ${Boost_LIBRARIES})
-                   
-# Add Rosenbrock app.
-add_executable(rosenbrock "${SOURCE_CODE}/rosenbrock.cpp")
-setup_executable_target(rosenbrock)
-target_link_libraries(rosenbrock 
-                      ${GSL_LIBRARIES})                      
+                      
