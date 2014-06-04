@@ -19,7 +19,7 @@
 #include <TudatCore/Mathematics/BasicMathematics/basicMathematicsFunctions.h>  
 #include <TudatCore/Mathematics/BasicMathematics/mathematicalConstants.h> 
 
-#include <D2D/cartesianToTwoLineElementsObjective.h>
+#include "D2D/cartesianToTwoLineElements.h"
 
 namespace d2d
 {

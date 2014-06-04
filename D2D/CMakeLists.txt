@@ -233,7 +233,7 @@ endif()
 
 # Add source files for D2D static library.
 set(D2D_SOURCES
-  "${SOURCE_CODE}/cartesianToTwoLineElementsObjective.cpp"
+  "${SOURCE_CODE}/cartesianToTwoLineElements.cpp"
 )
 
 # Add static library.
