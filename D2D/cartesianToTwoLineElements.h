@@ -84,7 +84,9 @@ int evaluateCartesianToTwoLineElementsSystem( const gsl_vector* independentVaria
  * \param targetEpoch Epoch associated with target Cartesian state.
  * \param referenceTle Reference Two Line Elements.
  * \param earthGravitationalParameter Earth gravitational parameter [m^3 s^-2].
- * \param tolerance Tolerance.
+ * \param tolerance Tolerance used to check if root-finder has converged [default: 1.0e-8].
+ * \param isPrintProgress Should the progress of the root-finder be printed to console? This is 
+            useful for debugging [default: false].
  * \return TLE object that generates target Cartesian state when propagated with SGP4 propagator to
  *           target epoch.
  */
@@ -92,6 +94,8 @@ const Tle convertCartesianStateToTwoLineElements( const Eigen::VectorXd targetSt
                                                   const DateTime targetEpoch,
                                                   const Tle referenceTle,
                                                   const double earthGravitationalParameter,
-                                                  const double tolerance = 1.0e-6 );
+                                                  const double tolerance = 1.0e-8,
+                                                  const bool isPrintProgress = false );
+
 
 } // namespace d2d

@@ -64,14 +64,13 @@ const Tle updateTleMeanElements(
     // Compute new eccentric anomaly [rad].
     const double eccentricAnomaly
         = convertTrueAnomalyToEccentricAnomaly( 
-            newKeplerianElements( trueAnomalyIndex ), newKeplerianElements( eccentricityIndex ) );
+            newKeplerianElements( trueAnomalyIndex ), newEccentricity );
 
     // Compute new mean mean anomaly [deg].
     const double newMeanAnomaly
         = computeModulo( 
         	convertRadiansToDegrees( 
-                convertEccentricAnomalyToMeanAnomaly( 
-                    eccentricAnomaly, newKeplerianElements( eccentricityIndex ) ) ), 360.0 );
+                convertEccentricAnomalyToMeanAnomaly( eccentricAnomaly, newEccentricity ) ), 360.0 );
 
     // Compute new mean motion [rev/day].
     const double newMeanMotion 
@@ -152,7 +151,8 @@ const Tle convertCartesianStateToTwoLineElements( const Eigen::VectorXd targetSt
                                                   const DateTime targetEpoch,
                                                   const Tle referenceTle,
                                                   const double earthGravitationalParameter,
-                                                  const double tolerance )
+                                                  const double tolerance,
+                                                  const bool isPrintProgress )
 {
     // Declare using-statements.
     using namespace tudat::basic_astrodynamics::orbital_element_conversions;
@@ -216,12 +216,24 @@ const Tle convertCartesianStateToTwoLineElements( const Eigen::VectorXd targetSt
     int solverStatus;
     int iterationCounter = 0;
 
-    // Print current state of solver.
-    printSolverStateTableHeader( );
-    printSolverState( iterationCounter, solver );
+    // Print progress table header if flag is set to true.
+    if ( isPrintProgress )
+    {
+        printSolverStateTableHeader( );        
+    }
 
     do
     {
+        // Print current state of solver if flag is set to true.
+        if ( isPrintProgress )
+        {
+            printSolverState( iterationCounter, solver );        
+        }
+
+        // Increment iteration counter.
+        ++iterationCounter;
+
+        // Execute solver iteration.
         solverStatus = gsl_multiroot_fsolver_iterate( solver );
 
         // Check if solver is stuck; if it is stuck, break from loop.
@@ -231,24 +243,32 @@ const Tle convertCartesianStateToTwoLineElements( const Eigen::VectorXd targetSt
             break;
         }
 
-        printSolverState( iterationCounter, solver );
-        ++iterationCounter;
-
+        // Check if root has been found (within tolerance).
         solverStatus = gsl_multiroot_test_residual( solver->f, tolerance );
 
     } while ( solverStatus == GSL_CONTINUE && iterationCounter < 100 );
 
-    // Print final status of solver.
-    std::cout << std::endl;
-    std::cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << std::endl;
-    std::cout << std::endl;
+    // Print final status of solver if flag is set to true.
+    if ( isPrintProgress )
+    {
+        std::cout << std::endl;
+        std::cout << "Status of non-linear solver: " << gsl_strerror( solverStatus ) << std::endl;
+        std::cout << std::endl;
+    }
+
+    // Store final Keplerian elements.
+    Eigen::VectorXd finalKeplerianElements( 6 );
+    for ( unsigned int i = 0; i < 6; i++ )
+    {
+        finalKeplerianElements( i ) = gsl_vector_get( solver->x, i );
+    }
 
     // Free up memory.
     gsl_multiroot_fsolver_free( solver );
     gsl_vector_free( initialGuess );
 
-    // TEMP
-    return referenceTle;
+    // Update and return new TLE object.
+    return updateTleMeanElements( finalKeplerianElements, newTle, earthGravitationalParameter );
 }
 
 } // namespace d2d

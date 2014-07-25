@@ -21,37 +21,37 @@ void printElement( DataType datum, const int width, const char separator )
 
 void printSolverStateTableHeader( )
 {
-	printElement( "#", 5, ' ' );
-	printElement( "a", 12, ' ' );
-	printElement( "e", 12, ' ' );
-	printElement( "i", 12, ' ' );
-	printElement( "AoP", 12, ' ' );
-	printElement( "RAAN", 12, ' ' );
-	printElement( "TA", 12, ' ' );
-	printElement( "f1", 12, ' ' );
-	printElement( "f2", 12, ' ' );
-	printElement( "f3", 12, ' ' );
-	printElement( "f4", 12, ' ' );
-	printElement( "f5", 12, ' ' );
-	printElement( "f6", 12, ' ' );
+	printElement( "#", 3, ' ' );
+	printElement( "a", 15, ' ' );
+	printElement( "e", 15, ' ' );
+	printElement( "i", 15, ' ' );
+	printElement( "AoP", 15, ' ' );
+	printElement( "RAAN", 15, ' ' );
+	printElement( "TA", 15, ' ' );
+	printElement( "f1", 15, ' ' );
+	printElement( "f2", 15, ' ' );
+	printElement( "f3", 15, ' ' );
+	printElement( "f4", 15, ' ' );
+	printElement( "f5", 15, ' ' );
+	printElement( "f6", 15, ' ' );
 	std::cout << std::endl;
 }
 
 void printSolverState( int iteration, gsl_multiroot_fsolver* solver )
 {
-	printElement( iteration, 5, ' ' );
-	printElement( gsl_vector_get( solver->x, 0 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->x, 1 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->x, 2 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->x, 3 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->x, 4 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->x, 5 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->f, 0 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->f, 1 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->f, 2 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->f, 3 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->f, 4 ), 12, ' ' );
-	printElement( gsl_vector_get( solver->f, 5 ), 12, ' ' );
+	printElement( iteration, 3, ' ' );
+	printElement( gsl_vector_get( solver->x, 0 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->x, 1 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->x, 2 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->x, 3 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->x, 4 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->x, 5 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->f, 0 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->f, 1 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->f, 2 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->f, 3 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->f, 4 ), 15, ' ' );
+	printElement( gsl_vector_get( solver->f, 5 ), 15, ' ' );
 	std::cout << std::endl;
 }
 
