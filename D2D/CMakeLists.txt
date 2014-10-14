@@ -1,7 +1,7 @@
-# Copyright (c) 2014, Dinamica Srl
-# Copyright (c) 2014, K. Kumar (kumar@dinamicatech.com)
+# Copyright (c) 2010-2014, Delft University of Technology
+# Copyright (c) 2010-2014, K. Kumar (me@kartikkumar.com)
 # All rights reserved.
-# See COPYING for license details.
+# See http://bit.ly/12SHPLR for license details.
 
 # Specify minimum CMake version required.
 cmake_minimum_required(VERSION 2.6)
@@ -9,14 +9,14 @@ cmake_minimum_required(VERSION 2.6)
 # Specify project name.
 project(D2D)
 
-# Set module path to local CMake scripts.
-set(CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../CMakeModules)
-
 # Define the directory with the source code.
-set(SOURCE_CODE "${CMAKE_CURRENT_SOURCE_DIR}")
+set(SOURCE_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # Define the project root directory.
-set(PROJECT_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(PROJECT_ROOT "${SOURCE_ROOT}/..")
+
+# Set path to local CMake modules.
+set(CMAKE_MODULE_PATH ${PROJECT_ROOT}/CMakeModules)
 
 # Set testing options based on platform.
 enable_testing()
@@ -47,173 +47,87 @@ endif()
 # -------------------------------------------------------------------------------------------------
 # DO NOT MANUALLY EDIT ANY SETTINGS AFTER THIS POINT IN THE FILE.
 # 
-# Pass any additional settings directly to CMake (e.g., via command-line) or by using a config file
-# (e.g., UserSettings.txt).
+# Pass any additional settings directly to CMake (e.g., via command-line).
 # -------------------------------------------------------------------------------------------------
 
-# Load user specific settings. These can overwrite all previous settings.
-if (NOT D2D_USER_SETTINGS AND NOT DEFINED ENV{D2D_USER_SETTINGS})
-  # Load from default paths, least important first.
-  include( "../UserSettings.txt" OPTIONAL)
-  include( "UserSettings.txt" OPTIONAL)
-else()
-  MESSAGE(STATUS "Loading preset...")
-  # Load the user specified file.
-  if (D2D_USER_SETTINGS)
-    include($D2D_USER_SETTINGS OPTIONAL)
-  else()
-    include($ENV{D2D_USER_SETTINGS} OPTIONAL)
-  endif()
-endif()
-
-# Set CMake build-type. If it not supplied by the user (either directly as an argument of through
-# the "UserSettings.txt" file, the default built type is "Release". NB: It is important this
-# section is placed AFTER the "UserSettings.txt" file is included, to ensure that that the correct
-# indiciation is given for which build type has been selected.
+# Set CMake build-type. If it not supplied by the user, the default built type is "Release". 
 if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE STREQUAL "Release"))
     message(STATUS "WARNING: building release version!")
     set(CMAKE_BUILD_TYPE Release)
 elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "WARNING: building debug version!")
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pg")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pg")
 endif()
 
-# Set lib and bin directories where static libraries and unit tests are built.
+# Set lib, bin and test directories.
 if(NOT LIB_ROOT)
-  set(LIB_ROOT "${PROJECT_ROOT}/lib")
-endif()
+  set(LIB_ROOT "${PROJECT_BINARY_DIR}/../lib")
+endif(NOT LIB_ROOT)
 if(NOT BIN_ROOT)
-  set(BIN_ROOT "${PROJECT_ROOT}/bin")
-endif()
+  set(BIN_ROOT "${PROJECT_BINARY_DIR}/..//bin")
+endif(NOT BIN_ROOT)
+if(NOT TEST_ROOT)
+  set(TEST_ROOT "${PROJECT_BINARY_DIR}/../test")
+endif(NOT TEST_ROOT)
 
 # Set the global macros for setting up targets.
-macro(setup_executable_target target_name)
-  set_property(TARGET ${target_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${BIN_ROOT}/applications")
-  install(TARGETS ${target_name} RUNTIME DESTINATION "${BIN_ROOT}/applications")
-endmacro(setup_executable_target)
-
 macro(setup_library_target target_name)
   set_property(TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY "${LIB_ROOT}")
   set_property(TARGET ${target_name} PROPERTY ARCHIVE_OUTPUT_DIRECTORY "${LIB_ROOT}")
 endmacro(setup_library_target)
 
-macro(setup_unit_test_target target_name)
-  set_property(TARGET ${target_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${BIN_ROOT}/unit_tests")
+macro(setup_executable_target target_name)
+  set_property(TARGET ${target_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${BIN_ROOT}")
+  install(TARGETS ${target_name} RUNTIME DESTINATION "${BIN_ROOT}")
+endmacro(setup_executable_target)
+
+macro(setup_test_target target_name)
+  set_property(TARGET ${target_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${TEST_ROOT}")
   get_property(CUSTOM_TEST_PROGRAM_NAME TARGET ${target_name} PROPERTY OUTPUT_NAME)
-  add_test("${target_name}" "${BIN_ROOT}/unit_tests/${target_name}")
-endmacro(setup_unit_test_target)
-
-if(NOT D2D_DISTRIBUTION_PATH)
-    set(D2D_DISTRIBUTION_PATH 
-        "${PROJECT_ROOT}/dist/")
-endif(NOT D2D_DISTRIBUTION_PATH)
-
-# Install files.
-install(DIRECTORY "${SOURCE_CODE}/"
-        DESTINATION "${D2D_DISTRIBUTION_PATH}/D2D"
-        PATTERN ".DS_STORE" EXCLUDE
-        PATTERN "CMakeLists.txt.user" EXCLUDE
-        PATTERN ".svn" EXCLUDE
-        PATTERN ".git" EXCLUDE
-        PATTERN ".bzr" EXCLUDE
-)
-
-install(FILES ${PROJECT_ROOT}/COPYING ${PROJECT_ROOT}/README 
-              ${PROJECT_ROOT}/UserSettings.txt.example
-        DESTINATION "${D2D_DISTRIBUTION_PATH}")
+  add_test("${target_name}" "${TEST_ROOT}/${target_name}")
+endmacro(setup_test_target)
 
 # Include the top-level directories.
-include_directories(AFTER
-  "${PROJECT_ROOT}"
-)
+include_directories(AFTER "${PROJECT_ROOT}")
 
-# Find Eigen3 library on local system.
-find_package(Eigen3 REQUIRED)
-
-# Include Eigen3 directories.
-# Set CMake flag to suppress Eigen warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${EIGEN3_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${EIGEN3_INCLUDE_DIR}\"")
-endif( )
-
-# Configure Boost libraries.
-if(NOT Boost_USE_STATIC_LIBS)
-  set(Boost_USE_STATIC_LIBS ON)
-endif()
-if(NOT Boost_USE_MULTITHREADED)
-  set(Boost_USE_MULTITHREADED ON)
-endif()
-if(NOT Boost_USE_STATIC_RUNTIME)
-  set(Boost_USE_STATIC_RUNTIME ON)
-endif()
-
-# Find Boost libraries on local system.
-find_package(Boost 1.52.0 
-             COMPONENTS 
-             regex system timer chrono 
-             REQUIRED)
-
-# Include Boost directories.
-# Set CMake flag to suppress Boost warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${Boost_INCLUDE_DIRS}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${Boost_INCLUDE_DIRS}\"")
-endif( )
-
-# Find GSL library on local system.
+# Find required libraries on local system.
+#find_package(Atom REQUIRED)
+find_package(CATCH REQUIRED)
 find_package(GSL REQUIRED)
-
-# Include GSL directories.
-# Set CMake flag to suppress GSL warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${GSL_INCLUDE_DIRS}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${GSL_INCLUDE_DIRS}\"")
-endif( )
-
-# Find Tudat Core library on local system.
+find_package(SGP4 REQUIRED)
 find_package(TudatCore 2 REQUIRED)
-
-# Include Tudat Core directories.
-# Set CMake flag to suppress Tudat Core warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${TUDAT_CORE_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_CORE_INCLUDE_DIR}\"")
-endif( )
-
-# Find Tudat library on local system.
 find_package(Tudat 2 REQUIRED)
 
-# Include Tudat directories.
-# Set CMake flag to suppress Tudat warnings (platform-dependent solution).
+# Include directories.
+# Set CMake flag to suppress warnings on Apple.
 if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${TUDAT_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_INCLUDE_DIR}\"")
-endif( )
+  include_directories(AFTER SYSTEM
+                      #"${ATOM_INCLUDE_DIR}"
+                      "${CATCH_INCLUDE_DIR}"
+                      "${GSL_INCLUDE_DIRS}" 
+                      "${SGP4_INCLUDE_DIRS}"
+                      "${SAM_INCLUDE_DIRS}"
+                      "${SML_INCLUDE_DIRS}")
 
-# Find SGP4DanRW library on local system.
-find_package(SGP4DanRW 1 REQUIRED)
-
-# Include SGP4DanRW directories.
-# Set CMake flag to suppress SGP4DanRW warnings (platform-dependent solution).
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${SGP4DANRW_INCLUDE_DIR}")
-else( )
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4DANRW_INCLUDE_DIR}\"")
-endif( )
+else(APPLE)
+  #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${ATOM_INCLUDE_DIR}\"")  
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${CATCH_INCLUDE_DIR}\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${GSL_INCLUDE_DIRS}\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")  
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_CORE_INCLUDE_DIR}\"")  
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_INCLUDE_DIR}\"")        
+endif(NOT APPLE)
 
 # If documentation should be built, find Doxygen package and setup config file.
-if(BUILD_DOCUMENTATION)
+if(BUILD_DOCS)
   find_package(Doxygen)
 
   if(NOT DOXYGEN_FOUND)
     message(FATAL_ERROR 
             "Doxygen is needed to build the documentation. Please install it correctly.")
-  endif()
+  endif(NOT DOXYGEN_FOUND)
 
   # Configure the Template Doxyfile for our specific project.
   configure_file(${PROJECT_ROOT}/Doxyfile.in 
@@ -221,33 +135,25 @@ if(BUILD_DOCUMENTATION)
 
   # Add a custom target to run Doxygen when ever the project is built.
   # If you do NOT want the documentation to be generated EVERY time you build the project
-  # then leave out the 'ALL' keyword from the above command.
+  # then leave out the 'ALL' keyword from the command below.
   add_custom_target (docs ALL COMMAND ${DOXYGEN_EXECUTABLE} 
                      ${PROJECT_BINARY_DIR}/Doxyfile 
                      SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
+endif(BUILD_DOCS)
 
-  # Install documentation.
-  install(DIRECTORY "${PROJECT_ROOT}/doc" 
-          DESTINATION "${D2D_DISTRIBUTION_PATH}")
-endif()
-
-# Add source files for D2D static library.
-set(D2D_SOURCES
-  "${SOURCE_CODE}/cartesianToTwoLineElements.cpp"
+# Add tests for Atom.
+set(D2D_TESTS
+#  "${SOURCE_ROOT}/Tests/testD2d.cpp"
 )
 
-# Add static library.
-add_library(d2d_functions STATIC ${D2D_SOURCES})
-setup_library_target(d2d_functions)
+#add_executable(d2d_tests ${D2D_TESTS})
+#setup_test_target(d2d_tests)
+#target_link_libraries(d2d_tests
+#                      ${SGP4_LIBRARY}
+#                      ${GSL_LIBRARIES})
 
 # Add D2D app.
-add_executable(d2d "${SOURCE_CODE}/d2d.cpp")
+add_executable(d2d "${SOURCE_ROOT}/d2d.cpp")
 setup_executable_target(d2d)
-target_link_libraries(d2d 
-                      d2d_functions
-                      ${GSL_LIBRARIES}
-                      ${SGP4DANRW_LIBRARY}
-                      tudat_mission_segments
-                      ${TUDAT_CORE_LIBRARIES} 
-                      ${Boost_LIBRARIES})
+target_link_libraries(d2d)
                       

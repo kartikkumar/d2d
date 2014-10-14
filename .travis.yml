@@ -1,0 +1,21 @@
+language: cpp
+
+compiler:
+  - clang
+  - gcc
+
+env:
+  - BUILD_TYPE=Debug
+  - BUILD_TYPE=Release
+
+before_install:
+
+install:
+  - cmake -HD2D -Bbuild -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+  - cd build
+  - make
+  - cd ..
+
+script:
+  - cd build
+  - ctest -V
