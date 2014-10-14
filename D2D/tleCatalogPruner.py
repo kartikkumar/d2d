@@ -13,13 +13,14 @@ def convertMeanMotionToSemiMajorAxis(meanMotion,gravitionalParameter):
 ####################################################################################################
 
 # Set path to TLE catalog file.
-tleCatalogFilePath 			= "/home/kartikkumar/Applications/d2d/D2D/140605_tleCatalog3line.txt"
+tleCatalogFilePath 			= "/Users/kartikkumar/Documents/Software/Dinamica/d2d/D2D/" \
+							  + "140605_tleCatalog3line.txt"
 
 # Set number of lines per entry in TLE catalog (2 or 3).
 tleEntryNumberOfLines		= 3
 
 # Set path to output directory.
-outputPath 					= "/home/kartikkumar/ownCloud/Shared/Stardust Tech/" \
+outputPath 					= "/Users/kartikkumar/ownCloud/Shared/Stardust Tech/" \
 							  + "Output/ASR_Debris2Debris/Figures"
 
 # Set figure DPI.
