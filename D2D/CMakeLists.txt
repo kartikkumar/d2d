@@ -72,8 +72,8 @@ find_package(GSL REQUIRED)
 find_package(SAM REQUIRED)
 find_package(SML REQUIRED)
 find_package(SGP4 REQUIRED)
-find_package(TudatCore 2 REQUIRED)
-find_package(Tudat 2 REQUIRED)
+# find_package(TudatCore 2 REQUIRED)
+# find_package(Tudat 2 REQUIRED)
 if(NOT APPLE)
   include_directories(AFTER SYSTEM
                       "${ATOM_INCLUDE_DIR}"
@@ -81,9 +81,9 @@ if(NOT APPLE)
                       "${GSL_INCLUDE_DIRS}" 
                       "${SAM_INCLUDE_DIRS}"
                       "${SML_INCLUDE_DIRS}"
-                      "${SGP4_INCLUDE_DIRS}"
-                      "${TUDAT_CORE_INCLUDE_DIR}"
-                      "${TUDAT_INCLUDE_DIR}")
+                      "${SGP4_INCLUDE_DIRS}")
+                      # "${TUDAT_CORE_INCLUDE_DIR}"
+                      # "${TUDAT_INCLUDE_DIR}")
 
 else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${ATOM_INCLUDE_DIR}\"")  
@@ -92,8 +92,8 @@ else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SAM_INCLUDE_DIRS}\"")  
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SML_INCLUDE_DIRS}\"")    
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")  
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_CORE_INCLUDE_DIR}\"")  
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_INCLUDE_DIR}\"")        
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_CORE_INCLUDE_DIR}\"")  
+  # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${TUDAT_INCLUDE_DIR}\"")        
 endif(NOT APPLE)
 
 # If documentation should be built, find Doxygen package and setup config file.
