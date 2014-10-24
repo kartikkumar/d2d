@@ -11,28 +11,33 @@ Requirements
 Installation
 ------
 
-
 Documentation
 -------------
 
-You can pass the `-DBUILD_DOCUMENTATION=on` option to `CMake` to build the [Doxygen](http://www.doxygen.org "Doxygen homepage") documentation locally.
+You can pass the `-DBUILD_DOCS=on` option to `CMake` to build the [Doxygen](http://www.doxygen.org "Doxygen homepage") documentation locally.
 
 Contributing
 ------------
 
-Contact me at [kumar@dinamicatech.com](kumar@dinamicatech.com) to find out how you can contribute to the `D2D` project.
+Once you've made your great commits:
+
+1. [Fork](https://github.com/kartikkumar/atom/fork) D2D
+2. Create a topic branch - `git checkout -b my_branch`
+3. Push to your branch - `git push origin my_branch`
+4. Create a [Pull Request](http://help.github.com/pull-requests/) from your branch
+5. That's it!
 
 License
 ------
 
-See `COPYING`.
+See `LICENSE`.
 
 Disclaimer
 ------
 
-Dinamica Srl is not liable for any damage(s) incurred due to improper use of `D2D`.
+The copyright holders are not liable for any damage(s) incurred due to improper use of `D2D`.
 
 Contact
 ------
 
-You can reach me at [kumar@dinamicatech.com](kumar@dinamicatech.com).
+Shoot an [email](mailto:me@kartikkumar.com?subject=D2D) if you have any questions.
