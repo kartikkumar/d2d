@@ -41,6 +41,7 @@ test
 temp
 debug
 external
+config/
 
 # Project files
 *.sublime*
