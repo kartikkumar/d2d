@@ -27,14 +27,20 @@
 *.out
 *.app
 
+# Binary files
+.db
+.db3
+.sqlite
+
 # Build system
 build
 bin
 lib
-doc
+docs
 test
 temp
 debug
+external
 
 # Project files
 *.sublime*

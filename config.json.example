@@ -1,0 +1,19 @@
+// Copyright (c) 2014 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D.
+{
+	// Select mode to run D2D.
+	// Option: [pruner, lambert_scanner, sgp4_forward_prop, atom_scanner]
+	"mode"				: "",
+
+	// Set absolute path to TLE catalog file.
+	"catalog"			: "",
+	// Set number of lines per TLE entry in catalog.
+	// Options: [2, 3]
+	"tle_lines"			: ,
+
+	// Set absolute path to output database (SQLite).
+	"database"    		: ""
+}
