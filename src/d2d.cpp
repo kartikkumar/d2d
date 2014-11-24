@@ -24,7 +24,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::cout << "------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
     std::cout << "                               D2D                                " << std::endl;
-    std::cout << "                              0.0.1                               " << std::endl;
+    std::cout << "                              0.0.2                               " << std::endl;
     std::cout << std::endl;
     std::cout << "         Copyright (c) 2014, K. Kumar (me@kartikkumar.com)        " << std::endl;
     std::cout << std::endl;
@@ -53,11 +53,23 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     ///////////////////////////////////////////////////////////////////////////
 
-    // Read and store JSON input document.
+    // Read and store JSON input document (filter out comment lines).
     std::ifstream inputFile( inputArguments[ 1 ] );
     std::stringstream jsonDocumentBuffer;
-    jsonDocumentBuffer << inputFile.rdbuf( );
-    inputFile.close( );   
+    std::string inputLine;
+    while ( std::getline( inputFile, inputLine ) )
+    {
+        size_t startPosition = inputLine.find_first_not_of( " \t" );
+        if ( std::string::npos != startPosition )
+        { 
+            inputLine = inputLine.substr( startPosition );
+        }
+
+        if ( inputLine.substr( 0, 2 ) != "//" )
+        {
+            jsonDocumentBuffer << inputLine << "\n";
+        }
+    }
 
     // Check the application mode requested and redirect to the right branch.
     rapidjson::Document configuration;
@@ -75,8 +87,14 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     if ( mode.compare( "lambert_scanner" ) == 0 )
     {
-        std::cout << "Mode:          " << mode << std::endl;
+        std::cout << "Mode:                         " << mode << std::endl;
         d2d::executeLambertScanner( configuration );
+    }
+
+    else if ( mode.compare( "fetch_lambert_transfer" ) == 0 )
+    {
+        std::cout << "Mode:                         " << mode << std::endl;
+        d2d::fetchLambertTransfer( configuration );        
     }
 
     ///////////////////////////////////////////////////////////////////////////

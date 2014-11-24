@@ -41,7 +41,8 @@ test
 temp
 debug
 external
-config/
+config/*
+!config/config.json.example
 
 # Project files
 *.sublime*

@@ -27,7 +27,7 @@ set(MYSRC_PATH                               "${MYPROJ_PATH}/src")
 set(MYTEST_SRC_PATH                          "${MYPROJ_PATH}/tests")
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}   "${MYPROJ_PATH}/cmake/Modules")
 
-OPTION(BUILD_MAIN                            "Build main" OFF)
+OPTION(BUILD_MAIN                            "Build main" ON)
 OPTION(BUILD_DOCS                            "Build docs" OFF)
 OPTION(BUILD_TESTS                           "Build tests" OFF)
 OPTION(BUILD_TESTS_WITH_EIGEN                "Build tests with Eigen library" OFF)
@@ -263,6 +263,73 @@ else(NOT APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITECPP_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 link_directories(${SQLITECPP_LIBRARY_DIR})
+
+if(NOT FORCE_DEPENDENCIES_BUILD)
+  find_package(SML)
+endif(NOT FORCE_DEPENDENCIES_BUILD)
+
+if(NOT SML_FOUND)
+  message(STATUS "SML will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(sml-lib
+    PREFIX ${MYEXT_PATH}/SML
+    #--Download step--------------
+    URL https://github.com/kartikkumar/sml/archive/master.zip
+    TIMEOUT 30
+    #--Update/Patch step----------
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    #--Configure step-------------
+    CONFIGURE_COMMAND ""
+    #--Build step-----------------
+    BUILD_COMMAND ""
+    #--Install step---------------
+    INSTALL_COMMAND ""
+    #--Output logging-------------
+    LOG_DOWNLOAD ON
+  )
+  ExternalProject_Get_Property(sml-lib source_dir)
+  set(SML_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SML")
+endif(NOT SML_FOUND)
+
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${SML_INCLUDE_DIRS}")
+else(APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SML_INCLUDE_DIRS}\"")
+endif(NOT APPLE)
+
+if(NOT FORCE_DEPENDENCIES_BUILD)
+  find_package(SAM)
+endif(NOT FORCE_DEPENDENCIES_BUILD)
+
+if(NOT SAM_FOUND)
+  message(STATUS "SAM will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(sam-lib
+    DEPENDS sml-lib
+    PREFIX ${MYEXT_PATH}/SAM
+    #--Download step--------------
+    URL https://github.com/kartikkumar/sam/archive/master.zip
+    TIMEOUT 30
+    #--Update/Patch step----------
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    #--Configure step-------------
+    CONFIGURE_COMMAND ""
+    #--Build step-----------------
+    BUILD_COMMAND ""
+    #--Install step---------------
+    INSTALL_COMMAND ""
+    #--Output logging-------------
+    LOG_DOWNLOAD ON
+  )
+  ExternalProject_Get_Property(sam-lib source_dir)
+  set(SAM_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SAM")
+endif(NOT SAM_FOUND)
+
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${SAM_INCLUDE_DIRS}")
+else(APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SAM_INCLUDE_DIRS}\"")
+endif(NOT APPLE)
 
 if(BUILD_MAIN)
   if(NOT MYBIN_PATH)

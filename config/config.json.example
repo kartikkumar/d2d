@@ -1,0 +1,84 @@
+// Copyright (c) 2014 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D.
+// Uncomment one of the following sections to execute one of the D2D application modes.
+// The application modes available are: 
+// 	- lambert_scanner
+//  - fetch_lambert_transfer
+//  - sg4p_forward_propagation
+//  - atom_scanner
+
+// Lambert scanner.
+//{
+//	"mode"						: "lambert_scanner",
+//
+//	// Set absolute path to TLE catalog file.
+//	"catalog"					: "",
+//	
+//	// Set number of lines per TLE entry in catalog.
+//	// Options: [2, 3]
+//	"tle_lines"					: 3,
+//
+//	// Set absolute path to output database (SQLite).
+//	"database"    				: "example.db",
+//
+//	// Set time-of-flight grid: (min, max, steps) [s].
+//	"time_of_flight_grid"		: [],
+//
+//	// Set flag indicating if transfers are prograde. If set to false, retrograde transfers are
+//	// computed.
+//	"is_prograde"				: true,
+//
+//	// Set maximum number of transfer revolutions.
+//	"revolutions_maximum"		: 0,
+//
+//	// Set number of transfers to include in shortlist. The shortlist is based on the N transfers
+//	// specified with the lowest transfers Delta-V. If shortlist_number is set to 0, or is absent
+//	// from the configuration file, no output will be written to file.
+//	"shortlist_number"  		: 0,
+//
+//	// Set aboslute path to output file with transfer shortlist. This is only required if
+//	// shortlist_number is defined and not equal to 0.
+//	"shortlist"					: ""
+//}
+
+// Write shortlist of Lambert transfers to file.
+//{
+//	"mode"						: "lambert_shortlist"
+//
+//	// Set number of transfers to include in shortlist. The shortlist is based on the N transfers
+//	// specified with the lowest transfers Delta-V. shortlist_number must be greater than 0.
+//	"shortlist_number"			: 100,
+//
+//	// Set aboslute path to output file with transfer shortlist.
+//	"shortlist"					: "shortlist.csv"
+//}
+
+// Fetch Lambert transfer.
+//{
+//	"mode"						: "fetch_lambert_transfer",
+//
+//	// Set time steps to output departure & arrival orbits, and transfer trajectory [s].
+//	"time_step"					: 60.0,
+//
+//	// Set absolute path to database (SQLite).
+//	"database"    				: "example.db",
+//
+//	// Set output file to write transfer to.
+//	"output_file" 				: "example_transfer.csv",
+//
+//	// Set trasnfer ID to fetch.
+//	"transfer_id" 				: 1
+//}
+
+// SGP4 forward propagation.
+//{
+//	"mode"						: "sg4p_forward_propagation"
+//}
+
+// Atom scanner.
+//{
+//	"mode"						: "atom_scanner"
+//}
