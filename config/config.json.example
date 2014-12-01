@@ -81,4 +81,10 @@
 // Atom scanner.
 //{
 //	"mode"						: "atom_scanner"
+//
+//	// Set absolute path to file containing Lambert transfer list.
+//	"lambert_transfer_list"		: "",
+//
+//	// Set absolute path to output database (SQLite).
+//	"database"					: "example.db"
 //}
