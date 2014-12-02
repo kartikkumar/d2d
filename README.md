@@ -101,3 +101,4 @@ TODO
 ------
 
   - Find a way to provide an option to clean installation. 
+  - Parallelize lambert_scanner and atom_scanner
