@@ -163,6 +163,25 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& jsonInp
  */
 void fetchLambertTransfer( const rapidjson::Document& input );
 
+//! State history.
+typedef std::map< double, kep_toolbox::array6D > StateHistory;
+
+//! Sample Kepler orbit.
+/*!
+ * Samples a Kepler orbit and generates a state-history stored in a STL map (key=epoch). The
+ * Kepler orbit is sampled by using propagate_lagrangian() provided with PyKep (Izzo, 2012).
+ *
+ * @param  initialState 		  Initial Cartesian state [km; km/s]
+ * @param  initialEpoch 		  Initial epoch corresponding to initial Cartesian state [s]
+ * @param  numberOfSamples     	  Number of samples
+ * @param  gravitationalParameter Gravitational parameter of central body [km^3 s^-2]
+ * @return 						  State-history of sampled Kepler orbit (stored in a STL map)
+ */
+StateHistory sampleKeplerOrbit( const kep_toolbox::array6D& initialState,
+								const double initialEpoch,
+								const int numberOfSamples,
+								const double gravitationalParameter );
+
 } // namespace d2d
 
 /*!

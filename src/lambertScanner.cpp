@@ -723,15 +723,40 @@ void fetchLambertTransfer( const rapidjson::Document& input )
     const std::string databasePath = databasePathIterator->value.GetString( );
     std::cout << "Database                      " << databasePath << std::endl;
 
-    // Fetch path to output file.
-   	rapidjson::Value::ConstMemberIterator outputFileIterator = input.FindMember( "output_file" );
-    if ( outputFileIterator == input.MemberEnd( ) )
+    // Fetch path to output files.
+   	rapidjson::Value::ConstMemberIterator outputFileDepartureIterator 
+   		= input.FindMember( "output_file_departure" );
+    if ( outputFileDepartureIterator == input.MemberEnd( ) )
     {
-        std::cerr << "ERROR: \"output_file\" could not be found in config file!" << std::endl;
+        std::cerr << "ERROR: \"output_file_departure\" could not be found in config file!" 
+        		  << std::endl;
         throw;        
     }
-    const std::string outputFilePath = outputFileIterator->value.GetString( );
-    std::cout << "Output                        " << outputFilePath << std::endl;
+
+   	rapidjson::Value::ConstMemberIterator outputFileArrivalIterator 
+   		= input.FindMember( "output_file_arrival" );
+    if ( outputFileArrivalIterator == input.MemberEnd( ) )
+    {
+        std::cerr << "ERROR: \"output_file_arrival\" could not be found in config file!" 
+        		  << std::endl;
+        throw;        
+    }        
+
+   	rapidjson::Value::ConstMemberIterator outputFileTransferIterator 
+   		= input.FindMember( "output_file_transfer" );
+    if ( outputFileTransferIterator == input.MemberEnd( ) )
+    {
+        std::cerr << "ERROR: \"output_file_transfer\" could not be found in config file!" 
+        		  << std::endl;
+        throw;        
+    }
+
+    const std::string outputFileDeparturePath = outputFileDepartureIterator->value.GetString( );
+    const std::string outputFileArrivalPath   = outputFileArrivalIterator->value.GetString( );
+    const std::string outputFileTransferPath  = outputFileTransferIterator->value.GetString( );
+    std::cout << "Departure file                " << outputFileDeparturePath << std::endl;
+    std::cout << "Arrival file                  " << outputFileArrivalPath << std::endl;
+    std::cout << "Transfer file                 " << outputFileTransferPath << std::endl;    
 
 	// Fetch transfer ID.
 	rapidjson::Value::ConstMemberIterator transferIdIterator = input.FindMember( "transfer_id" );
@@ -816,54 +841,189 @@ void fetchLambertTransfer( const rapidjson::Document& input )
 	const double transferTrueAnomaly 				= query.getColumn( 41 );
 	const double transferDeltaV 					= query.getColumn( 42 );
 
-	// Compute and store positions and velocities by propagating conic section (Kepler orbit).
-	kep_toolbox::array3D position, velocity;
+	// Compute and store transfer positions and velocities by propagating conic section 
+	// (Kepler orbit).
+	kep_toolbox::array3D transferPosition, transferVelocity;
+    kep_toolbox::array6D transferState;
 
-	position[ 0 ] = departurePositionX;
-	position[ 1 ] = departurePositionY;
-	position[ 2 ] = departurePositionZ;
+	transferPosition[ 0 ] = departurePositionX;
+	transferPosition[ 1 ] = departurePositionY;
+	transferPosition[ 2 ] = departurePositionZ;
 
-	velocity[ 0 ] = departureVelocityX + departureDeltaVX;
-	velocity[ 1 ] = departureVelocityY + departureDeltaVY;
-	velocity[ 2 ] = departureVelocityZ + departureDeltaVZ;
+	transferVelocity[ 0 ] = departureVelocityX + departureDeltaVX;
+	transferVelocity[ 1 ] = departureVelocityY + departureDeltaVY;
+	transferVelocity[ 2 ] = departureVelocityZ + departureDeltaVZ;
 
-	typedef std::map< double, kep_toolbox::array6D > StateHistory;
-    StateHistory stateHistory;
+    transferState[ 0 ] = transferPosition[ 0 ];
+    transferState[ 1 ] = transferPosition[ 1 ];
+    transferState[ 2 ] = transferPosition[ 2 ];
+    transferState[ 3 ] = transferVelocity[ 0 ];
+    transferState[ 4 ] = transferVelocity[ 1 ];
+    transferState[ 5 ] = transferVelocity[ 2 ];
 
-    kep_toolbox::array6D state;
-    state[ 0 ] = position[ 0 ];
-    state[ 1 ] = position[ 1 ];
-    state[ 2 ] = position[ 2 ];
-    state[ 3 ] = velocity[ 0 ];
-    state[ 4 ] = velocity[ 1 ];
-    state[ 5 ] = velocity[ 2 ];
-
-    stateHistory[ departureEpoch ] = state;      
+    StateHistory transferHistory;
+    transferHistory[ departureEpoch ] = transferState;      
 
     const int numberOfSteps = std::floor( timeOfFlight / timeStep );
 
     for ( int i = 0; i < numberOfSteps; i++ )
-    {
-	    kep_toolbox::propagate_lagrangian( 
-	    	position, velocity, ( i + 1 ) * timeStep, earthGravitationalParameter );
+    {	
+	    kep_toolbox::propagate_lagrangian( transferPosition, 
+	    								   transferVelocity, 
+	    								   timeStep, 
+	    								   earthGravitationalParameter );
 
-	    state[ 0 ] = position[ 0 ];
-	    state[ 1 ] = position[ 1 ];
-	    state[ 2 ] = position[ 2 ];
-	    state[ 3 ] = velocity[ 0 ];
-	    state[ 4 ] = velocity[ 1 ];
-	    state[ 5 ] = velocity[ 2 ];
+	    transferState[ 0 ] = transferPosition[ 0 ];
+	    transferState[ 1 ] = transferPosition[ 1 ];
+	    transferState[ 2 ] = transferPosition[ 2 ];
+	    transferState[ 3 ] = transferVelocity[ 0 ];
+	    transferState[ 4 ] = transferVelocity[ 1 ];
+	    transferState[ 5 ] = transferVelocity[ 2 ];
 
-	    stateHistory[ departureEpoch + ( i + 1 ) * timeStep ] = state;	    
+	    transferHistory[ departureEpoch + ( i + 1 ) * timeStep ] = transferState;	    
     }
 
     if ( timeOfFlight - numberOfSteps * timeStep > std::numeric_limits< double >::epsilon( ) )
     {
 		kep_toolbox::propagate_lagrangian( 
-			position, 
-			velocity, 
+			transferPosition, 
+			transferVelocity, 
 			timeOfFlight - numberOfSteps * timeStep, 
 			earthGravitationalParameter );
+
+		transferState[ 0 ] = transferPosition[ 0 ];
+		transferState[ 1 ] = transferPosition[ 1 ];
+		transferState[ 2 ] = transferPosition[ 2 ];
+		transferState[ 3 ] = transferVelocity[ 0 ];
+		transferState[ 4 ] = transferVelocity[ 1 ];
+		transferState[ 5 ] = transferVelocity[ 2 ];
+
+		transferHistory[ departureEpoch + timeOfFlight ] = transferState;   	
+    }
+
+    // Write transfer state history to output file.
+	std::ofstream outputFileTransfer( outputFileTransferPath.c_str( ) );
+	outputFileTransfer << "t,x,y,z,xdot,ydot,zdot" << std::endl;
+
+	for ( StateHistory::iterator iteratorStateHistory = transferHistory.begin( );
+		  iteratorStateHistory != transferHistory.end( );
+		  iteratorStateHistory++ )
+	{
+		outputFileTransfer << iteratorStateHistory->first	    << ","
+				   		   << iteratorStateHistory->second[ 0 ] << ","
+						   << iteratorStateHistory->second[ 1 ] << ","
+						   << iteratorStateHistory->second[ 2 ] << ","
+						   << iteratorStateHistory->second[ 3 ] << ","
+						   << iteratorStateHistory->second[ 4 ] << ","
+						   << iteratorStateHistory->second[ 5 ] << std::endl;				   
+	}
+
+	outputFileTransfer.close( );
+
+	kep_toolbox::array6D departureState;
+
+    departureState[ 0 ] = departurePositionX;
+    departureState[ 1 ] = departurePositionY;
+    departureState[ 2 ] = departurePositionZ;
+    departureState[ 3 ] = departureVelocityX;
+    departureState[ 4 ] = departureVelocityY;
+    departureState[ 5 ] = departureVelocityZ;
+
+	StateHistory departureHistory = sampleKeplerOrbit( 
+		departureState, departureEpoch, numberOfSteps, earthGravitationalParameter );
+
+	std::ofstream outputFileDeparture( outputFileDeparturePath.c_str( ) );
+	outputFileDeparture << "t,x,y,z,xdot,ydot,zdot" << std::endl;
+
+	for ( StateHistory::iterator iteratorStateHistory = departureHistory.begin( );
+		  iteratorStateHistory != departureHistory.end( );
+		  iteratorStateHistory++ )
+	{
+		outputFileDeparture << iteratorStateHistory->first 		 << ","
+						    << iteratorStateHistory->second[ 0 ] << ","
+						    << iteratorStateHistory->second[ 1 ] << ","
+						    << iteratorStateHistory->second[ 2 ] << ","
+						    << iteratorStateHistory->second[ 3 ] << ","
+						    << iteratorStateHistory->second[ 4 ] << ","
+						    << iteratorStateHistory->second[ 5 ] << std::endl;				   
+	}
+
+	outputFileDeparture.close( );
+
+	// Sample departure and write to file.
+	kep_toolbox::array6D arrivalState;
+
+    arrivalState[ 0 ] = arrivalPositionX;
+    arrivalState[ 1 ] = arrivalPositionY;
+    arrivalState[ 2 ] = arrivalPositionZ;
+    arrivalState[ 3 ] = arrivalVelocityX;
+    arrivalState[ 4 ] = arrivalVelocityY;
+    arrivalState[ 5 ] = arrivalVelocityZ;
+
+	StateHistory arrivalHistory = sampleKeplerOrbit( 
+		arrivalState, departureEpoch + timeOfFlight, numberOfSteps, earthGravitationalParameter );
+
+	std::ofstream outputFileArrival( outputFileArrivalPath.c_str( ) );
+	outputFileArrival << "t,x,y,z,xdot,ydot,zdot" << std::endl;
+
+	for ( StateHistory::iterator iteratorStateHistory = arrivalHistory.begin( );
+		  iteratorStateHistory != arrivalHistory.end( );
+		  iteratorStateHistory++ )
+	{
+		outputFileArrival << iteratorStateHistory->first 		 << ","
+						    << iteratorStateHistory->second[ 0 ] << ","
+						    << iteratorStateHistory->second[ 1 ] << ","
+						    << iteratorStateHistory->second[ 2 ] << ","
+						    << iteratorStateHistory->second[ 3 ] << ","
+						    << iteratorStateHistory->second[ 4 ] << ","
+						    << iteratorStateHistory->second[ 5 ] << std::endl;				   
+	}
+
+	outputFileArrival.close( );		
+}
+
+//! Sample Kepler orbit.
+StateHistory sampleKeplerOrbit( const kep_toolbox::array6D& initialState,
+								const double initialEpoch,
+								const int numberOfSamples,
+								const double gravitationalParameter )
+{
+
+	std::vector< double > stateVector( 6 );
+	stateVector[ sam::xPositionIndex ] = initialState[ 0 ];
+	stateVector[ sam::yPositionIndex ] = initialState[ 1 ];
+	stateVector[ sam::zPositionIndex ] = initialState[ 2 ];
+	stateVector[ sam::xVelocityIndex ] = initialState[ 3 ];
+	stateVector[ sam::yVelocityIndex ] = initialState[ 4 ];
+	stateVector[ sam::zVelocityIndex ] = initialState[ 5 ];
+
+	kep_toolbox::array6D state = initialState;
+
+	kep_toolbox::array3D position, velocity;
+	position[ 0 ] = initialState[ 0 ];
+	position[ 1 ] = initialState[ 1 ];
+	position[ 2 ] = initialState[ 2 ];
+	velocity[ 0 ] = initialState[ 3 ];
+	velocity[ 1 ] = initialState[ 4 ];
+	velocity[ 2 ] = initialState[ 5 ];
+
+	const std::vector< double > stateKepler 
+		= sam::convertCartesianToKeplerianElements( stateVector, gravitationalParameter );
+
+	// Compute orbital period (length of propagation).
+	const double orbitalPeriod = sam::computeKeplerOrbitalPeriod( 
+		stateKepler[ sam::semiMajorAxisIndex ], gravitationalParameter );
+
+	// Compute size of propagation steps.
+	const double timeStep = orbitalPeriod / static_cast< double >( numberOfSamples );
+
+	StateHistory stateHistory;
+	stateHistory[ initialEpoch ] = initialState;
+
+	// Loop over all samples and store propagated state in map.
+	for ( int i = 0; i < numberOfSamples; i++ )
+	{
+		kep_toolbox::propagate_lagrangian( position, velocity, timeStep, gravitationalParameter );
 
 		state[ 0 ] = position[ 0 ];
 		state[ 1 ] = position[ 1 ];
@@ -872,28 +1032,10 @@ void fetchLambertTransfer( const rapidjson::Document& input )
 		state[ 4 ] = velocity[ 1 ];
 		state[ 5 ] = velocity[ 2 ];
 
-		stateHistory[ departureEpoch + timeOfFlight ] = state;   	
-    }
-
-    // Write state history to output file.
-	std::ofstream outputFile( outputFilePath.c_str( ) );
-	outputFile << "epoch,xPosition [km],yPosition [km],zPosition [km],"
-			   << "xVelocity [km],yVelocity [km],zVelocity" << std::endl;
-
-	for ( StateHistory::iterator iteratorStateHistory = stateHistory.begin( );
-		  iteratorStateHistory != stateHistory.end( );
-		  iteratorStateHistory++ )
-	{
-		outputFile << iteratorStateHistory->first << ","
-				   << iteratorStateHistory->second[ 0 ] << ","
-				   << iteratorStateHistory->second[ 1 ] << ","
-				   << iteratorStateHistory->second[ 2 ] << ","
-				   << iteratorStateHistory->second[ 3 ] << ","
-				   << iteratorStateHistory->second[ 4 ] << ","
-				   << iteratorStateHistory->second[ 5 ] << std::endl;				   
+		stateHistory[ ( i + 1 ) * timeStep + initialEpoch ] = state;
 	}
 
-	outputFile.close( );
+	return stateHistory;
 }
 
 } // namespace d2d
