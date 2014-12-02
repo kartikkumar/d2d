@@ -139,7 +139,7 @@ void executeLambertScanner( const rapidjson::Document& jsonInput )
 
     SQLite::Statement query( database, lambertScannerTableInsert.str( ) );
 
-    std::cout << "Running simulations ... " << std::endl;
+    std::cout << "Running simulations and populating database ... " << std::endl;
 
     // Loop over TLE objects and compute transfers based on Lambert targeter across time-of-flight
     // grid.
@@ -190,6 +190,10 @@ void executeLambertScanner( const rapidjson::Document& jsonInput )
             {
                 const double timeOfFlight
                     = input.timeOfFlightMinimum + timeOfFlightCounter * input.timeOfFlightStepSize;
+
+                std::cout << "Computing transfer from Object #" << departureObjectId
+                          << " to Object #" << arrivalObjectId
+                          << " (ToF: " << timeOfFlight << " s)" << std::endl;
 
                 Eci tleArrivalState = sgp4Arrival.FindPosition(
                     departureObject.Epoch( ) + timeOfFlight );
@@ -327,7 +331,6 @@ int revolution = 0;
     }
 
     std::cout << "Simulations executed successfully!" << std::endl;
-    std::cout << "Populating database ... " << std::endl;
 
     // Commit transaction.
     transaction.commit( );
@@ -676,7 +679,7 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& input )
             }
             else
             {
-                std::cout << "Shortlist #:                " << shortlistNumber << std::endl;
+                std::cout << "Shortlist #:                  " << shortlistNumber << std::endl;
             }
         }
     }
