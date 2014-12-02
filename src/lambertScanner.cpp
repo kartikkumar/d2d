@@ -188,6 +188,9 @@ void executeLambertScanner( const rapidjson::Document& jsonInput )
                   timeOfFlightCounter < input.timeOfFlightSteps;
                   timeOfFlightCounter++ )
             {
+                const int departureObjectId = static_cast< int >( departureObject.NoradNumber( ) );
+                const int arrivalObjectId = static_cast< int >( arrivalObject.NoradNumber( ) );
+
                 const double timeOfFlight
                     = input.timeOfFlightMinimum + timeOfFlightCounter * input.timeOfFlightStepSize;
 
@@ -257,8 +260,7 @@ int revolution = 0;
                                                   + sml::norm< double >( arrivalDeltaV );
 
                     // Bind values to SQL insert query.
-                    query.bind( ":departureObjectId",
-                                static_cast< int >( departureObject.NoradNumber( ) ) );
+                    query.bind( ":departureObjectId", departureObjectId );
                     query.bind( ":departureEpoch", departureObject.Epoch( ).ToJulian( ) );
                     query.bind( ":departurePositionX", departureState[ sam::xPositionIndex ] );
                     query.bind( ":departurePositionY", departureState[ sam::yPositionIndex ] );
@@ -281,8 +283,7 @@ int revolution = 0;
                     query.bind( ":departureDeltaVX", departureDeltaV[ 0 ] );
                     query.bind( ":departureDeltaVY", departureDeltaV[ 1 ] );
                     query.bind( ":departureDeltaVZ", departureDeltaV[ 2 ] );
-                    query.bind( ":arrivalObjectId",
-                        static_cast< int >( arrivalObject.NoradNumber( ) ) );
+                    query.bind( ":arrivalObjectId", arrivalObjectId );
                     query.bind( ":arrivalPositionX", arrivalState[ sam::xPositionIndex ] );
                     query.bind( ":arrivalPositionY", arrivalState[ sam::yPositionIndex ] );
                     query.bind( ":arrivalPositionZ", arrivalState[ sam::zPositionIndex ] );
