@@ -802,7 +802,6 @@ void fetchLambertTransfer( const rapidjson::Document& input )
     SQLite::Statement query( database, transferSelect.str( ) );
     query.executeStep( );
 
-    const int    departureObjectId                  = query.getColumn( 1 );
     const double departureEpoch                     = query.getColumn( 2 );
     const double departurePositionX                 = query.getColumn( 3 );
     const double departurePositionY                 = query.getColumn( 4 );
@@ -810,40 +809,16 @@ void fetchLambertTransfer( const rapidjson::Document& input )
     const double departureVelocityX                 = query.getColumn( 6 );
     const double departureVelocityY                 = query.getColumn( 7 );
     const double departureVelocityZ                 = query.getColumn( 8 );
-    const double departureSemiMajorAxis             = query.getColumn( 9 );
-    const double departureEccentricity              = query.getColumn( 10 );
-    const double departureInclination               = query.getColumn( 11 );
-    const double departureArgumentOfPeriapsis       = query.getColumn( 12 );
-    const double departureLongitudeOfAscendingNode  = query.getColumn( 13 );
-    const double departureTrueAnomaly               = query.getColumn( 14 );
     const double departureDeltaVX                   = query.getColumn( 15 );
     const double departureDeltaVY                   = query.getColumn( 16 );
     const double departureDeltaVZ                   = query.getColumn( 17 );
-    const int    arrivalObjectId                    = query.getColumn( 18 );
     const double arrivalPositionX                   = query.getColumn( 19 );
     const double arrivalPositionY                   = query.getColumn( 20 );
     const double arrivalPositionZ                   = query.getColumn( 21 );
     const double arrivalVelocityX                   = query.getColumn( 22 );
     const double arrivalVelocityY                   = query.getColumn( 23 );
     const double arrivalVelocityZ                   = query.getColumn( 24 );
-    const double arrivalSemiMajorAxis               = query.getColumn( 25 );
-    const double arrivalEccentricity                = query.getColumn( 26 );
-    const double arrivalInclination                 = query.getColumn( 27 );
-    const double arrivalArgumentOfPeriapsis         = query.getColumn( 28 );
-    const double arrivalLongitudeOfAscendingNode    = query.getColumn( 29 );
-    const double arrivalTrueAnomaly                 = query.getColumn( 30 );
-    const double arrivalDeltaVX                     = query.getColumn( 31 );
-    const double arrivalDeltaVY                     = query.getColumn( 32 );
-    const double arrivalDeltaVZ                     = query.getColumn( 33 );
     const double timeOfFlight                       = query.getColumn( 34 );
-    const int    revolutions                        = query.getColumn( 35 );
-    const double transferSemiMajorAxis              = query.getColumn( 36 );
-    const double transferEccentricity               = query.getColumn( 37 );
-    const double transferInclination                = query.getColumn( 38 );
-    const double transferArgumentOfPeriapsis        = query.getColumn( 39 );
-    const double transferLongitudeOfAscendingNode   = query.getColumn( 40 );
-    const double transferTrueAnomaly                = query.getColumn( 41 );
-    const double transferDeltaV                     = query.getColumn( 42 );
 
     // Compute and store transfer positions and velocities by propagating conic section
     // (Kepler orbit).
