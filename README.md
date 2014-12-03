@@ -5,7 +5,7 @@ Debris-2-Debris
 
 `Debris-2-Debris` (`D2D`) is a toolbox that can be used to rapidly search through a catalog of space debris objects to find candidate optimal debris-to-debris transfers. These candidate pairs can be fed into a full-scale optimization problem in the context of mission analysis for an Active Debris Removal (ADR) space mission.
 
-For an example use of this toolbox, take a look at [Kumar, et al. (2014)](#temp). 
+For an example use of this toolbox, take a look at [Kumar, et al. (2014)](#temp).
 
 Features
 ------
@@ -23,20 +23,21 @@ To install this project, please ensure that you have installed the following (in
   - [Git](http://git-scm.com)
   - A C++ compiler, e.g., [GCC](https://gcc.gnu.org/), [clang](http://clang.llvm.org/), [MinGW](http://www.mingw.org/)
   - [CMake](http://www.cmake.org)
+  - [Boost](http://www.boost.org) ([PyKep](https://www.github.com/esa/pykep) dependency)
   - [Doxygen](http://www.doxygen.org "Doxygen homepage") (optional)
 
  In addition, `D2D` depends on the following libraries:
 
   - [SML](https://www.github.com/kartikkumar/sml)
   - [SAM](https://www.github.com/kartikkumar/sam)
-  - [Atom](https://www.github.com/kartikkumar/sam)  
+  - [Atom](https://www.github.com/kartikkumar/sam)
   - [GSL](http://www.gnu.org/software/gsl)
   - [SGP4](https://www.github.com/kartikkumar/sgp4deorbit)
-  - [PyKep](https://www.github.com/esa/pykep)        
+  - [PyKep](https://www.github.com/esa/pykep)
   - [CATCH](https://www.github.com/philsquared/Catch)
   - [Eigen](http://eigen.tuxfamily.org/) (optional)
 
-These dependencies will be downloaded and configured automatically if they are not already present locally (requires an internet connection).
+These dependencies will be downloaded and configured automagically if they are not already present locally (requires an internet connection).
 
 Installation
 ------
@@ -100,5 +101,10 @@ Shoot an [email](mailto:me@kartikkumar.com?subject=D2D) if you have any question
 TODO
 ------
 
-  - Find a way to provide an option to clean installation. 
+  - Find a way to provide an option to clean installation.
   - Parallelize lambert_scanner and atom_scanner
+  - Add lambert_single and atom_single modes to compute single transfers
+  - Add option to automatically download TLE catalog
+  - Fix issue with multi-rev Lambert solutions
+  - Add status indicator in console for scanning modes
+
