@@ -74,10 +74,15 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
   endif(MSVC)
-else(WIN32)
+elseif(UNIX AND NOT APPLE)
   set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
+    "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor -pthread -ldl")
+else(APPLE)
+    set(CMAKE_CXX_FLAGS
+      "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
 endif(WIN32)
+
+set(MYDEPENDENCIES "")
 
 # Include script to build external library with CMake.
 include(ExternalProject)
@@ -106,6 +111,7 @@ if(NOT RAPIDJSON_FOUND)
   ExternalProject_Get_Property(rapidjson-lib source_dir)
   set(RAPIDJSON_INCLUDE_DIRS ${source_dir}/include
     CACHE INTERNAL "Path to include folder for RapidJSON")
+  set(MYDEPENDENCIES ${MYDEPENDENCIES} "rapidjson-lib")
 endif(NOT RAPIDJSON_FOUND)
 
 if(NOT APPLE)
@@ -140,6 +146,7 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
   set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
   set(KEPLERIANTOOLBOX_LIBRARY "keplerian_toolbox_static")
+  set(MYDEPENDENCIES ${MYDEPENDENCIES} "keplerian_toolbox")
 endif(NOT KEPLERIANTOOLBOX_FOUND)
 
 if(NOT APPLE)
@@ -173,6 +180,7 @@ if(NOT SQLITE3_FOUND)
   set(SQLITE3_INCLUDE_DIR ${source_dir} CACHE INTERNAL "Path to include folder for SQLite3")
   set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
   set(SQLITE3_LIBRARY "sqlite3-static")
+  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sqlite-lib")
 endif(NOT SQLITE3_FOUND)
 link_directories(${SQLITE3_LIBRARY_DIR})
 
@@ -208,6 +216,7 @@ if(NOT SQLITECPP_FOUND)
     CACHE INTERNAL "Path to include folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY "SQLiteCpp")
+  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sqlitecpp-lib")
 endif(NOT SQLITECPP_FOUND)
 
 if(NOT APPLE)
@@ -241,6 +250,7 @@ if(NOT SGP4_FOUND)
   set(SGP4_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SGP4")
   set(SGP4_LIBRARY_DIR ${source_dir}/libsgp4 CACHE INTERNAL "Path to library folder for SGP4")
   set(SGP4_LIBRARY "sgp4")
+  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sgp4-deorbit")
 endif(NOT SGP4_FOUND)
 link_directories(${SGP4_LIBRARY_DIR})
 
@@ -273,6 +283,7 @@ if(NOT SML_FOUND)
   )
   ExternalProject_Get_Property(sml-lib source_dir)
   set(SML_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SML")
+  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sml-lib")
 endif(NOT SML_FOUND)
 
 if(NOT APPLE)
@@ -305,6 +316,7 @@ if(NOT SAM_FOUND)
   )
   ExternalProject_Get_Property(sam-lib source_dir)
   set(SAM_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SAM")
+  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sam-lib")
 endif(NOT SAM_FOUND)
 
 if(NOT APPLE)
@@ -312,13 +324,6 @@ if(NOT APPLE)
 else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SAM_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
-
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIRS}")
-else(APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")
-endif(NOT APPLE)
-link_directories(${SGP4_LIBRARY_DIR})
 
 include_directories(AFTER "${MYINC_PATH}")
 
@@ -328,15 +333,8 @@ endif(NOT MYLIB_PATH)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MYLIB_PATH})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MYLIB_PATH})
 add_library(${MYPROJ_LIB} ${MYPROJ_SRC})
-add_dependencies(${MYPROJ_LIB}
-  sam-lib
-  sml-lib
-  sgp4-deorbit
-  sqlitecpp-lib
-  sqlite-lib
-  keplerian_toolbox
-  rapidjson-lib
-)
+set(MYDEPENDENCIES ${MYDEPENDENCIES})
+add_dependencies(${MYPROJ_LIB} ${MYDEPENDENCIES})
 
 if(BUILD_MAIN)
   if(NOT MYBIN_PATH)
