@@ -203,11 +203,10 @@ if(NOT SQLITE3_FOUND)
   ExternalProject_Add(sqlite-lib
     PREFIX ${MYEXT_PATH}/SQLite
     #--Download step--------------
-    URL http://www.sqlite.org/2014/sqlite-autoconf-3080701.tar.gz
+    URL https://github.com/kartikkumar/sqlite3-cmake/archive/master.zip
     TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
-    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/source/configure --prefix=${CMAKE_INSTALL_PREFIX}
     #--Build step-----------------
     BUILD_IN_SOURCE 1
     #--Install step---------------
@@ -218,7 +217,7 @@ if(NOT SQLITE3_FOUND)
   ExternalProject_Get_Property(sqlite-lib source_dir)
   set(SQLITE3_INCLUDE_DIR ${source_dir} CACHE INTERNAL "Path to include folder for SQLite3")
   set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
-  set(SQLITE3_LIBRARY "sqlite")
+  set(SQLITE3_LIBRARY "sqlite3-static")
   set(MYDEPENDENCIES ${DEPENDENCIES} sqlite-lib)
 endif(NOT SQLITE3_FOUND)
 link_directories(${SQLITE3_LIBRARY_DIR})
