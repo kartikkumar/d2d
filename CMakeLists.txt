@@ -74,10 +74,7 @@ if(WIN32)
     set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
   endif(MSVC)
-elseif(UNIX AND NOT APPLE)
-  set(CMAKE_CXX_FLAGS
-    "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor -pthread -ldl")
-else(APPLE)
+else(WIN32)
     set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
 endif(WIN32)
@@ -162,6 +159,8 @@ else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${KEPLERIANTOOLBOX_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 link_directories(${KEPLERIANTOOLBOX_LIBRARY_DIR})
+
+find_package(Threads)
 
 if(NOT FORCE_DEPENDENCIES_BUILD)
   find_package(sqlite3)
@@ -344,6 +343,8 @@ if(BUILD_MAIN)
     ${KEPLERIANTOOLBOX_LIBRARY}
     ${SQLITECPP_LIBRARY}
     ${SQLITE3_LIBRARY}
+    ${CMAKE_THREAD_LIBS_INIT}
+    ${CMAKE_DL_LIBS}
   )
 endif(BUILD_MAIN)
 
