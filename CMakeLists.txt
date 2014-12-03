@@ -79,15 +79,6 @@ else(WIN32)
     "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
 endif(WIN32)
 
-include_directories(AFTER "${MYINC_PATH}")
-
-if(NOT MYLIB_PATH)
-  set(MYLIB_PATH "${PROJECT_BINARY_DIR}/lib")
-endif(NOT MYLIB_PATH)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MYLIB_PATH})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MYLIB_PATH})
-add_library(${MYPROJ_LIB} ${MYPROJ_SRC})
-
 # Include script to build external library with CMake.
 include(ExternalProject)
 
@@ -98,13 +89,11 @@ endif(NOT FORCE_DEPENDENCIES_BUILD)
 if(NOT RAPIDJSON_FOUND)
   message(STATUS "RapidJSON will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(rapidjson-lib
-    PREFIX ${MYEXT_PATH}/RapidJSON
+    PREFIX ${MYEXT_PATH}/RapidJson
     #--Download step--------------
     URL https://github.com/miloyip/rapidjson/archive/master.zip
-    TIMEOUT 30
+    TIMEOUT 120
     #--Update/Patch step----------
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
     #--Configure step-------------
     CONFIGURE_COMMAND ""
     #--Build step-----------------
@@ -115,7 +104,8 @@ if(NOT RAPIDJSON_FOUND)
     LOG_DOWNLOAD ON
   )
   ExternalProject_Get_Property(rapidjson-lib source_dir)
-  set(RAPIDJSON_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for RapidJSON")
+  set(RAPIDJSON_INCLUDE_DIRS ${source_dir}/include
+    CACHE INTERNAL "Path to include folder for RapidJSON")
 endif(NOT RAPIDJSON_FOUND)
 
 if(NOT APPLE)
@@ -123,40 +113,6 @@ if(NOT APPLE)
 else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${RAPIDJSON_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
-
-if(NOT FORCE_DEPENDENCIES_BUILD)
-  find_package(SGP4)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
-
-if(NOT SGP4_FOUND)
-  message(STATUS "SGP4 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  ExternalProject_Add(sgp4-deorbit
-    PREFIX ${MYEXT_PATH}/SGP4
-    #--Download step--------------
-    URL https://github.com/kartikkumar/sgp4deorbit/archive/master.zip
-    TIMEOUT 30
-    #--Update/Patch step----------
-    #--Configure step-------------
-    #--Build step-----------------
-    BUILD_IN_SOURCE 1
-    #--Install step---------------
-    INSTALL_COMMAND ""
-    #--Output logging-------------
-    LOG_DOWNLOAD ON
-  )
-  ExternalProject_Get_Property(sgp4-deorbit source_dir)
-  set(SGP4_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SGP4")
-  set(SGP4_LIBRARY_DIR ${source_dir}/libsgp4 CACHE INTERNAL "Path to library folder for SGP4")
-  set(SGP4_LIBRARY "sgp4")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} sgp4-deorbit)
-endif(NOT SGP4_FOUND)
-
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIRS}")
-else(APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")
-endif(NOT APPLE)
-link_directories(${SGP4_LIBRARY_DIR})
 
 if(NOT FORCE_DEPENDENCIES_BUILD)
   find_package(KeplerianToolbox)
@@ -168,7 +124,7 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
     PREFIX ${MYEXT_PATH}/KeplerianToolbox
     #--Download step--------------
     URL https://github.com/esa/pykep/archive/master.zip
-    TIMEOUT 30
+    TIMEOUT 120
     #--Update/Patch step----------
     #--Configure step-------------
     #--Build step-----------------
@@ -179,12 +135,11 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
     LOG_DOWNLOAD ON
   )
   ExternalProject_Get_Property(keplerian_toolbox source_dir)
-  set(KEPLERIANTOOLBOX_INCLUDE_DIRS ${source_dir}
+  set(KEPLERIANTOOLBOX_INCLUDE_DIRS ${source_dir}/src
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
-  set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}/libsgp4
+  set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
   set(KEPLERIANTOOLBOX_LIBRARY "keplerian_toolbox_static")
-  set(MYDEPENDENCIES ${DEPENDENCIES} keplerian_toolbox)
 endif(NOT KEPLERIANTOOLBOX_FOUND)
 
 if(NOT APPLE)
@@ -204,7 +159,7 @@ if(NOT SQLITE3_FOUND)
     PREFIX ${MYEXT_PATH}/SQLite
     #--Download step--------------
     URL https://github.com/kartikkumar/sqlite3-cmake/archive/master.zip
-    TIMEOUT 30
+    TIMEOUT 120
     #--Update/Patch step----------
     #--Configure step-------------
     #--Build step-----------------
@@ -218,7 +173,6 @@ if(NOT SQLITE3_FOUND)
   set(SQLITE3_INCLUDE_DIR ${source_dir} CACHE INTERNAL "Path to include folder for SQLite3")
   set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
   set(SQLITE3_LIBRARY "sqlite3-static")
-  set(MYDEPENDENCIES ${DEPENDENCIES} sqlite-lib)
 endif(NOT SQLITE3_FOUND)
 link_directories(${SQLITE3_LIBRARY_DIR})
 
@@ -239,7 +193,7 @@ if(NOT SQLITECPP_FOUND)
     PREFIX ${MYEXT_PATH}/SQLiteCpp
     #--Download step--------------
     URL https://github.com/kartikkumar/sqlitecpp/archive/master.zip
-    TIMEOUT 30
+    TIMEOUT 120
     #--Update/Patch step----------
     #--Configure step-------------
     #--Build step-----------------
@@ -250,10 +204,10 @@ if(NOT SQLITECPP_FOUND)
     LOG_DOWNLOAD ON
   )
   ExternalProject_Get_Property(sqlitecpp-lib source_dir)
-  set(SQLITECPP_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SQLiteCpp")
+  set(SQLITECPP_INCLUDE_DIRS ${source_dir}/include
+    CACHE INTERNAL "Path to include folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY "SQLiteCpp")
-  set(MYDEPENDENCIES ${DEPENDENCIES} sqlitecpp-lib)
 endif(NOT SQLITECPP_FOUND)
 
 if(NOT APPLE)
@@ -262,6 +216,39 @@ else(NOT APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITECPP_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 link_directories(${SQLITECPP_LIBRARY_DIR})
+
+if(NOT FORCE_DEPENDENCIES_BUILD)
+  find_package(SGP4)
+endif(NOT FORCE_DEPENDENCIES_BUILD)
+
+if(NOT SGP4_FOUND)
+  message(STATUS "SGP4 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(sgp4-deorbit
+    PREFIX ${MYEXT_PATH}/SGP4
+    #--Download step--------------
+    URL https://github.com/kartikkumar/sgp4deorbit/archive/master.zip
+    TIMEOUT 120
+    #--Update/Patch step----------
+    #--Configure step-------------
+    #--Build step-----------------
+    BUILD_IN_SOURCE 1
+    #--Install step---------------
+    INSTALL_COMMAND ""
+    #--Output logging-------------
+    LOG_DOWNLOAD ON
+  )
+  ExternalProject_Get_Property(sgp4-deorbit source_dir)
+  set(SGP4_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SGP4")
+  set(SGP4_LIBRARY_DIR ${source_dir}/libsgp4 CACHE INTERNAL "Path to library folder for SGP4")
+  set(SGP4_LIBRARY "sgp4")
+endif(NOT SGP4_FOUND)
+link_directories(${SGP4_LIBRARY_DIR})
+
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIRS}")
+else(APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")
+endif(NOT APPLE)
 
 if(NOT FORCE_DEPENDENCIES_BUILD)
   find_package(SML)
@@ -273,10 +260,8 @@ if(NOT SML_FOUND)
     PREFIX ${MYEXT_PATH}/SML
     #--Download step--------------
     URL https://github.com/kartikkumar/sml/archive/master.zip
-    TIMEOUT 30
+    TIMEOUT 120
     #--Update/Patch step----------
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
     #--Configure step-------------
     CONFIGURE_COMMAND ""
     #--Build step-----------------
@@ -287,7 +272,7 @@ if(NOT SML_FOUND)
     LOG_DOWNLOAD ON
   )
   ExternalProject_Get_Property(sml-lib source_dir)
-  set(SML_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SML")
+  set(SML_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SML")
 endif(NOT SML_FOUND)
 
 if(NOT APPLE)
@@ -307,10 +292,8 @@ if(NOT SAM_FOUND)
     PREFIX ${MYEXT_PATH}/SAM
     #--Download step--------------
     URL https://github.com/kartikkumar/sam/archive/master.zip
-    TIMEOUT 30
+    TIMEOUT 120
     #--Update/Patch step----------
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
     #--Configure step-------------
     CONFIGURE_COMMAND ""
     #--Build step-----------------
@@ -321,7 +304,7 @@ if(NOT SAM_FOUND)
     LOG_DOWNLOAD ON
   )
   ExternalProject_Get_Property(sam-lib source_dir)
-  set(SAM_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SAM")
+  set(SAM_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SAM")
 endif(NOT SAM_FOUND)
 
 if(NOT APPLE)
@@ -330,15 +313,37 @@ else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SAM_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIRS}")
+else(APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")
+endif(NOT APPLE)
+link_directories(${SGP4_LIBRARY_DIR})
+
+include_directories(AFTER "${MYINC_PATH}")
+
+if(NOT MYLIB_PATH)
+  set(MYLIB_PATH "${PROJECT_BINARY_DIR}/lib")
+endif(NOT MYLIB_PATH)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MYLIB_PATH})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MYLIB_PATH})
+add_library(${MYPROJ_LIB} ${MYPROJ_SRC})
+add_dependencies(${MYPROJ_LIB}
+  sam-lib
+  sml-lib
+  sgp4-deorbit
+  sqlitecpp-lib
+  sqlite-lib
+  keplerian_toolbox
+  rapidjson-lib
+)
+
 if(BUILD_MAIN)
   if(NOT MYBIN_PATH)
     set(MYBIN_PATH "${PROJECT_BINARY_DIR}/bin")
   endif(NOT MYBIN_PATH)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${MYBIN_PATH})
   add_executable(${MYPROJ_EXE} ${MYPROJ_EXE_SRC})
-  if(NOT "${MYDEPENDENCIES}" STREQUAL "")
-    add_dependencies(${MYPROJ_EXE} "${MYDEPENDENCIES}")
-  endif(NOT "${MYDEPENDENCIES}" STREQUAL "")
   target_link_libraries(${MYPROJ_EXE}
     ${MYPROJ_LIB}
     ${KEPLERIANTOOLBOX_LIBRARY}
@@ -386,7 +391,7 @@ if(BUILD_TESTS)
       PREFIX ${MYEXT_PATH}/Catch
       #--Download step--------------
       URL https://github.com/kartikkumar/Catch/archive/master.zip
-      TIMEOUT 30
+      TIMEOUT 120
       #--Update/Patch step----------
       UPDATE_COMMAND ""
       PATCH_COMMAND ""
@@ -420,7 +425,7 @@ if(BUILD_TESTS)
         PREFIX ${MYEXT_PATH}/Eigen
         #--Download step--------------
         URL http://bitbucket.org/eigen/eigen/get/3.2.2.tar.gz
-        TIMEOUT 30
+        TIMEOUT 120
         #--Update/Patch step----------
         UPDATE_COMMAND ""
         PATCH_COMMAND ""
