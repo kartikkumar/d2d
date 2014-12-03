@@ -34,7 +34,7 @@ OPTION(BUILD_TESTS_WITH_EIGEN                "Build tests with Eigen library" OF
 OPTION(FORCE_DEPENDENCIES_BUILD              "Force build of dependencies" OFF)
 
 set(MYPROJ_SRC
-  "${MYSRC_PATH}/lambertScanner.cpp"
+  "${MYSRC_PATH}/lambertMethods.cpp"
 )
 
 set(MYPROJ_EXE_SRC
@@ -45,7 +45,7 @@ set(MYPROJ_TEST_SRC
   "${MYTEST_SRC_PATH}/testD2D.cpp"
 )
 
-# Set CMake build-type. If it not supplied by the user, the default built type is "Release". 
+# Set CMake build-type. If it not supplied by the user, the default built type is "Release".
 if((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE STREQUAL "Release"))
     message(STATUS "WARNING: building release version!")
     set(CMAKE_BUILD_TYPE Release)
@@ -60,7 +60,7 @@ endif((NOT CMAKE_BUILD_TYPE) OR (CMAKE_BUILD_TYPE STREQUAL "Release"))
 if(WIN32)
   if(MSVC)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc /Ox /W3 /FC -D_SCL_SECURE_NO_WARNINGS")
-    # We need to force MSVC to use static runtime: 
+    # We need to force MSVC to use static runtime:
     # (from http://www.cmake.org/Wiki/CMake_FAQ#Dynamic_Replace).
     foreach(flag_var
       CMAKE_CXX_FLAGS CMAKE_CXX_FLAGS_DEBUG CMAKE_CXX_FLAGS_RELEASE
@@ -71,11 +71,11 @@ if(WIN32)
       endif(${flag_var} MATCHES "/MD")
     endforeach(flag_var)
   else(MSVC)
-    set(CMAKE_CXX_FLAGS 
+    set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
   endif(MSVC)
 else(WIN32)
-  set(CMAKE_CXX_FLAGS 
+  set(CMAKE_CXX_FLAGS
     "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
 endif(WIN32)
 
@@ -181,7 +181,7 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
   ExternalProject_Get_Property(keplerian_toolbox source_dir)
   set(KEPLERIANTOOLBOX_INCLUDE_DIRS ${source_dir}
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
-  set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}/libsgp4 
+  set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}/libsgp4
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
   set(KEPLERIANTOOLBOX_LIBRARY "keplerian_toolbox_static")
   set(MYDEPENDENCIES ${DEPENDENCIES} keplerian_toolbox)
@@ -204,22 +204,22 @@ if(NOT SQLITE3_FOUND)
     PREFIX ${MYEXT_PATH}/SQLite
     #--Download step--------------
     URL http://www.sqlite.org/2014/sqlite-autoconf-3080701.tar.gz
-    TIMEOUT 30        
+    TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
-    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/source/configure --prefix=${CMAKE_INSTALL_PREFIX}    
+    CONFIGURE_COMMAND ${PROJECT_BINARY_DIR}/source/configure --prefix=${CMAKE_INSTALL_PREFIX}
     #--Build step-----------------
     BUILD_IN_SOURCE 1
     #--Install step---------------
     INSTALL_COMMAND ""
     #--Output logging-------------
-    LOG_DOWNLOAD ON    
+    LOG_DOWNLOAD ON
   )
   ExternalProject_Get_Property(sqlite-lib source_dir)
   set(SQLITE3_INCLUDE_DIR ${source_dir} CACHE INTERNAL "Path to include folder for SQLite3")
   set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
   set(SQLITE3_LIBRARY "sqlite")
-  set(MYDEPENDENCIES ${DEPENDENCIES} sqlite-lib)  
+  set(MYDEPENDENCIES ${DEPENDENCIES} sqlite-lib)
 endif(NOT SQLITE3_FOUND)
 link_directories(${SQLITE3_LIBRARY_DIR})
 
@@ -254,7 +254,7 @@ if(NOT SQLITECPP_FOUND)
   set(SQLITECPP_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY "SQLiteCpp")
-  set(MYDEPENDENCIES ${DEPENDENCIES} sqlitecpp-lib)  
+  set(MYDEPENDENCIES ${DEPENDENCIES} sqlitecpp-lib)
 endif(NOT SQLITECPP_FOUND)
 
 if(NOT APPLE)
@@ -340,9 +340,9 @@ if(BUILD_MAIN)
   if(NOT "${MYDEPENDENCIES}" STREQUAL "")
     add_dependencies(${MYPROJ_EXE} "${MYDEPENDENCIES}")
   endif(NOT "${MYDEPENDENCIES}" STREQUAL "")
-  target_link_libraries(${MYPROJ_EXE} 
-    ${MYPROJ_LIB} 
-    ${KEPLERIANTOOLBOX_LIBRARY} 
+  target_link_libraries(${MYPROJ_EXE}
+    ${MYPROJ_LIB}
+    ${KEPLERIANTOOLBOX_LIBRARY}
     ${SGP4_LIBRARY}
     ${SQLITECPP_LIBRARY}
     ${SQLITE3_LIBRARY}
@@ -353,18 +353,18 @@ if(BUILD_DOCS)
   find_package(Doxygen)
 
   if(NOT DOXYGEN_FOUND)
-    message(FATAL_ERROR 
+    message(FATAL_ERROR
             "Doxygen is needed to build the documentation. Please make sure it is installed.")
   endif(NOT DOXYGEN_FOUND)
 
-  configure_file(${MYPROJ_PATH}/Doxyfile.in 
+  configure_file(${MYPROJ_PATH}/Doxyfile.in
                  ${PROJECT_BINARY_DIR}/Doxyfile @ONLY IMMEDIATE)
 
   # Add a custom target to run Doxygen whenever the project is built.
   # If you do NOT want the documentation to be generated EVERY time you build the project
   # then leave out the 'ALL' keyword from the command below.
-  add_custom_target(docs ALL COMMAND ${DOXYGEN_EXECUTABLE} 
-                    ${PROJECT_BINARY_DIR}/Doxyfile 
+  add_custom_target(docs ALL COMMAND ${DOXYGEN_EXECUTABLE}
+                    ${PROJECT_BINARY_DIR}/Doxyfile
                     SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
 endif(BUILD_DOCS)
 
@@ -384,20 +384,20 @@ if(BUILD_TESTS)
   if(NOT CATCH_FOUND)
     message(STATUS "Catch will be downloaded when ${CMAKE_PROJECT_NAME} is built")
     ExternalProject_Add(catch
-      PREFIX ${MYEXT_PATH}/Catch  
+      PREFIX ${MYEXT_PATH}/Catch
       #--Download step--------------
       URL https://github.com/kartikkumar/Catch/archive/master.zip
       TIMEOUT 30
       #--Update/Patch step----------
       UPDATE_COMMAND ""
       PATCH_COMMAND ""
-      #--Configure step-------------             
+      #--Configure step-------------
       CONFIGURE_COMMAND ""
-      #--Build step-----------------      
+      #--Build step-----------------
       BUILD_COMMAND ""
-      #--Install step---------------      
+      #--Install step---------------
       INSTALL_COMMAND ""
-      #--Output logging-------------      
+      #--Output logging-------------
       LOG_DOWNLOAD ON
     )
     ExternalProject_Get_Property(catch source_dir)
@@ -433,11 +433,11 @@ if(BUILD_TESTS)
         INSTALL_COMMAND ""
         #--Output logging-------------
         LOG_DOWNLOAD ON
-      )        
+      )
       ExternalProject_Get_Property(eigen-lib source_dir)
       set(EIGEN3_INCLUDE_DIR ${source_dir} CACHE INTERNAL "Path to include folder for Eigen")
     endif(NOT EIGEN3_FOUND)
-    
+
     if(NOT APPLE)
       include_directories(SYSTEM AFTER "${EIGEN3_INCLUDE_DIR}")
     else(APPLE)
@@ -446,9 +446,9 @@ if(BUILD_TESTS)
 
    #string(REPLACE "Elements" "ElementsEigen" TESTS_SRC_EIGEN "${MYPROJ_TEST_SRC}")
    #add_executable(${MYPROJ_TEST}_eigen ${TESTS_SRC_EIGEN})
-   #add_dependencies(${MYPROJ_TEST}_eigen)  
+   #add_dependencies(${MYPROJ_TEST}_eigen)
    #target_link_libraries(${MYPROJ_TEST}_eigen ${SGP4_LIBRARY} ${GSL_LIBRARY})
-   #add_test(NAME ${MYPROJ_TEST}_eigen COMMAND "${MYTESTS_PATH}/${MYPROJ_TEST}_eigen") 
+   #add_test(NAME ${MYPROJ_TEST}_eigen COMMAND "${MYTESTS_PATH}/${MYPROJ_TEST}_eigen")
   endif(BUILD_TESTS_WITH_EIGEN)
 
   add_executable(${MYPROJ_TEST} ${MYPROJ_TEST_SRC})
@@ -457,7 +457,7 @@ if(BUILD_TESTS)
   add_test(NAME ${MYPROJ_TEST} COMMAND "${MYTESTS_PATH}/${MYPROJ_TEST}")
 endif(BUILD_TESTS)
 
-# Install executable. 
+# Install executable.
 # Destination is set by CMAKE_INSTALL_PREFIX and defaults to usual locations, unless overridden by
 # user.
 install(TARGETS ${MYPROJ_EXE} DESTINATION bin)

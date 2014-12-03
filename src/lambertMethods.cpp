@@ -23,7 +23,7 @@
 #include <SML/sml.hpp>
 #include <SAM/sam.hpp>
 
-#include "D2D/lambertScanner.hpp"
+#include "D2D/lambertMethods.hpp"
 
 namespace d2d
 {

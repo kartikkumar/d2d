@@ -1,4 +1,4 @@
-/*    
+/*
  * Copyright (c) 2014 K. Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
@@ -14,7 +14,7 @@
 
 #include <rapidjson/document.h>
 
-#include <D2D/lambertScanner.hpp>
+#include <D2D/lambertMethods.hpp>
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -44,7 +44,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     // Check that only one input has been provided (a JSON file).
     if ( numberOfInputs - 1 != 1 )
     {
-        std::cerr << "ERROR: Number of inputs is wrong. Please only provide a JSON input file!" 
+        std::cerr << "ERROR: Number of inputs is wrong. Please only provide a JSON input file!"
                   << std::endl;
         throw;
     }
@@ -61,7 +61,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         size_t startPosition = inputLine.find_first_not_of( " \t" );
         if ( std::string::npos != startPosition )
-        { 
+        {
             inputLine = inputLine.substr( startPosition );
         }
 
@@ -78,12 +78,12 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     rapidjson::Value::MemberIterator modeIterator = configuration.FindMember( "mode" );
     if ( modeIterator == configuration.MemberEnd( ) )
     {
-        std::cerr << "ERROR: Configuration option \"mode\" could not be found in JSON input!" 
+        std::cerr << "ERROR: Configuration option \"mode\" could not be found in JSON input!"
                   << std::endl;
-        throw;        
+        throw;
     }
     std::string mode = modeIterator->value.GetString( );
-    std::transform( mode.begin( ), mode.end( ), mode.begin( ), ::tolower ); 
+    std::transform( mode.begin( ), mode.end( ), mode.begin( ), ::tolower );
 
     if ( mode.compare( "lambert_scanner" ) == 0 )
     {
@@ -94,7 +94,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     else if ( mode.compare( "fetch_lambert_transfer" ) == 0 )
     {
         std::cout << "Mode:                         " << mode << std::endl;
-        d2d::fetchLambertTransfer( configuration );        
+        d2d::fetchLambertTransfer( configuration );
     }
 
     ///////////////////////////////////////////////////////////////////////////
@@ -108,7 +108,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::cout << std::endl;
     std::cout << "------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
-    
+
     return EXIT_SUCCESS;
 
     ///////////////////////////////////////////////////////////////////////////
