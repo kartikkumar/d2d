@@ -10,7 +10,6 @@ env:
 
 before_install:
   - sudo apt-get install libboost-all-dev
-  - sudo apt-get install libpthread-stubs0-dev
 
 install:
   - mkdir build
