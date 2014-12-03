@@ -82,7 +82,14 @@ else(APPLE)
       "${CMAKE_CXX_FLAGS} -Wall -Woverloaded-virtual -Wold-style-cast -Wnon-virtual-dtor")
 endif(WIN32)
 
-set(MYDEPENDENCIES "")
+include_directories(AFTER "${MYINC_PATH}")
+
+if(NOT MYLIB_PATH)
+  set(MYLIB_PATH "${PROJECT_BINARY_DIR}/lib")
+endif(NOT MYLIB_PATH)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MYLIB_PATH})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MYLIB_PATH})
+add_library(${MYPROJ_LIB} ${MYPROJ_SRC})
 
 # Include script to build external library with CMake.
 include(ExternalProject)
@@ -111,7 +118,7 @@ if(NOT RAPIDJSON_FOUND)
   ExternalProject_Get_Property(rapidjson-lib source_dir)
   set(RAPIDJSON_INCLUDE_DIRS ${source_dir}/include
     CACHE INTERNAL "Path to include folder for RapidJSON")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} "rapidjson-lib")
+  add_dependencies(${MYPROJ_LIB} rapidjson-lib)
 endif(NOT RAPIDJSON_FOUND)
 
 if(NOT APPLE)
@@ -146,7 +153,7 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
   set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
   set(KEPLERIANTOOLBOX_LIBRARY "keplerian_toolbox_static")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} "keplerian_toolbox")
+  add_dependencies(${MYPROJ_LIB} keplerian_toolbox)
 endif(NOT KEPLERIANTOOLBOX_FOUND)
 
 if(NOT APPLE)
@@ -162,8 +169,8 @@ endif(NOT FORCE_DEPENDENCIES_BUILD)
 
 if(NOT SQLITE3_FOUND)
   message(STATUS "SQLite3 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  ExternalProject_Add(sqlite-lib
-    PREFIX ${MYEXT_PATH}/SQLite
+  ExternalProject_Add(sqlite3-lib
+    PREFIX ${MYEXT_PATH}/SQLite3
     #--Download step--------------
     URL https://github.com/kartikkumar/sqlite3-cmake/archive/master.zip
     TIMEOUT 120
@@ -176,11 +183,11 @@ if(NOT SQLITE3_FOUND)
     #--Output logging-------------
     LOG_DOWNLOAD ON
   )
-  ExternalProject_Get_Property(sqlite-lib source_dir)
-  set(SQLITE3_INCLUDE_DIR ${source_dir} CACHE INTERNAL "Path to include folder for SQLite3")
+  ExternalProject_Get_Property(sqlite3-lib source_dir)
+  set(SQLITE3_INCLUDE_DIR ${source_dir}/src CACHE INTERNAL "Path to include folder for SQLite3")
   set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
   set(SQLITE3_LIBRARY "sqlite3-static")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sqlite-lib")
+  add_dependencies(${MYPROJ_LIB} sqlite3-lib)
 endif(NOT SQLITE3_FOUND)
 link_directories(${SQLITE3_LIBRARY_DIR})
 
@@ -197,7 +204,7 @@ endif(NOT FORCE_DEPENDENCIES_BUILD)
 if(NOT SQLITECPP_FOUND)
   message(STATUS "SQLiteCpp will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(sqlitecpp-lib
-    DEPENDS sqlite-lib
+    DEPENDS sqlite3-lib
     PREFIX ${MYEXT_PATH}/SQLiteCpp
     #--Download step--------------
     URL https://github.com/kartikkumar/sqlitecpp/archive/master.zip
@@ -216,7 +223,7 @@ if(NOT SQLITECPP_FOUND)
     CACHE INTERNAL "Path to include folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY "SQLiteCpp")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sqlitecpp-lib")
+  add_dependencies(${MYPROJ_LIB} sqlitecpp-lib)
 endif(NOT SQLITECPP_FOUND)
 
 if(NOT APPLE)
@@ -250,7 +257,7 @@ if(NOT SGP4_FOUND)
   set(SGP4_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SGP4")
   set(SGP4_LIBRARY_DIR ${source_dir}/libsgp4 CACHE INTERNAL "Path to library folder for SGP4")
   set(SGP4_LIBRARY "sgp4")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sgp4-deorbit")
+  add_dependencies(${MYPROJ_LIB} sgp4-deorbit)
 endif(NOT SGP4_FOUND)
 link_directories(${SGP4_LIBRARY_DIR})
 
@@ -283,7 +290,7 @@ if(NOT SML_FOUND)
   )
   ExternalProject_Get_Property(sml-lib source_dir)
   set(SML_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SML")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sml-lib")
+  add_dependencies(${MYPROJ_LIB} sml-lib)
 endif(NOT SML_FOUND)
 
 if(NOT APPLE)
@@ -316,7 +323,7 @@ if(NOT SAM_FOUND)
   )
   ExternalProject_Get_Property(sam-lib source_dir)
   set(SAM_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SAM")
-  set(MYDEPENDENCIES ${MYDEPENDENCIES} "sam-lib")
+  add_dependencies(${MYPROJ_LIB} sam-lib)
 endif(NOT SAM_FOUND)
 
 if(NOT APPLE)
@@ -324,17 +331,6 @@ if(NOT APPLE)
 else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SAM_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
-
-include_directories(AFTER "${MYINC_PATH}")
-
-if(NOT MYLIB_PATH)
-  set(MYLIB_PATH "${PROJECT_BINARY_DIR}/lib")
-endif(NOT MYLIB_PATH)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${MYLIB_PATH})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${MYLIB_PATH})
-add_library(${MYPROJ_LIB} ${MYPROJ_SRC})
-set(MYDEPENDENCIES ${MYDEPENDENCIES})
-add_dependencies(${MYPROJ_LIB} ${MYDEPENDENCIES})
 
 if(BUILD_MAIN)
   if(NOT MYBIN_PATH)
@@ -344,8 +340,8 @@ if(BUILD_MAIN)
   add_executable(${MYPROJ_EXE} ${MYPROJ_EXE_SRC})
   target_link_libraries(${MYPROJ_EXE}
     ${MYPROJ_LIB}
-    ${KEPLERIANTOOLBOX_LIBRARY}
     ${SGP4_LIBRARY}
+    ${KEPLERIANTOOLBOX_LIBRARY}
     ${SQLITECPP_LIBRARY}
     ${SQLITE3_LIBRARY}
   )
