@@ -45,7 +45,7 @@ endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT KEPLERIANTOOLBOX_FOUND)
   message(STATUS "KeplerianToolbox will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  ExternalProject_Add(keplerian_toolbox
+  ExternalProject_Add(keplerian_toolbox-lib
     PREFIX ${EXTERNAL_PATH}/KeplerianToolbox
     #--Download step--------------
     URL https://github.com/esa/pykep/archive/master.zip
@@ -59,7 +59,7 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
     #--Output logging-------------
     LOG_DOWNLOAD ON
   )
-  ExternalProject_Get_Property(keplerian_toolbox source_dir)
+  ExternalProject_Get_Property(keplerian_toolbox-lib source_dir)
   set(KEPLERIANTOOLBOX_INCLUDE_DIRS ${source_dir}/src
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
   set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}
