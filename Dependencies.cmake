@@ -11,8 +11,7 @@ endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT RAPIDJSON_FOUND)
   message(STATUS "RapidJSON will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  set(RAPIDJSON_DEPENDENCY "rapidjson-lib")
-  ExternalProject_Add(${RAPIDJSON_DEPENDENCY}
+  ExternalProject_Add(rapidjson-lib
     PREFIX ${EXTERNAL_PATH}/RapidJson
     #--Download step--------------
     URL https://github.com/miloyip/rapidjson/archive/master.zip
@@ -46,8 +45,7 @@ endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT KEPLERIANTOOLBOX_FOUND)
   message(STATUS "KeplerianToolbox will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  set(KEPLERIANTOOLBOX_DEPENDENCY "keplerian_toolbox-lib")
-  ExternalProject_Add(${KEPLERIANTOOLBOX_DEPENDENCY}
+  ExternalProject_Add(keplerian_toolbox-lib
     PREFIX ${EXTERNAL_PATH}/KeplerianToolbox
     #--Download step--------------
     URL https://github.com/esa/pykep/archive/master.zip
@@ -121,9 +119,8 @@ endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT SQLITECPP_FOUND)
   message(STATUS "SQLiteCpp will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  set(SQLITECPP_DEPENDENCY "sqlitecpp-lib")
   if(NOT SQLITE3_FOUND)
-    ExternalProject_Add(${SQLITECPP_DEPENDENCY}
+    ExternalProject_Add(sqlitecpp-lib
       DEPENDS sqlite3-lib
       PREFIX ${EXTERNAL_PATH}/SQLiteCpp
       #--Download step--------------
@@ -176,8 +173,7 @@ endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT SGP4_FOUND)
   message(STATUS "SGP4 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  set(SGP4_DEPENDENCY "sgp4-deorbit")
-  ExternalProject_Add(${SGP4_DEPENDENCY}
+  ExternalProject_Add(sgp4-deorbit
     PREFIX ${EXTERNAL_PATH}/SGP4
     #--Download step--------------
     URL https://github.com/kartikkumar/sgp4deorbit/archive/master.zip

@@ -105,11 +105,18 @@ include(Dependencies.cmake)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${LIB_PATH})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${LIB_PATH})
 add_library(${LIB_NAME} ${SRC})
-add_dependencies(${LIB_NAME} ${DEPENDENCIES}
-  ${KEPLERIANTOOLBOX_DEPENDENCY}
-  ${SGP4_DEPENDENCY}
-  ${RAPIDJSON_DEPENDENCY}
-  ${SQLITECPP_DEPENDENCY})
+if(NOT RAPIDJSON_FOUND)
+  add_dependencies(${LIB_NAME} rapidjson-lib)
+endif(NOT RAPIDJSON_FOUND)
+if(NOT KEPLERIANTOOLBOX_FOUND)
+  add_dependencies(${LIB_NAME} keplerian_toolbox-lib)
+endif(NOT KEPLERIANTOOLBOX_FOUND)
+if(NOT SQLITECPP_FOUND)
+  add_dependencies(${LIB_NAME} sqlitecpp-lib)
+endif(NOT SQLITECPP_FOUND)
+if(NOT SGP4_FOUND)
+  add_dependencies(${LIB_NAME} sgp4-deorbit)
+endif(NOT SGP4_FOUND)
 
 if(BUILD_MAIN)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_PATH})
