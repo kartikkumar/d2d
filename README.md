@@ -103,8 +103,8 @@ TODO
 
   - Find a way to provide an option to clean installation.
   - Parallelize lambert_scanner and atom_scanner using OpenMP if present
-  - Add lambert_single and atom_single modes to compute single transfers
+  - Add atom_single mode to compute single transfers
   - Add option to automatically download TLE catalog
-  - Fix issue with multi-rev Lambert solutions
   - Add status indicator in console for scanning modes
   - Build GUI interface
+  - Add option to compute transfers in 2D (by setting z-component to zero)
