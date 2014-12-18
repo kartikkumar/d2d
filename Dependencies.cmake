@@ -5,17 +5,17 @@
 # Include script to build external library with CMake.
 include(ExternalProject)
 
-if(NOT FORCE_DEPENDENCIES_BUILD)
+if(NOT BUILD_DEPENDENCIES)
   find_package(rapidjson)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
+endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT RAPIDJSON_FOUND)
   message(STATUS "RapidJSON will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(rapidjson-lib
-    PREFIX ${MYEXT_PATH}/RapidJson
+    PREFIX ${EXTERNAL_PATH}/RapidJson
     #--Download step--------------
     URL https://github.com/miloyip/rapidjson/archive/master.zip
-    TIMEOUT 120
+    TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
     CONFIGURE_COMMAND ""
@@ -29,7 +29,6 @@ if(NOT RAPIDJSON_FOUND)
   ExternalProject_Get_Property(rapidjson-lib source_dir)
   set(RAPIDJSON_INCLUDE_DIRS ${source_dir}/include
     CACHE INTERNAL "Path to include folder for RapidJSON")
-  add_dependencies(${MYPROJ_LIB} rapidjson-lib)
 endif(NOT RAPIDJSON_FOUND)
 
 if(NOT APPLE)
@@ -38,17 +37,19 @@ else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${RAPIDJSON_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 
-if(NOT FORCE_DEPENDENCIES_BUILD)
+# -------------------------------
+
+if(NOT BUILD_DEPENDENCIES)
   find_package(KeplerianToolbox)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
+endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT KEPLERIANTOOLBOX_FOUND)
   message(STATUS "KeplerianToolbox will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(keplerian_toolbox
-    PREFIX ${MYEXT_PATH}/KeplerianToolbox
+    PREFIX ${EXTERNAL_PATH}/KeplerianToolbox
     #--Download step--------------
     URL https://github.com/esa/pykep/archive/master.zip
-    TIMEOUT 120
+    TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
     #--Build step-----------------
@@ -64,7 +65,6 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
   set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
   set(KEPLERIANTOOLBOX_LIBRARY "keplerian_toolbox_static")
-  add_dependencies(${MYPROJ_LIB} keplerian_toolbox)
 endif(NOT KEPLERIANTOOLBOX_FOUND)
 
 if(NOT APPLE)
@@ -74,19 +74,21 @@ else(APPLE)
 endif(NOT APPLE)
 link_directories(${KEPLERIANTOOLBOX_LIBRARY_DIR})
 
+# -------------------------------
+
 find_package(Threads)
 
-if(NOT FORCE_DEPENDENCIES_BUILD)
+if(NOT BUILD_DEPENDENCIES)
   find_package(sqlite3)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
+endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT SQLITE3_FOUND)
   message(STATUS "SQLite3 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(sqlite3-lib
-    PREFIX ${MYEXT_PATH}/SQLite3
+    PREFIX ${EXTERNAL_PATH}/SQLite3
     #--Download step--------------
     URL https://github.com/kartikkumar/sqlite3-cmake/archive/master.zip
-    TIMEOUT 120
+    TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
     #--Build step-----------------
@@ -100,7 +102,6 @@ if(NOT SQLITE3_FOUND)
   set(SQLITE3_INCLUDE_DIR ${source_dir}/src CACHE INTERNAL "Path to include folder for SQLite3")
   set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
   set(SQLITE3_LIBRARY "sqlite3-static")
-  add_dependencies(${MYPROJ_LIB} sqlite3-lib)
 endif(NOT SQLITE3_FOUND)
 link_directories(${SQLITE3_LIBRARY_DIR})
 
@@ -110,19 +111,21 @@ else(NOT APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITE3_INCLUDE_DIR}\"")
 endif(NOT APPLE)
 
-if(NOT FORCE_DEPENDENCIES_BUILD)
+# -------------------------------
+
+if(NOT BUILD_DEPENDENCIES)
   find_package(SQLiteCpp 0.099)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
+endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT SQLITECPP_FOUND)
   message(STATUS "SQLiteCpp will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   if(NOT SQLITE3_FOUND)
     ExternalProject_Add(sqlitecpp-lib
       DEPENDS sqlite3-lib
-      PREFIX ${MYEXT_PATH}/SQLiteCpp
+      PREFIX ${EXTERNAL_PATH}/SQLiteCpp
       #--Download step--------------
       URL https://github.com/kartikkumar/sqlitecpp/archive/master.zip
-      TIMEOUT 120
+      TIMEOUT 30
       #--Update/Patch step----------
       #--Configure step-------------
       #--Build step-----------------
@@ -134,10 +137,10 @@ if(NOT SQLITECPP_FOUND)
     )
   else(NOT SQLITE3_FOUND)
     ExternalProject_Add(sqlitecpp-lib
-    PREFIX ${MYEXT_PATH}/SQLiteCpp
+    PREFIX ${EXTERNAL_PATH}/SQLiteCpp
     #--Download step--------------
     URL https://github.com/kartikkumar/sqlitecpp/archive/master.zip
-    TIMEOUT 120
+    TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
     #--Build step-----------------
@@ -153,7 +156,6 @@ if(NOT SQLITECPP_FOUND)
     CACHE INTERNAL "Path to include folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLiteCpp")
   set(SQLITECPP_LIBRARY "SQLiteCpp")
-  add_dependencies(${MYPROJ_LIB} sqlitecpp-lib)
 endif(NOT SQLITECPP_FOUND)
 
 if(NOT APPLE)
@@ -163,17 +165,19 @@ else(NOT APPLE)
 endif(NOT APPLE)
 link_directories(${SQLITECPP_LIBRARY_DIR})
 
-if(NOT FORCE_DEPENDENCIES_BUILD)
+# -------------------------------
+
+if(NOT BUILD_DEPENDENCIES)
   find_package(SGP4)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
+endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT SGP4_FOUND)
   message(STATUS "SGP4 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(sgp4-deorbit
-    PREFIX ${MYEXT_PATH}/SGP4
+    PREFIX ${EXTERNAL_PATH}/SGP4
     #--Download step--------------
     URL https://github.com/kartikkumar/sgp4deorbit/archive/master.zip
-    TIMEOUT 120
+    TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
     #--Build step-----------------
@@ -187,7 +191,6 @@ if(NOT SGP4_FOUND)
   set(SGP4_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SGP4")
   set(SGP4_LIBRARY_DIR ${source_dir}/libsgp4 CACHE INTERNAL "Path to library folder for SGP4")
   set(SGP4_LIBRARY "sgp4")
-  add_dependencies(${MYPROJ_LIB} sgp4-deorbit)
 endif(NOT SGP4_FOUND)
 link_directories(${SGP4_LIBRARY_DIR})
 
@@ -197,18 +200,22 @@ else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 
-if(NOT FORCE_DEPENDENCIES_BUILD)
+# -------------------------------
+
+if(NOT BUILD_DEPENDENCIES)
   find_package(SML)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
+endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT SML_FOUND)
   message(STATUS "SML will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(sml-lib
-    PREFIX ${MYEXT_PATH}/SML
+    PREFIX ${EXTERNAL_PATH}/SML
     #--Download step--------------
     URL https://github.com/kartikkumar/sml/archive/master.zip
-    TIMEOUT 120
+    TIMEOUT 30
     #--Update/Patch step----------
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
     #--Configure step-------------
     CONFIGURE_COMMAND ""
     #--Build step-----------------
@@ -220,7 +227,6 @@ if(NOT SML_FOUND)
   )
   ExternalProject_Get_Property(sml-lib source_dir)
   set(SML_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SML")
-  add_dependencies(${MYPROJ_LIB} sml-lib)
 endif(NOT SML_FOUND)
 
 if(NOT APPLE)
@@ -229,65 +235,56 @@ else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SML_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 
-if(NOT FORCE_DEPENDENCIES_BUILD)
-  find_package(SAM)
-endif(NOT FORCE_DEPENDENCIES_BUILD)
+# -------------------------------
 
-if(NOT SAM_FOUND)
-  message(STATUS "SAM will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  if(NOT SML_FOUND)
-    ExternalProject_Add(sam-lib
-      DEPENDS sml-lib
-      PREFIX ${MYEXT_PATH}/SAM
-      #--Download step--------------
-      URL https://github.com/kartikkumar/sam/archive/master.zip
-      TIMEOUT 120
-      #--Update/Patch step----------
-      #--Configure step-------------
-      CONFIGURE_COMMAND ""
-      #--Build step-----------------
-      BUILD_COMMAND ""
-      #--Install step---------------
-      INSTALL_COMMAND ""
-      #--Output logging-------------
-      LOG_DOWNLOAD ON
-    )
-  else(NOT SML_FOUND)
-    ExternalProject_Add(sam-lib
-      PREFIX ${MYEXT_PATH}/SAM
-      #--Download step--------------
-      URL https://github.com/kartikkumar/sam/archive/master.zip
-      TIMEOUT 120
-      #--Update/Patch step----------
-      #--Configure step-------------
-      CONFIGURE_COMMAND ""
-      #--Build step-----------------
-      BUILD_COMMAND ""
-      #--Install step---------------
-      INSTALL_COMMAND ""
-      #--Output logging-------------
-      LOG_DOWNLOAD ON
-    )
-  endif(NOT SML_FOUND)
-  ExternalProject_Get_Property(sam-lib source_dir)
-  set(SAM_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for SAM")
-  add_dependencies(${MYPROJ_LIB} sam-lib)
-endif(NOT SAM_FOUND)
+if(NOT BUILD_DEPENDENCIES)
+  find_package(Astro)
+endif(NOT BUILD_DEPENDENCIES)
+
+if(NOT ASTRO_FOUND)
+  message(STATUS "Astro will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(astro-lib
+    DEPENDS sml-lib
+    PREFIX ${EXTERNAL_PATH}/Astro
+    #--Download step--------------
+    URL https://github.com/kartikkumar/astro/archive/master.zip
+    TIMEOUT 30
+    #--Update/Patch step----------
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    #--Configure step-------------
+    CONFIGURE_COMMAND ""
+    #--Build step-----------------
+    BUILD_COMMAND ""
+    #--Install step---------------
+    INSTALL_COMMAND ""
+    #--Output logging-------------
+    LOG_DOWNLOAD ON
+  )
+  ExternalProject_Get_Property(astro-lib source_dir)
+  set(ASTRO_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for Astro")
+endif(NOT ASTRO_FOUND)
 
 if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${SAM_INCLUDE_DIRS}")
+  include_directories(SYSTEM AFTER "${ASTRO_INCLUDE_DIRS}")
 else(APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SAM_INCLUDE_DIRS}\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${ASTRO_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
 
+# -------------------------------
+
 if(BUILD_TESTS)
+  if(NOT BUILD_DEPENDENCIES)
+    find_package(CATCH)
+  endif(NOT BUILD_DEPENDENCIES)
+
   if(NOT CATCH_FOUND)
     message(STATUS "Catch will be downloaded when ${CMAKE_PROJECT_NAME} is built")
     ExternalProject_Add(catch
-      PREFIX ${MYEXT_PATH}/Catch
+      PREFIX ${EXTERNAL_PATH}/Catch
       #--Download step--------------
       URL https://github.com/kartikkumar/Catch/archive/master.zip
-      TIMEOUT 120
+      TIMEOUT 30
       #--Update/Patch step----------
       UPDATE_COMMAND ""
       PATCH_COMMAND ""
@@ -311,17 +308,17 @@ if(BUILD_TESTS)
   endif(NOT APPLE)
 
   if(BUILD_TESTS_WITH_EIGEN)
-    if(NOT FORCE_DEPENDENCIES_BUILD)
+    if(NOT BUILD_DEPENDENCIES)
       find_package(Eigen3)
-    endif(NOT FORCE_DEPENDENCIES_BUILD)
+    endif(NOT BUILD_DEPENDENCIES)
 
     if(NOT EIGEN3_FOUND)
       message(STATUS "Eigen will be downloaded when ${CMAKE_PROJECT_NAME} is built")
       ExternalProject_Add(eigen-lib
-        PREFIX ${MYEXT_PATH}/Eigen
+        PREFIX ${EXTERNAL_PATH}/Eigen
         #--Download step--------------
         URL http://bitbucket.org/eigen/eigen/get/3.2.2.tar.gz
-        TIMEOUT 120
+        TIMEOUT 30
         #--Update/Patch step----------
         UPDATE_COMMAND ""
         PATCH_COMMAND ""
