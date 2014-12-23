@@ -40,8 +40,16 @@ docs
 temp
 debug
 external
+
+# Config & data files
+*.json
 config/*
 !config/config.json.example
+data/*
+!data/catalog/
+data/catalog/*
+!data/catalog/test_catalog.txt
+
 
 # Project files
 *.sublime*

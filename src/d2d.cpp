@@ -116,7 +116,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::cout << std::endl;
     std::cout << "------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
-    std::cout << "                   Project exited successfully!                   " << std::endl;
+    std::cout << "                         Exited successfully!                     " << std::endl;
     std::cout << std::endl;
     std::cout << "------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;

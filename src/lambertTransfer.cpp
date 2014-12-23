@@ -212,7 +212,16 @@ void executeLambertTransfer( const rapidjson::Document& config )
         arrivalOrbitFile.close( );
 
         // Sample arrival path.
-        const StateHistory arrivalPath = sampleKeplerOrbit( arrivalState,
+    Eci tleArrivalStateStart = sgp4Arrival.FindPosition( input.departureEpoch );
+
+    Vector6 arrivalStateStart;
+    arrivalStateStart[ astro::xPositionIndex ] = tleArrivalStateStart.Position( ).x;
+    arrivalStateStart[ astro::yPositionIndex ] = tleArrivalStateStart.Position( ).y;
+    arrivalStateStart[ astro::zPositionIndex ] = tleArrivalStateStart.Position( ).z;
+    arrivalStateStart[ astro::xVelocityIndex ] = tleArrivalStateStart.Velocity( ).x;
+    arrivalStateStart[ astro::yVelocityIndex ] = tleArrivalStateStart.Velocity( ).y;
+    arrivalStateStart[ astro::zVelocityIndex ] = tleArrivalStateStart.Velocity( ).z;
+        const StateHistory arrivalPath = sampleKeplerOrbit( arrivalStateStart,
                                                             input.timeOfFlight,
                                                             input.outputSteps,
                                                             earthGravitationalParameter,
