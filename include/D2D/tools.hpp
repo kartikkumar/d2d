@@ -4,14 +4,18 @@
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
-#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <string>
 
 #include <boost/array.hpp>
 
 #include <rapidjson/document.h>
+
+#include <libsgp4/Eci.h>
+
+#include <Astro/astro.hpp>
 
 namespace d2d
 {
@@ -47,43 +51,100 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
                                 const double gravitationalParameter,
                                 const double initialEpoch = 0.0 );
 
-//! Print datum to stream.
+//! Convert SGP4 ECI object to state vector.
 /*!
- * Prints a specified datum to stream provided, given a specified width and a filler character.
+ * Converts a Cartesian state stored in an object of the Eci class in the SGP4 library () into a
+ * boost::array of 6 elements.
  *
- * @tparam     DataType  Type for specified datum
+ * @sa Eci, boost::array
+ * @param  state State stored in Eci object
+ * @return       State stored in boost::array
+ */
+inline Vector6 getStateVector( const Eci state )
+{
+    Vector6 result;
+    result[ astro::xPositionIndex ] = state.Position( ).x;
+    result[ astro::yPositionIndex ] = state.Position( ).y;
+    result[ astro::zPositionIndex ] = state.Position( ).z;
+    result[ astro::xVelocityIndex ] = state.Velocity( ).x;
+    result[ astro::yVelocityIndex ] = state.Velocity( ).y;
+    result[ astro::zVelocityIndex ] = state.Velocity( ).z;
+    return result;
+}
+
+//! Print value to stream.
+/*!
+ * Prints a specified value to stream provided, given a specified width and a filler character.
+ *
+ * @tparam     DataType  Type for specified value
  * @param[out] stream    Output stream
- * @param[in]  datum     Specified datum to print
- * @param[in]  width     Width of datum printed to stream, in terms of number of characters
+ * @param[in]  value     Specified value to print
+ * @param[in]  width     Width of value printed to stream, in terms of number of characters
  *                       (default = 25)
  * @param[in]  filler    Character used to fill fixed-width (default = ' ')
  */
 template< typename DataType >
 inline void print( std::ostream& stream,
-                   const DataType datum,
+                   const DataType value,
                    const int width = 25,
                    const char filler = ' ' )
 {
-    stream << std::left << std::setw( width ) << std::setfill( filler ) << datum;
+    stream << std::left << std::setw( width ) << std::setfill( filler ) << value;
 }
 
+//! Print metadata parameter to stream.
+/*!
+ * Prints metadata parameter to stream provided, given a specified name, value, units, and
+ * delimiter.
+ *
+ * @tparam     DataType      Type for specified value
+ * @param[out] stream        Output stream
+ * @param[in]  parameterName Name for metadata parameter
+ * @param[in]  value         Specified value to print
+ * @param[in]  units         Units for value
+ * @param[in]  delimiter     Character used to delimiter entries in stream (default = ' ')
+ */
 template< typename DataType >
-inline void printMetaParameter( std::ostream& stream,
-                                const std::string& parameterName,
-                                const DataType datum,
-                                const std::string& unit,
-                                const char delimiter = ',' )
+inline void print( std::ostream& stream,
+                   const std::string& parameterName,
+                   const DataType value,
+                   const std::string& units,
+                   const char delimiter = ',' )
 {
     print( stream, parameterName );
     stream << delimiter;
-    print( stream, datum );
+    print( stream, value );
     stream << delimiter;
-    print( stream, unit );
+    print( stream, units );
     stream << std::endl;
 }
 
-inline ConfigIterator findParameter( const rapidjson::Document& config,
-                                     const std::string& parameterName )
+//! Print state history to stream.
+/*!
+ * Prints state history to stream provided, given a specified tate history object, a stream header,
+ * and a number of digits of precision.
+ *
+ * @param[out] stream        Output stream
+ * @param[in]  stateHistory  State history containing epochs and associated state vectors
+ * @param[in]  streamHeader  A header for the output stream (file header if a file stream is
+ *                           provided) (default = "")
+ * @param[in]  precision     Digits of precision for state history entries printed to stream
+ *                           (default = number of digits of precision for a double)
+ */
+void print( std::ostream& stream,
+            const StateHistory stateHistory,
+            const std::string& streamHeader = "",
+            const int precision = std::numeric_limits< double >::digits10 );
+
+//! Find parameter.
+/* Finds parameter in config stored in JSON document. An error is thrown if the parameter cannot
+ * be found. If the parameter is found, an iterator to the member in the JSON document is returned.
+ *
+ * @param[in] config        JSON document containing config parameters
+ * @param[in] parameterName Name of parameter to find
+ * @return                  Iterator to parameter retreived from JSON document
+ */
+inline ConfigIterator find( const rapidjson::Document& config, const std::string& parameterName )
 {
     const ConfigIterator iterator = config.FindMember( parameterName.c_str( ) );
     if ( iterator == config.MemberEnd( ) )
@@ -92,28 +153,6 @@ inline ConfigIterator findParameter( const rapidjson::Document& config,
         throw;
     }
     return iterator;
-}
-
-inline void printStateHistory( std::ostream& stream,
-                          const StateHistory stateHistory,
-                          const std::string& fileHeader,
-                          const int precision = std::numeric_limits< double >::digits10 )
-{
-        stream << fileHeader << std::endl;
-
-        for ( StateHistory::const_iterator iteratorState = stateHistory.begin( );
-              iteratorState != stateHistory.end( );
-              iteratorState++ )
-        {
-            stream << std::setprecision( precision )
-                   << iteratorState->first       << ","
-                   << iteratorState->second[ 0 ] << ","
-                   << iteratorState->second[ 1 ] << ","
-                   << iteratorState->second[ 2 ] << ","
-                   << iteratorState->second[ 3 ] << ","
-                   << iteratorState->second[ 4 ] << ","
-                   << iteratorState->second[ 5 ] << std::endl;
-        }
 }
 
 } // namespace d2d

@@ -1,0 +1,69 @@
+// Copyright (c) 2014 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "lambert_transfer" application mode.
+{
+    "mode"                      : "lambert_transfer",
+
+    // Set TLE (2-line or 3-line block from catalog) for departure object.
+    // Note that departure_tle_line0 should be left empty for 2-line variant.
+    // Be careful of accidentally altering line lenght with e.g., trailing whitespaces.
+    "departure_tle_line0"       : "",
+    "departure_tle_line1"       : "",
+    "departure_tle_line2"       : "",
+
+    // Set TLE (2-line or 3-line block from catalog) for arrival object.
+    // Note that arrival_tle_line0 should be left empty for 2-line variant
+    // Be careful of accidentally altering line lenght with e.g., trailing whitespaces.
+    "arrival_tle_line0"         : "",
+    "arrival_tle_line1"         : "",
+    "arrival_tle_line2"         : "",
+
+    // Set departure epoch for transfer.
+    // Format: [year,month,day,hours,minutes,seconds] (all elements in the array must be integers)/
+    // The elements year, month and day are required. The others are optional but must be included
+    // from left to right.
+    // If departure_epoch array is left empty, the TLE epoch for the departure object is assumed.
+    "departure_epoch"           : [],
+
+    // Set time-of-flight for transfer (s).
+    "time_of_flight"            : ,
+
+    // Set flag indicating if transfers are prograde. If set to false, retrograde transfers are
+    // computed.
+    "is_prograde"               : ,
+
+    // Set maximum number of transfer revolutions.
+    "revolutions_maximum"       : ,
+
+    // Set which solutions should be written to output files.
+    // Set solution_output to "all" if all solutions should be written to file. Note that this
+    // means that potentially (2 * revolutions_maximum + 1) solutions will be written to file.
+    // Set solution_output to "best" to select the lowest Delta-V solution to be written to file.
+    // Options: [all, best]
+    "solution_output"           : "best",
+
+    // Set number of sample time steps to output for departure & arrival orbits, and transfer
+    // trajectory.
+    "output_steps"              : ,
+
+    // Set output files to write transfer to.
+    // "output_directory"        path to the output directory (relative or absolute)
+    //                           N.B: the directory must exist already!
+    // "metadata"                simulation metadata
+    // "departure_orbit"         Sampled departure orbit ephemeris in Cartesian elements
+    // "departure_path"          Sampled departure object's path ephemeris in Cartesian elements
+    // "arrival_orbit"           Sampled arrival orbit ephemeris in Cartesian elements
+    // "arrival_path"            Sampled arrival object's path ephemeris in Cartesian elements
+    // "transfer_orbit"          Sampled transfer orbit ephemeris in Cartesian elements
+    // "transfer_path"           Sampled transfer path ephemeris in Cartesian elements
+    "output_directory"          : ".",
+    "metadata"                  : "metadata.csv",
+    "departure_orbit"           : "departure_orbit.csv",
+    "departure_path"            : "departure_path.csv",
+    "arrival_orbit"             : "arrival_orbit.csv",
+    "arrival_path"              : "arrival_path.csv",
+    "transfer_orbit"            : "transfer_orbit.csv",
+    "transfer_path"             : "transfer_path.csv"
+}

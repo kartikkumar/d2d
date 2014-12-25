@@ -6,12 +6,9 @@
 
 #include <algorithm>
 #include <fstream>
-// #include <iomanip>
 #include <iostream>
-// #include <limits>
 #include <map>
 #include <sstream>
-// #include <vector>
 
 #include <keplerian_toolbox.h>
 
@@ -42,15 +39,8 @@ void executeLambertTransfer( const rapidjson::Document& config )
     std::cout << std::endl;
 
     SGP4 sgp4Departure( input.departureObject );
-    Eci tleDepartureState = sgp4Departure.FindPosition( input.departureEpoch );
-
-    Vector6 departureState;
-    departureState[ astro::xPositionIndex ] = tleDepartureState.Position( ).x;
-    departureState[ astro::yPositionIndex ] = tleDepartureState.Position( ).y;
-    departureState[ astro::zPositionIndex ] = tleDepartureState.Position( ).z;
-    departureState[ astro::xVelocityIndex ] = tleDepartureState.Velocity( ).x;
-    departureState[ astro::yVelocityIndex ] = tleDepartureState.Velocity( ).y;
-    departureState[ astro::zVelocityIndex ] = tleDepartureState.Velocity( ).z;
+    const Eci tleDepartureState = sgp4Departure.FindPosition( input.departureEpoch );
+    const Vector6 departureState = getStateVector( tleDepartureState );
 
     Vector3 departurePosition;
     std::copy( departureState.begin( ), departureState.begin( ) + 3, departurePosition.begin( ) );
@@ -60,15 +50,8 @@ void executeLambertTransfer( const rapidjson::Document& config )
 
     SGP4 sgp4Arrival( input.arrivalObject );
     const DateTime arrivalEpoch = input.departureEpoch.AddSeconds( input.timeOfFlight );
-    Eci tleArrivalState = sgp4Arrival.FindPosition( arrivalEpoch );
-
-    Vector6 arrivalState;
-    arrivalState[ astro::xPositionIndex ] = tleArrivalState.Position( ).x;
-    arrivalState[ astro::yPositionIndex ] = tleArrivalState.Position( ).y;
-    arrivalState[ astro::zPositionIndex ] = tleArrivalState.Position( ).z;
-    arrivalState[ astro::xVelocityIndex ] = tleArrivalState.Velocity( ).x;
-    arrivalState[ astro::yVelocityIndex ] = tleArrivalState.Velocity( ).y;
-    arrivalState[ astro::zVelocityIndex ] = tleArrivalState.Velocity( ).z;
+    const Eci tleArrivalState = sgp4Arrival.FindPosition( arrivalEpoch );
+    const Vector6 arrivalState = getStateVector( tleArrivalState );
 
     Vector3 arrivalPosition;
     std::copy( arrivalState.begin( ), arrivalState.begin( ) + 3, arrivalPosition.begin( ) );
@@ -102,6 +85,12 @@ void executeLambertTransfer( const rapidjson::Document& config )
             std::cout << "The lowest Delta-V solution found will be written to file ... "
                       << std::endl;
         }
+
+        else
+        {
+            std::cerr << "ERROR: Invalid option for \"solution_output\"!" << std::endl;
+            throw;
+        }
     }
 
     else
@@ -118,45 +107,70 @@ void executeLambertTransfer( const rapidjson::Document& config )
     std::cout << "Writing output files ... " << std::endl;
     std::cout << std::endl;
 
+    // Compute Delta-Vs for transfer and determine index of lowest.
+    typedef std::vector< double > TransferDeltaVs;
+    TransferDeltaVs transferDeltaVs( numberOfSolutions );
+
+    int minimumDeltaVIndex = 0;
+
     for ( int i = 0; i < numberOfSolutions; i++ )
+    {
+        // Compute total Delta-V for transfer.
+        const Vector3 transferDepartureVelocity = targeter.get_v1( )[ i ];
+        const Vector3 transferArrivalVelocity = targeter.get_v2( )[ i ];
+        transferDeltaVs[ i ]
+            = sml::norm< double >(
+                sml::add( transferDepartureVelocity, sml::multiply( departureVelocity, -1.0 ) ) )
+                + sml::norm< double >(
+                    sml::add( transferArrivalVelocity, sml::multiply( arrivalVelocity, -1.0 ) ) );
+
+        if ( i > 0 && ( transferDeltaVs[ i ] < transferDeltaVs[ minimumDeltaVIndex ] ) )
+        {
+            minimumDeltaVIndex = i;
+        }
+
+    }
+
+    int startId = 0;
+    int endId = numberOfSolutions;
+
+    if ( input.solutionOutput.compare( "best" ) == 0 )
+    {
+        startId = minimumDeltaVIndex;
+        endId = startId + 1;
+    }
+
+    // Write solutions to files.
+    for ( int i = startId; i < endId; i++ )
     {
         const int solutionId = i + 1;
         const int revolutions = static_cast< int >( ( i + 1 ) / 2 );
         std::cout << "Writing solution #" << solutionId << " ... " << std::endl;
-
-        // Compute total Delta-V for transfer.
-        const Vector3 transferDepartureVelocity = targeter.get_v1( )[ i ];
-        const Vector3 transferArrivalVelocity = targeter.get_v2( )[ i ];
-        const double transferDeltaV
-            = sml::norm< double >(
-                sml::add( transferDepartureVelocity, sml::multiply( departureVelocity, -1.0 ) ) );
-              + sml::norm< double >(
-                    sml::add( transferArrivalVelocity, sml::multiply( arrivalVelocity, -1.0 ) ) );
 
         // Write metadata to file.
         std::ostringstream metadataPath;
         metadataPath << input.outputDirectory << "/sol" << solutionId << "_"
                      << input.metadataFilename;
         std::ofstream metadataFile( metadataPath.str( ).c_str( ) );
-        printMetaParameter(
-            metadataFile, "departure_id", input.departureObject.NoradNumber( ), "-" );
-        printMetaParameter( metadataFile, "arrival_id", input.arrivalObject.NoradNumber( ), "-" );
-        printMetaParameter(
-            metadataFile, "departure_epoch", input.departureEpoch.ToJulian( ), "JD" );
-        printMetaParameter( metadataFile, "time_of_flight", targeter.get_tof( ), "s" );
-        printMetaParameter( metadataFile, "is_prograde", input.isPrograde, "-" );
-        printMetaParameter( metadataFile, "revolutions", revolutions, "-" );
-        printMetaParameter( metadataFile, "transfer_delta_v", transferDeltaV, "km/s" );
+        print( metadataFile, "departure_id", input.departureObject.NoradNumber( ), "-" );
+        print( metadataFile, "arrival_id", input.arrivalObject.NoradNumber( ), "-" );
+        print( metadataFile, "departure_epoch", input.departureEpoch.ToJulian( ), "JD" );
+        print( metadataFile, "time_of_flight", targeter.get_tof( ), "s" );
+        print( metadataFile, "is_prograde", input.isPrograde, "-" );
+        print( metadataFile, "revolutions", revolutions, "-" );
+        print( metadataFile, "transfer_delta_v", transferDeltaVs[ i ], "km/s" );
         metadataFile.close( );
 
         // Defined common header line for all the ephemeric files generated below.
         const std::string ephemerisFileHeader = "jd,x,y,z,xdot,ydot,zdot";
 
         // Compute period of departure orbit.
-        const Vector6 departureStateKepler = astro::convertCartesianToKeplerianElements(
-            departureState, earthGravitationalParameter );
-        const double departureOrbitalPeriod = astro::computeKeplerOrbitalPeriod(
-            departureStateKepler[ astro::semiMajorAxisIndex ], earthGravitationalParameter );
+        const Vector6 departureStateKepler
+            = astro::convertCartesianToKeplerianElements( departureState,
+                                                          earthGravitationalParameter );
+        const double departureOrbitalPeriod
+            = astro::computeKeplerOrbitalPeriod( departureStateKepler[ astro::semiMajorAxisIndex ],
+                                                 earthGravitationalParameter );
 
         // Sample departure orbit.
         const StateHistory departureOrbit = sampleKeplerOrbit( departureState,
@@ -170,7 +184,7 @@ void executeLambertTransfer( const rapidjson::Document& config )
         departureOrbitFilePath << input.outputDirectory << "/sol" << solutionId << "_"
                                << input.departureOrbitFilename;
         std::ofstream departureOrbitFile( departureOrbitFilePath.str( ).c_str( ) );
-        printStateHistory( departureOrbitFile, departureOrbit, ephemerisFileHeader );
+        print( departureOrbitFile, departureOrbit, ephemerisFileHeader );
         departureOrbitFile.close( );
 
         // Sample departure path.
@@ -187,14 +201,16 @@ void executeLambertTransfer( const rapidjson::Document& config )
         departurePathFilePath << input.outputDirectory << "/sol" << solutionId << "_"
                               << input.departurePathFilename;
         std::ofstream departurePathFile( departurePathFilePath.str( ).c_str( ) );
-        printStateHistory( departurePathFile, departurePath, ephemerisFileHeader );
+        print( departurePathFile, departurePath, ephemerisFileHeader );
         departurePathFile.close( );
 
         // Compute period of arrival orbit.
-        const Vector6 arrivalStateKepler = astro::convertCartesianToKeplerianElements(
-            arrivalState, earthGravitationalParameter );
-        const double arrivalOrbitalPeriod = astro::computeKeplerOrbitalPeriod(
-            arrivalStateKepler[ astro::semiMajorAxisIndex ], earthGravitationalParameter );
+        const Vector6 arrivalStateKepler
+            = astro::convertCartesianToKeplerianElements( arrivalState,
+                                                          earthGravitationalParameter );
+        const double arrivalOrbitalPeriod
+            = astro::computeKeplerOrbitalPeriod( arrivalStateKepler[ astro::semiMajorAxisIndex ],
+                                                 earthGravitationalParameter );
 
         // Sample arrival orbit.
         const StateHistory arrivalOrbit = sampleKeplerOrbit( arrivalState,
@@ -208,19 +224,13 @@ void executeLambertTransfer( const rapidjson::Document& config )
         arrivalOrbitFilePath << input.outputDirectory << "/sol" << solutionId << "_"
                              << input.arrivalOrbitFilename;
         std::ofstream arrivalOrbitFile( arrivalOrbitFilePath.str( ).c_str( ) );
-        printStateHistory( arrivalOrbitFile, arrivalOrbit, ephemerisFileHeader );
+        print( arrivalOrbitFile, arrivalOrbit, ephemerisFileHeader );
         arrivalOrbitFile.close( );
 
         // Sample arrival path.
-    Eci tleArrivalStateStart = sgp4Arrival.FindPosition( input.departureEpoch );
+        Eci tleArrivalStateStart = sgp4Arrival.FindPosition( input.departureEpoch );
+        const Vector6 arrivalStateStart = getStateVector( tleArrivalStateStart );
 
-    Vector6 arrivalStateStart;
-    arrivalStateStart[ astro::xPositionIndex ] = tleArrivalStateStart.Position( ).x;
-    arrivalStateStart[ astro::yPositionIndex ] = tleArrivalStateStart.Position( ).y;
-    arrivalStateStart[ astro::zPositionIndex ] = tleArrivalStateStart.Position( ).z;
-    arrivalStateStart[ astro::xVelocityIndex ] = tleArrivalStateStart.Velocity( ).x;
-    arrivalStateStart[ astro::yVelocityIndex ] = tleArrivalStateStart.Velocity( ).y;
-    arrivalStateStart[ astro::zVelocityIndex ] = tleArrivalStateStart.Velocity( ).z;
         const StateHistory arrivalPath = sampleKeplerOrbit( arrivalStateStart,
                                                             input.timeOfFlight,
                                                             input.outputSteps,
@@ -232,7 +242,7 @@ void executeLambertTransfer( const rapidjson::Document& config )
         arrivalPathFilePath << input.outputDirectory << "/sol" << solutionId << "_"
                             << input.arrivalPathFilename;
         std::ofstream arrivalPathFile( arrivalPathFilePath.str( ).c_str( ) );
-        printStateHistory( arrivalPathFile, arrivalPath, ephemerisFileHeader );
+        print( arrivalPathFile, arrivalPath, ephemerisFileHeader );
         arrivalPathFile.close( );
 
         // Sample transfer trajectory.
@@ -245,8 +255,9 @@ void executeLambertTransfer( const rapidjson::Document& config )
                    transferDepartureState.begin( ) + 3 );
 
         // Compute period of transfer orbit.
-        const Vector6 transferDepartureStateKepler = astro::convertCartesianToKeplerianElements(
-            transferDepartureState, earthGravitationalParameter );
+        const Vector6 transferDepartureStateKepler
+            = astro::convertCartesianToKeplerianElements( transferDepartureState,
+                                                          earthGravitationalParameter );
         const double transferOrbitalPeriod
             = astro::computeKeplerOrbitalPeriod(
                 transferDepartureStateKepler[ astro::semiMajorAxisIndex ],
@@ -265,7 +276,7 @@ void executeLambertTransfer( const rapidjson::Document& config )
         transferOrbitFilePath << input.outputDirectory << "/sol" << solutionId << "_"
                               << input.transferOrbitFilename;
         std::ofstream transferOrbitFile( transferOrbitFilePath.str( ).c_str( ) );
-        printStateHistory( transferOrbitFile, transferOrbit, ephemerisFileHeader );
+        print( transferOrbitFile, transferOrbit, ephemerisFileHeader );
         transferOrbitFile.close( );
 
         // Sample transfer path.
@@ -280,7 +291,7 @@ void executeLambertTransfer( const rapidjson::Document& config )
         transferPathFilePath << input.outputDirectory << "/sol" << solutionId << "_"
                              << input.transferPathFilename;
         std::ofstream transferPathFile( transferPathFilePath.str( ).c_str( ) );
-        printStateHistory( transferPathFile, transferPath, ephemerisFileHeader );
+        print( transferPathFile, transferPath, ephemerisFileHeader );
         transferPathFile.close( );
     }
 
@@ -292,28 +303,25 @@ void executeLambertTransfer( const rapidjson::Document& config )
 LambertTransferInput checkLambertTransferInput( const rapidjson::Document& config )
 {
     const std::string departureTleLine0
-        = findParameter( config, "departure_tle_line0" )->value.GetString( );
+        = find( config, "departure_tle_line0" )->value.GetString( );
     std::cout << "Departure TLE Line 0          " << departureTleLine0 << std::endl;
     const std::string departureTleLine1
-        = findParameter( config, "departure_tle_line1" )->value.GetString( );
+        = find( config, "departure_tle_line1" )->value.GetString( );
     std::cout << "Departure TLE Line 1          " << departureTleLine1 << std::endl;
     const std::string departureTleLine2
-        = findParameter( config, "departure_tle_line2" )->value.GetString( );
+        = find( config, "departure_tle_line2" )->value.GetString( );
     std::cout << "Departure TLE Line 2          " << departureTleLine2 << std::endl;
     const Tle departureObject( departureTleLine0, departureTleLine1, departureTleLine2 );
 
-    const std::string arrivalTleLine0
-        = findParameter( config, "arrival_tle_line0" )->value.GetString( );
+    const std::string arrivalTleLine0 = find( config, "arrival_tle_line0" )->value.GetString( );
     std::cout << "Arrival TLE Line 0            " << arrivalTleLine0 << std::endl;
-    const std::string arrivalTleLine1
-        = findParameter( config, "arrival_tle_line1" )->value.GetString( );
+    const std::string arrivalTleLine1 = find( config, "arrival_tle_line1" )->value.GetString( );
     std::cout << "Arrival TLE Line 1            " << arrivalTleLine1 << std::endl;
-    const std::string arrivalTleLine2
-        = findParameter( config, "arrival_tle_line2" )->value.GetString( );
+    const std::string arrivalTleLine2 = find( config, "arrival_tle_line2" )->value.GetString( );
     std::cout << "Arrival TLE Line 2            " << arrivalTleLine2 << std::endl;
     const Tle arrivalObject( arrivalTleLine0, arrivalTleLine1, arrivalTleLine2 );
 
-    const ConfigIterator departureEpochIterator = findParameter( config, "departure_epoch" );
+    const ConfigIterator departureEpochIterator = find( config, "departure_epoch" );
     std::map< std::string, int > departureEpochElements;
     if ( departureEpochIterator->value.Size( ) == 0 )
     {
@@ -356,12 +364,12 @@ LambertTransferInput checkLambertTransferInput( const rapidjson::Document& confi
                                    departureEpochElements[ "seconds" ] );
     std::cout << "Departure epoch               " << departureEpoch << std::endl;
 
-    const double timeOfFlight = findParameter( config, "time_of_flight" )->value.GetDouble( );
+    const double timeOfFlight = find( config, "time_of_flight" )->value.GetDouble( );
     std::cout << "Time-of-Flight                " << timeOfFlight << std::endl;
 
-    const bool isPrograde = findParameter( config, "is_prograde" )->value.GetBool( );
+    const bool isPrograde = find( config, "is_prograde" )->value.GetBool( );
     std::cout << "Prograde?                     ";
-    if ( !isPrograde )
+    if ( isPrograde )
     {
         std::cout << "true" << std::endl;
     }
@@ -370,46 +378,41 @@ LambertTransferInput checkLambertTransferInput( const rapidjson::Document& confi
         std::cout << "false" << std::endl;
     }
 
-    const int revolutionsMaximum = findParameter( config, "revolutions_maximum" )->value.GetInt( );
+    const int revolutionsMaximum = find( config, "revolutions_maximum" )->value.GetInt( );
     std::cout << "Revolutions (max)             " << revolutionsMaximum << std::endl;
 
-    std::string solutionOutput = findParameter( config, "solution_output" )->value.GetString( );
+    std::string solutionOutput = find( config, "solution_output" )->value.GetString( );
     std::transform( solutionOutput.begin( ), solutionOutput.end( ),
                     solutionOutput.begin( ), ::tolower );
     std::cout << "Solution output               " << solutionOutput << std::endl;
 
-    const int outputSteps = findParameter( config, "output_steps" )->value.GetInt( );
+    const int outputSteps = find( config, "output_steps" )->value.GetInt( );
     std::cout << "Output steps                  " << outputSteps << std::endl;
 
-    const std::string outputDirectory
-        = findParameter( config, "output_directory" )->value.GetString( );
+    const std::string outputDirectory = find( config, "output_directory" )->value.GetString( );
     std::cout << "Output directory              " << outputDirectory << std::endl;
 
-    const std::string metadataFilename = findParameter( config, "metadata" )->value.GetString( );
+    const std::string metadataFilename = find( config, "metadata" )->value.GetString( );
     std::cout << "Metadata file                 " << metadataFilename << std::endl;
 
     const std::string departureOrbitFilename
-        = findParameter( config, "departure_orbit" )->value.GetString( );
+        = find( config, "departure_orbit" )->value.GetString( );
     std::cout << "Departure orbit file          " << departureOrbitFilename << std::endl;
 
     const std::string departurePathFilename
-        = findParameter( config, "departure_path" )->value.GetString( );
+        = find( config, "departure_path" )->value.GetString( );
     std::cout << "Departure path file           " << departurePathFilename << std::endl;
 
-    const std::string arrivalOrbitFilename
-        = findParameter( config, "arrival_orbit" )->value.GetString( );
+    const std::string arrivalOrbitFilename = find( config, "arrival_orbit" )->value.GetString( );
     std::cout << "Arrival orbit file            " << arrivalOrbitFilename << std::endl;
 
-    const std::string arrivalPathFilename
-        = findParameter( config, "arrival_path" )->value.GetString( );
+    const std::string arrivalPathFilename = find( config, "arrival_path" )->value.GetString( );
     std::cout << "Arrival path file             " << arrivalPathFilename << std::endl;
 
-    const std::string transferOrbitFilename
-        = findParameter( config, "transfer_orbit" )->value.GetString( );
+    const std::string transferOrbitFilename = find( config, "transfer_orbit" )->value.GetString( );
     std::cout << "Transfer orbit file           " << transferOrbitFilename << std::endl;
 
-    const std::string transferPathFilename
-        = findParameter( config, "transfer_path" )->value.GetString( );
+    const std::string transferPathFilename = find( config, "transfer_path" )->value.GetString( );
     std::cout << "Transfer path file            " << transferPathFilename << std::endl;
 
     return LambertTransferInput( departureObject,

@@ -5,6 +5,7 @@
  */
 
 #include <algorithm>
+#include <iomanip>
 
 #include <keplerian_toolbox.h>
 
@@ -44,5 +45,29 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
 
     return stateHistory;
 }
+
+//! Print state history to stream.
+void print( std::ostream& stream,
+            const StateHistory stateHistory,
+            const std::string& streamHeader,
+            const int precision )
+{
+        stream << streamHeader << std::endl;
+
+        for ( StateHistory::const_iterator iteratorState = stateHistory.begin( );
+              iteratorState != stateHistory.end( );
+              iteratorState++ )
+        {
+            stream << std::setprecision( precision )
+                   << iteratorState->first       << ","
+                   << iteratorState->second[ 0 ] << ","
+                   << iteratorState->second[ 1 ] << ","
+                   << iteratorState->second[ 2 ] << ","
+                   << iteratorState->second[ 3 ] << ","
+                   << iteratorState->second[ 4 ] << ","
+                   << iteratorState->second[ 5 ] << std::endl;
+        }
+}
+
 
 } // namespace d2d

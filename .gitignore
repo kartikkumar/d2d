@@ -44,12 +44,11 @@ external
 # Config & data files
 *.json
 config/*
-!config/config.json.example
+!config/*.json.empty
 data/*
 !data/catalog/
 data/catalog/*
 !data/catalog/test_catalog.txt
-
 
 # Project files
 *.sublime*
