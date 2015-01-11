@@ -159,7 +159,7 @@ private:
  *
  * @sa executeLambertTransfer, LambertTransferInput
  * @param[in] config User-defined configuration options (extracted from JSON input file)
- * @return          Struct containing all valid input to execute single Lambert transfer
+ * @return           Struct containing all valid input to execute single Lambert transfer
  */
 LambertTransferInput checkLambertTransferInput( const rapidjson::Document& config );
 

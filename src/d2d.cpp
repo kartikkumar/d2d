@@ -14,6 +14,7 @@
 
 #include <rapidjson/document.h>
 
+#include <D2D/lambertScanner.hpp>
 #include <D2D/lambertTransfer.hpp>
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
@@ -72,11 +73,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     }
 
     // Check the application mode requested and redirect to the right branch.
-    rapidjson::Document configuration;
-    configuration.Parse( jsonDocumentBuffer.str( ).c_str( ) );
+    rapidjson::Document config;
+    config.Parse( jsonDocumentBuffer.str( ).c_str( ) );
 
-    rapidjson::Value::MemberIterator modeIterator = configuration.FindMember( "mode" );
-    if ( modeIterator == configuration.MemberEnd( ) )
+    rapidjson::Value::MemberIterator modeIterator = config.FindMember( "mode" );
+    if ( modeIterator == config.MemberEnd( ) )
     {
         std::cerr << "ERROR: Configuration option \"mode\" could not be found in JSON input!"
                   << std::endl;
@@ -87,20 +88,20 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
 
     if ( mode.compare( "lambert_transfer" ) == 0 )
     {
-        std::cout << "Mode:                         " << mode << std::endl;
-        d2d::executeLambertTransfer( configuration );
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeLambertTransfer( config );
     }
 
-    // else if ( mode.compare( "lambert_scanner" ) == 0 )
-    // {
-    //     std::cout << "Mode:                         " << mode << std::endl;
-    //     d2d::executeLambertScanner( configuration );
-    // }
+    else if ( mode.compare( "lambert_scanner" ) == 0 )
+    {
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeLambertScanner( config );
+    }
 
     // else if ( mode.compare( "fetch_lambert_transfer" ) == 0 )
     // {
     //     std::cout << "Mode:                         " << mode << std::endl;
-    //     d2d::fetchLambertTransfer( configuration );
+    //     d2d::fetchLambertTransfer( config );
     // }
 
     else

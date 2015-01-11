@@ -335,9 +335,9 @@ LambertTransferInput checkLambertTransferInput( const rapidjson::Document& confi
 
     else
     {
-        departureEpochElements[ "year" ]  = departureEpochIterator->value[ 0 ].GetInt( );
-        departureEpochElements[ "month" ] = departureEpochIterator->value[ 1 ].GetInt( );
-        departureEpochElements[ "day" ]   = departureEpochIterator->value[ 2 ].GetInt( );
+        departureEpochElements[ "year" ]    = departureEpochIterator->value[ 0 ].GetInt( );
+        departureEpochElements[ "month" ]   = departureEpochIterator->value[ 1 ].GetInt( );
+        departureEpochElements[ "day" ]     = departureEpochIterator->value[ 2 ].GetInt( );
 
         if ( departureEpochIterator->value.Size( ) > 3 )
         {
