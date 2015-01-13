@@ -1,0 +1,43 @@
+// Copyright (c) 2014 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "lambert_scanner" application mode.
+{
+    "mode"                      : "lambert_scanner",
+
+    // Set path to TLE catalog file.
+    "catalog"                   : "../data/catalog/test_catalog.txt",
+
+    // Set number of lines per TLE entry in catalog.
+    // Options: [2, 3]
+    "tle_lines"                 : 3,
+
+    // Set path to output database (SQLite).
+    // WARNING: if the database file already exists, it will be overwritten!
+    "database"                  : "../data/lambert_scanner_test_catalog.db",
+
+    // Set departure epoch for transfers (common to all transfers computed).
+    // Format: [year,month,day,hours,minutes,seconds] (all elements in the array must be integers)/
+    // The elements year, month and day are required. The others are optional but must be included
+    // from left to right.
+    // If departure_epoch array is left empty, the TLE epoch for the departure object is assumed.
+    "departure_epoch"           : [],
+
+    // Set time-of-flight grid: [min (s), max (s), # of steps].
+    "time_of_flight_grid"       : [,,],
+
+    // Set flag indicating if transfers are prograde. If set to false, retrograde transfers are
+    // computed.
+    // N.B.: Since SQLite doesn't have a boolean type, the flag is stored as an integer
+    // (0=false, 1=true)
+    "is_prograde"               : ,
+
+    // Set maximum number of transfer revolutions (N).
+    "revolutions_maximum"       : ,
+
+    // Set number of transfers to include in shortlist and absolute path to output file [N, file].
+    // The shortlist is based on the N transfers specified with the lowest transfers Delta-V.
+    // If N is set to 0 no output will be written to file.
+    "shortlist"                 : [0,""]
+}

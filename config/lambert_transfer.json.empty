@@ -34,7 +34,7 @@
     // computed.
     "is_prograde"               : ,
 
-    // Set maximum number of transfer revolutions.
+    // Set maximum number of transfer revolutions (N).
     "revolutions_maximum"       : ,
 
     // Set which solutions should be written to output files.
@@ -58,7 +58,7 @@
     // "arrival_path"            Sampled arrival object's path ephemeris in Cartesian elements
     // "transfer_orbit"          Sampled transfer orbit ephemeris in Cartesian elements
     // "transfer_path"           Sampled transfer path ephemeris in Cartesian elements
-    "output_directory"          : ".",
+    "output_directory"          : "../data/",
     "metadata"                  : "metadata.csv",
     "departure_orbit"           : "departure_orbit.csv",
     "departure_path"            : "departure_path.csv",

@@ -61,19 +61,19 @@ print ""
 
 print "Input data files being read ..."
 
-input_path_prefix = config["input_directory"] + "sol" + str(config["solution_id"]) + "_"
-output_path_prefix = config["output_directory"] + "sol" + str(config["solution_id"]) + "_"
+input_path_prefix = config["input_directory"]
+output_path_prefix = config["output_directory"] + str(config["tag"]) + "_"
 
 # Read and store data files.
 metadata = pd.read_csv(input_path_prefix + config["metadata"], header=None)
 metadata_table = []
 metadata_table.append(["Departure ID",int(metadata[1][0])," "])
 metadata_table.append(["Arrival ID",int(metadata[1][1])," "])
-metadata_table.append(["Departure epoch","{:,g}".format(metadata[1][2]),"JD"])
-metadata_table.append(["Time-of-flight","{:,g}".format(metadata[1][3]),"s"])
-metadata_table.append(["Prograde?",str(bool(metadata[1][4]))," "])
+metadata_table.append(["Departure epoch","{:,g}".format(float(metadata[1][2])),"JD"])
+metadata_table.append(["Time-of-flight","{:,g}".format(float(metadata[1][3])),"s"])
+metadata_table.append(["Prograde?",metadata[1][4].strip()," "])
 metadata_table.append(["Revolutions",int(metadata[1][5])," "])
-metadata_table.append([r"Transfer $\Delta V$","{:,g}".format(metadata[1][6]),"km/s"])
+metadata_table.append([r"Transfer $\Delta V$","{:,g}".format(float(metadata[1][6])),"km/s"])
 
 departure_orbit = pd.read_csv(input_path_prefix + config["departure_orbit"])
 arrival_orbit = pd.read_csv(input_path_prefix + config["arrival_orbit"])

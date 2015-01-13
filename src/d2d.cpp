@@ -14,6 +14,7 @@
 
 #include <rapidjson/document.h>
 
+#include <D2D/lambertFetch.hpp>
 #include <D2D/lambertScanner.hpp>
 #include <D2D/lambertTransfer.hpp>
 
@@ -55,6 +56,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     ///////////////////////////////////////////////////////////////////////////
 
     // Read and store JSON input document (filter out comment lines).
+    // TODO: Need to make comment-line filtering more robust.
     std::ifstream inputFile( inputArguments[ 1 ] );
     std::stringstream jsonDocumentBuffer;
     std::string inputLine;
@@ -98,11 +100,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         d2d::executeLambertScanner( config );
     }
 
-    // else if ( mode.compare( "fetch_lambert_transfer" ) == 0 )
-    // {
-    //     std::cout << "Mode:                         " << mode << std::endl;
-    //     d2d::fetchLambertTransfer( config );
-    // }
+    else if ( mode.compare( "lambert_fetch" ) == 0 )
+    {
+        std::cout << "Mode:                         " << mode << std::endl;
+        d2d::fetchLambertTransfer( config );
+    }
 
     else
     {

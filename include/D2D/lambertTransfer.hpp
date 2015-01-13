@@ -26,7 +26,7 @@ namespace d2d
  */
 void executeLambertTransfer( const rapidjson::Document& config );
 
-//! Lambert single input.
+//! Lambert transfer input.
 /*!
  * Data struct containing all valid input parameters to execute a single Lambert transfer. This
  * struct is populated by the checkLambertTransferInput() function and can be used to execute a
@@ -150,7 +150,7 @@ protected:
 private:
 };
 
-//! Check input parameters Lambert transfer.
+//! Check input parameters for lambert_transfer application mode.
 /*!
  * Checks that all inputs to execute a single Lambert transfer are valid. If not, an error is
  * thrown with a short description of the problem. If all inputs are valid, a data struct
@@ -159,7 +159,7 @@ private:
  *
  * @sa executeLambertTransfer, LambertTransferInput
  * @param[in] config User-defined configuration options (extracted from JSON input file)
- * @return           Struct containing all valid input to execute single Lambert transfer
+ * @return           Struct containing all valid input for lambert_transfer application mode
  */
 LambertTransferInput checkLambertTransferInput( const rapidjson::Document& config );
 

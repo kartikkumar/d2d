@@ -45,6 +45,7 @@ CMAKE_DEPENDENT_OPTION(BUILD_COVERAGE_ANALYSIS "Build code coverage analysis"   
                                                "BUILD_TESTS"                    OFF)
 
 set(SRC
+  "${SRC_PATH}/lambertFetch.cpp"
   "${SRC_PATH}/lambertScanner.cpp"
   "${SRC_PATH}/lambertTransfer.cpp"
   "${SRC_PATH}/tools.cpp"

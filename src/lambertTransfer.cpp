@@ -156,7 +156,16 @@ void executeLambertTransfer( const rapidjson::Document& config )
         print( metadataFile, "arrival_id", input.arrivalObject.NoradNumber( ), "-" );
         print( metadataFile, "departure_epoch", input.departureEpoch.ToJulian( ), "JD" );
         print( metadataFile, "time_of_flight", targeter.get_tof( ), "s" );
-        print( metadataFile, "is_prograde", input.isPrograde, "-" );
+
+        if ( input.isPrograde == true )
+        {
+            print( metadataFile, "is_prograde", "true", "-" );
+        }
+        else
+        {
+            print( metadataFile, "is_prograde", "false", "-" );
+        }
+
         print( metadataFile, "revolutions", revolutions, "-" );
         print( metadataFile, "transfer_delta_v", transferDeltaVs[ i ], "km/s" );
         metadataFile.close( );
@@ -299,7 +308,7 @@ void executeLambertTransfer( const rapidjson::Document& config )
     std::cout << "Output successfully written to file!" << std::endl;
 }
 
-//! Check input parameters Lambert transfer.
+//! Check input parameters for lambert_transfer application mode.
 LambertTransferInput checkLambertTransferInput( const rapidjson::Document& config )
 {
     const std::string departureTleLine0
@@ -332,7 +341,6 @@ LambertTransferInput checkLambertTransferInput( const rapidjson::Document& confi
         departureEpochElements[ "minutes" ] = departureObject.Epoch( ).Minute( );
         departureEpochElements[ "seconds" ] = departureObject.Epoch( ).Second( );
     }
-
     else
     {
         departureEpochElements[ "year" ]    = departureEpochIterator->value[ 0 ].GetInt( );

@@ -1,0 +1,38 @@
+// Copyright (c) 2014 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "lambert_fetch" application mode.
+{
+    "mode"                      : "lambert_fetch",
+
+    // Set path to output database (SQLite).
+    // WARNING: The database file must already exist and be populated with data using the
+    //          "lambert_scanner" mode!
+    "database"                  : "",
+
+    // Set trasnfer ID to fetch.
+    "transfer_id"               : ,
+
+    // Set number of steps to output departure & arrival orbits, and transfer trajectory.
+    "output_steps"              : 1000,
+
+    // Set output files to write transfer to.
+    // "output_directory"        path to the output directory (relative or absolute)
+    //                           N.B: the directory must exist already!
+    // "metadata"                simulation metadata
+    // "departure_orbit"         Sampled departure orbit ephemeris in Cartesian elements
+    // "departure_path"          Sampled departure object's path ephemeris in Cartesian elements
+    // "arrival_orbit"           Sampled arrival orbit ephemeris in Cartesian elements
+    // "arrival_path"            Sampled arrival object's path ephemeris in Cartesian elements
+    // "transfer_orbit"          Sampled transfer orbit ephemeris in Cartesian elements
+    // "transfer_path"           Sampled transfer path ephemeris in Cartesian elements
+    "output_directory"          : "../data/",
+    "metadata"                  : "metadata.csv",
+    "departure_orbit"           : "departure_orbit.csv",
+    "departure_path"            : "departure_path.csv",
+    "arrival_orbit"             : "arrival_orbit.csv",
+    "arrival_path"              : "arrival_path.csv",
+    "transfer_orbit"            : "transfer_orbit.csv",
+    "transfer_path"             : "transfer_path.csv"
+}

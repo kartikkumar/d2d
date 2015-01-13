@@ -7,17 +7,15 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
-// #include <iomanip>
 #include <iostream>
 #include <iterator>
 #include <map>
-// #include <numeric>
 #include <sstream>
 #include <vector>
 
 #include <boost/progress.hpp>
 
-// #include <libsgp4/Eci.h>
+#include <libsgp4/Eci.h>
 #include <libsgp4/Globals.h>
 #include <libsgp4/SGP4.h>
 #include <libsgp4/Tle.h>
@@ -133,6 +131,7 @@ void executeLambertScanner( const rapidjson::Document& config )
         << ":arrivalDeltaVZ,"
         << ":timeOfFlight,"
         << ":revolutions,"
+        << ":prograde,"
         << ":transferSemiMajorAxis,"
         << ":transferEccentricity,"
         << ":transferInclination,"
@@ -317,6 +316,7 @@ void executeLambertScanner( const rapidjson::Document& config )
                 query.bind( ":arrivalDeltaVZ", arrivalDeltaVs[ minimumDeltaVIndex ][ 2 ] );
                 query.bind( ":timeOfFlight", timeOfFlight );
                 query.bind( ":revolutions", revolutions );
+                query.bind( ":prograde", input.isPrograde );
                 query.bind( ":transferSemiMajorAxis",
                     transferStateKepler[ astro::semiMajorAxisIndex ] );
                 query.bind( ":transferEccentricity",
@@ -512,7 +512,8 @@ void createLambertScannerTable( SQLite::Database& database )
         << "\"arrivalDeltaVY\" REAL,"
         << "\"arrivalDeltaVZ\" REAL,"
         << "\"timeOfFlight\" REAL,"
-        << "\"revolutions\" REAL,"
+        << "\"revolutions\" INTEGER,"
+        << "\"prograde\" INTEGER," // N.B.: SQLite doesn't support booleans so 0 = false, 1 = true
         << "\"transferSemiMajorAxis\" REAL,"
         << "\"transferEccentricity\" REAL,"
         << "\"transferInclination\" REAL,"
@@ -590,6 +591,7 @@ void writeTransferShortlist( SQLite::Database& database,
                   << "arrivalDeltaVZ,"
                   << "timeOfFlight,"
                   << "revolutions,"
+                  << "prograde,"
                   << "transferSemiMajorAxis,"
                   << "transferEccentricity,"
                   << "transferInclination,"
@@ -638,13 +640,14 @@ void writeTransferShortlist( SQLite::Database& database,
         const double arrivalDeltaVZ                     = query.getColumn( 33 );
         const double timeOfFlight                       = query.getColumn( 34 );
         const int    revolutions                        = query.getColumn( 35 );
-        const double transferSemiMajorAxis              = query.getColumn( 36 );
-        const double transferEccentricity               = query.getColumn( 37 );
-        const double transferInclination                = query.getColumn( 38 );
-        const double transferArgumentOfPeriapsis        = query.getColumn( 39 );
-        const double transferLongitudeOfAscendingNode   = query.getColumn( 40 );
-        const double transferTrueAnomaly                = query.getColumn( 41 );
-        const double transferDeltaV                     = query.getColumn( 42 );
+        const int    prograde                           = query.getColumn( 36 );
+        const double transferSemiMajorAxis              = query.getColumn( 37 );
+        const double transferEccentricity               = query.getColumn( 38 );
+        const double transferInclination                = query.getColumn( 39 );
+        const double transferArgumentOfPeriapsis        = query.getColumn( 40 );
+        const double transferLongitudeOfAscendingNode   = query.getColumn( 41 );
+        const double transferTrueAnomaly                = query.getColumn( 42 );
+        const double transferDeltaV                     = query.getColumn( 43 );
 
         shortlistFile << transferId << ","
                       << departureObjectId << ","
@@ -682,6 +685,7 @@ void writeTransferShortlist( SQLite::Database& database,
                       << arrivalDeltaVZ << ","
                       << timeOfFlight << ","
                       << revolutions << ","
+                      << prograde << ","
                       << transferSemiMajorAxis << ","
                       << transferEccentricity << ","
                       << transferInclination << ","
