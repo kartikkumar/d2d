@@ -59,17 +59,17 @@ print ""
 print "Input data files being read ..."
 
 # Read and store data files
-input_path_prefix = config["input_directory"] + "/sol" + str(config["solution_id"]) + "_"
+input_path_prefix = config["input_directory"]
 
 metadata = pd.read_csv(input_path_prefix + config["metadata"], header=None)
 metadata_table = []
-metadata_table.append(["Departure TLE ID",int(metadata[1][0])," "])
-metadata_table.append(["Arrival TLE ID",int(metadata[1][1])," "])
-metadata_table.append(["Departure epoch","{:,g}".format(metadata[1][2]),"JD"])
-metadata_table.append(["Time-of-flight","{:,g}".format(metadata[1][3]),"s"])
-metadata_table.append(["Prograde?",str(bool(metadata[1][4]))," "])
+metadata_table.append(["Departure ID",int(metadata[1][0])," "])
+metadata_table.append(["Arrival ID",int(metadata[1][1])," "])
+metadata_table.append(["Departure epoch","{:,g}".format(float(metadata[1][2])),"JD"])
+metadata_table.append(["Time-of-flight","{:,g}".format(float(metadata[1][3])),"s"])
+metadata_table.append(["Prograde?",metadata[1][4].strip()," "])
 metadata_table.append(["Revolutions",int(metadata[1][5])," "])
-metadata_table.append([r"Transfer $\Delta V$","{:,g}".format(metadata[1][6]),"km/s"])
+metadata_table.append([r"Transfer $\Delta V$","{:,g}".format(float(metadata[1][6])),"km/s"])
 
 departure_orbit = pd.read_csv(input_path_prefix + config["departure_orbit"])
 arrival_orbit = pd.read_csv(input_path_prefix + config["arrival_orbit"])
@@ -169,8 +169,8 @@ def animate(i):
 # Generate and save animation
 animation_data = animation.FuncAnimation(fig,animate,init_func=init,blit=False, \
                                          frames=len(transfer_path))
-animation_path = config["output_directory"] + "/sol" + str(config["solution_id"]) + "_" \
-                 + config["animation"]
+animation_path = config["output_directory"] + str(config["tag"]) + "_" + config["animation"] \
+                 + ".mp4"
 animation_data.save(animation_path,fps=config["frame_rate"],bitrate=config["bit_rate"])
 
 print "Animation generated successfully!"

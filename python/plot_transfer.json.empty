@@ -2,9 +2,6 @@
 // Distributed under the MIT License.
 // See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 {
-    // Tag that is used in prefix for output files.
-    "tag"                        : "",
-
     // Directory containing metadata and ephemerides for departure & arrival orbits and transfer
     // trajectory.
     "input_directory"           : "",
@@ -18,6 +15,9 @@
     "transfer_orbit"            : "",
     "transfer_path"             : "",
 
+    // Tag that is used in prefix for files.
+    "tag"                        : "",
+
     // Directory where 2D figure is stored.
     "output_directory"          : "",
 
@@ -29,5 +29,5 @@
     "show_3D_figure"            : false,
 
     // Characteristics for figures.
-    "figure_dpi"                : 300,
+    "figure_dpi"                : 300
 }
