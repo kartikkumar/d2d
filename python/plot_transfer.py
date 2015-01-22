@@ -61,7 +61,7 @@ print ""
 
 print "Input data files being read ..."
 
-input_path_prefix = config["input_directory"]
+input_path_prefix = config["input_directory"] + "/"
 output_path_prefix = config["output_directory"] + str(config["tag"]) + "_"
 
 # Read and store data files.
