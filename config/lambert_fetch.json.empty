@@ -11,7 +11,7 @@
     //          "lambert_scanner" mode!
     "database"                  : "",
 
-    // Set trasnfer ID to fetch.
+    // Set transfer ID to fetch.
     "transfer_id"               : ,
 
     // Set number of steps to output departure & arrival orbits, and transfer trajectory.
