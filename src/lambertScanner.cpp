@@ -473,10 +473,13 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
 //! Create Lambert scanner table.
 void createLambertScannerTable( SQLite::Database& database )
 {
+    // Drop table from database if it exists.
+    database.exec( "DROP TABLE IF EXISTS lambert_scanner;" );
+
     // Set up SQL command to create table to store Lambert scanner results.
     std::ostringstream lambertScannerTableCreate;
     lambertScannerTableCreate
-        << "CREATE TABLE IF NOT EXISTS lambert_scanner ("
+        << "CREATE TABLE lambert_scanner ("
         << "\"transferId\" INTEGER PRIMARY KEY AUTOINCREMENT,"
         << "\"departureObjectId\" INTEGER,"
         << "\"departureEpoch\" REAL,"
@@ -528,7 +531,7 @@ void createLambertScannerTable( SQLite::Database& database )
 
     // Execute commant to create index on transfer Delta-V column.
     std::ostringstream transferDeltaVIndexCreate;
-    transferDeltaVIndexCreate << "CREATE UNIQUE INDEX IF NOT EXISTS \"transferDeltaV\" on "
+    transferDeltaVIndexCreate << "CREATE INDEX IF NOT EXISTS \"transferDeltaV\" on "
                               << "lambert_scanner (transferDeltaV ASC);";
     database.exec( transferDeltaVIndexCreate.str( ).c_str( ) );
 
