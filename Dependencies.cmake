@@ -273,6 +273,42 @@ endif(NOT APPLE)
 
 # -------------------------------
 
+if(NOT BUILD_DEPENDENCIES)
+  find_package(Atom)
+endif(NOT BUILD_DEPENDENCIES)
+
+if(NOT ATOM_FOUND)
+  message(STATUS "Atom will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(atom-lib
+    DEPENDS astro-lib
+    PREFIX ${EXTERNAL_PATH}/Atp,
+    #--Download step--------------
+    URL https://github.com/kartikkumar/atom/archive/master.zip
+    TIMEOUT 30
+    #--Update/Patch step----------
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    #--Configure step-------------
+    CONFIGURE_COMMAND ""
+    #--Build step-----------------
+    BUILD_COMMAND ""
+    #--Install step---------------
+    INSTALL_COMMAND ""
+    #--Output logging-------------
+    LOG_DOWNLOAD ON
+  )
+  ExternalProject_Get_Property(atom-lib source_dir)
+  set(ATOM_INCLUDE_DIRS ${source_dir}/include CACHE INTERNAL "Path to include folder for Atom")
+endif(NOT ATOM_FOUND)
+
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${ATOM_INCLUDE_DIRS}")
+else(APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${ATOM_INCLUDE_DIRS}\"")
+endif(NOT APPLE)
+
+# -------------------------------
+
 if(BUILD_TESTS)
   if(NOT BUILD_DEPENDENCIES)
     find_package(CATCH)
