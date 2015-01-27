@@ -4,6 +4,7 @@
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
+#include <algorithm>
 #include <iostream>
 #include <limits>
 #include <map>
@@ -137,7 +138,8 @@ void print( std::ostream& stream,
             const int precision = std::numeric_limits< double >::digits10 );
 
 //! Find parameter.
-/* Finds parameter in config stored in JSON document. An error is thrown if the parameter cannot
+/*!
+ * Finds parameter in config stored in JSON document. An error is thrown if the parameter cannot
  * be found. If the parameter is found, an iterator to the member in the JSON document is returned.
  *
  * @param[in] config        JSON document containing config parameters
@@ -153,6 +155,19 @@ inline ConfigIterator find( const rapidjson::Document& config, const std::string
         throw;
     }
     return iterator;
+}
+
+//! Remove newline characters from string.
+/*!
+ * Removes newline characters from a string by making use of the STL erase() and remove()
+ * functions.
+ *
+ * @param[in,out] string String from which newline characters should be removed
+ */
+inline void removeNewline( std::string& string )
+{
+    string.erase( std::remove( string.begin( ), string.end( ), '\r' ), string.end( ) );
+    string.erase( std::remove( string.begin( ), string.end( ), '\n' ), string.end( ) );
 }
 
 } // namespace d2d

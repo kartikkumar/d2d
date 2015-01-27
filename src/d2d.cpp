@@ -14,9 +14,10 @@
 
 #include <rapidjson/document.h>
 
-#include <D2D/lambertFetch.hpp>
-#include <D2D/lambertScanner.hpp>
-#include <D2D/lambertTransfer.hpp>
+#include "D2D/catalogPruner.hpp"
+#include "D2D/lambertFetch.hpp"
+#include "D2D/lambertScanner.hpp"
+#include "D2D/lambertTransfer.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -88,7 +89,13 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::string mode = modeIterator->value.GetString( );
     std::transform( mode.begin( ), mode.end( ), mode.begin( ), ::tolower );
 
-    if ( mode.compare( "lambert_transfer" ) == 0 )
+    if ( mode.compare( "catalog_pruner") == 0 )
+    {
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeCatalogPruner( config );
+    }
+
+    else if ( mode.compare( "lambert_transfer" ) == 0 )
     {
         std::cout << "Mode                          " << mode << std::endl;
         d2d::executeLambertTransfer( config );

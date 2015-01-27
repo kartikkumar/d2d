@@ -59,13 +59,16 @@ void executeLambertScanner( const rapidjson::Document& config )
     while ( std::getline( catalogFile, catalogLine ) )
     {
         TleStrings tleStrings;
+        removeNewline( catalogLine );
         tleStrings.push_back( catalogLine );
         std::getline( catalogFile, catalogLine );
+        removeNewline( catalogLine );
         tleStrings.push_back( catalogLine );
 
         if ( input.tleLines == 3 )
         {
             std::getline( catalogFile, catalogLine );
+            removeNewline( catalogLine );
             tleStrings.push_back( catalogLine );
             tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ], tleStrings[ 2 ] ) );
         }
