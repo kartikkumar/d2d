@@ -9,10 +9,6 @@
     // Set path to TLE catalog file.
     "catalog"                   : "../data/catalog/test_catalog.txt",
 
-    // Set number of lines per TLE entry in catalog.
-    // Options: [2, 3]
-    "tle_lines"                 : 3,
-
     // Set path to output database (SQLite).
     // WARNING: if the database file already exists, it will be overwritten!
     "database"                  : "../data/test_lambert_scanner_catalog.db",

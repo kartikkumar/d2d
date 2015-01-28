@@ -52,7 +52,6 @@ public:
      *
      * @sa checkLambertScannerInput, executeLambertScanner
      * @param[in] aCatalogPath          Path to TLE catalog
-     * @param[in] someTleLines          Number of lines per TLE entry in catalog (2 or 3)
      * @param[in] aDatabasePath         Path to SQLite database
      * @param[in] aDepartureEpoch       Departure epoch for all transfers
      * @param[in] aTimeOfFlightMinimum  Minimum time-of-flight [s]
@@ -66,7 +65,6 @@ public:
      * @param[in] aShortlistPath        Path to shortlist file
      */
     LambertScannerInput( const std::string& aCatalogPath,
-                         const int          someTleLines,
                          const std::string& aDatabasePath,
                          const DateTime&    aDepartureEpoch,
                          const double       aTimeOfFlightMinimum,
@@ -78,7 +76,6 @@ public:
                          const int          aShortlistLength,
                          const std::string& aShortlistPath )
         : catalogPath( aCatalogPath ),
-          tleLines( someTleLines ),
           databasePath( aDatabasePath ),
           departureEpoch( aDepartureEpoch ),
           timeOfFlightMinimum( aTimeOfFlightMinimum ),
@@ -93,9 +90,6 @@ public:
 
     //! Path to TLE catalog.
     const std::string catalogPath;
-
-    //! Number of lines per TLE entry in catalog.
-    const int tleLines;
 
     //! Path to SQLite database to store output.
     const std::string databasePath;

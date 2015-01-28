@@ -37,18 +37,8 @@ void executeCatalogPruner( const rapidjson::Document& config )
     std::string catalogLine;
 
     // Check if catalog is 2-line or 3-line version.
-    int tleLines = 3;
     std::getline( catalogFile, catalogLine );
-    if ( catalogLine.substr( 0, 1 ) != "0" )
-    {
-        tleLines = 2;
-        std::cout << "2-line catalog detected ... " << std::endl;
-        std::cerr << "WARNING: regex name filter will be skipped!" << std::endl;
-    }
-    else
-    {
-        std::cout << "3-line catalog detected ..." << std::endl;
-    }
+    const int tleLines = getTleCatalogType( catalogLine );
 
     // Reset file stream to start of file.
     catalogFile.seekg( 0, std::ios::beg );
@@ -56,6 +46,8 @@ void executeCatalogPruner( const rapidjson::Document& config )
     // Loop over file and apply filters to generate pruned catalog.
     if ( tleLines == 3 )
     {
+        std::cout << "3-line catalog detected ..." << std::endl;
+
         std::ofstream prunedCatalogFile( input.prunedCatalogPath.c_str( ) );
 
         while ( std::getline( catalogFile, catalogLine ) )
@@ -139,6 +131,9 @@ void executeCatalogPruner( const rapidjson::Document& config )
     }
     else if ( tleLines == 2 )
     {
+        std::cout << "2-line catalog detected ... " << std::endl;
+        std::cerr << "WARNING: regex name filter will be skipped!" << std::endl;
+
         std::ofstream prunedCatalogFile( input.prunedCatalogPath.c_str( ) );
 
         while ( std::getline( catalogFile, catalogLine ) )

@@ -61,17 +61,7 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
  * @param  state State stored in Eci object
  * @return       State stored in boost::array
  */
-inline Vector6 getStateVector( const Eci state )
-{
-    Vector6 result;
-    result[ astro::xPositionIndex ] = state.Position( ).x;
-    result[ astro::yPositionIndex ] = state.Position( ).y;
-    result[ astro::zPositionIndex ] = state.Position( ).z;
-    result[ astro::xVelocityIndex ] = state.Velocity( ).x;
-    result[ astro::yVelocityIndex ] = state.Velocity( ).y;
-    result[ astro::zVelocityIndex ] = state.Velocity( ).z;
-    return result;
-}
+Vector6 getStateVector( const Eci state );
 
 //! Print value to stream.
 /*!
@@ -146,16 +136,7 @@ void print( std::ostream& stream,
  * @param[in] parameterName Name of parameter to find
  * @return                  Iterator to parameter retreived from JSON document
  */
-inline ConfigIterator find( const rapidjson::Document& config, const std::string& parameterName )
-{
-    const ConfigIterator iterator = config.FindMember( parameterName.c_str( ) );
-    if ( iterator == config.MemberEnd( ) )
-    {
-        std::cerr << "ERROR: \"" << parameterName << "\" missing from config file!" << std::endl;
-        throw;
-    }
-    return iterator;
-}
+ConfigIterator find( const rapidjson::Document& config, const std::string& parameterName );
 
 //! Remove newline characters from string.
 /*!
@@ -164,10 +145,15 @@ inline ConfigIterator find( const rapidjson::Document& config, const std::string
  *
  * @param[in,out] string String from which newline characters should be removed
  */
-inline void removeNewline( std::string& string )
-{
-    string.erase( std::remove( string.begin( ), string.end( ), '\r' ), string.end( ) );
-    string.erase( std::remove( string.begin( ), string.end( ), '\n' ), string.end( ) );
-}
+void removeNewline( std::string& string );
+
+//! Get TLE catalog type.
+/*!
+ * Determines the TLE catalog type (2-line or 3-line) based on the TLE format.
+ *
+ * @param[in] catalogFirstLine First line in TLE catalog
+ * @return                     Number of lines per TLE in catalog
+ */
+int getTleCatalogType( const std::string& catalogFirstLine );
 
 } // namespace d2d

@@ -46,6 +46,19 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
     return stateHistory;
 }
 
+//! Convert SGP4 ECI object to state vector.
+Vector6 getStateVector( const Eci state )
+{
+    Vector6 result;
+    result[ astro::xPositionIndex ] = state.Position( ).x;
+    result[ astro::yPositionIndex ] = state.Position( ).y;
+    result[ astro::zPositionIndex ] = state.Position( ).z;
+    result[ astro::xVelocityIndex ] = state.Velocity( ).x;
+    result[ astro::yVelocityIndex ] = state.Velocity( ).y;
+    result[ astro::zVelocityIndex ] = state.Velocity( ).z;
+    return result;
+}
+
 //! Print state history to stream.
 void print( std::ostream& stream,
             const StateHistory stateHistory,
@@ -69,5 +82,44 @@ void print( std::ostream& stream,
         }
 }
 
+//! Find parameter.
+ConfigIterator find( const rapidjson::Document& config, const std::string& parameterName )
+{
+    const ConfigIterator iterator = config.FindMember( parameterName.c_str( ) );
+    if ( iterator == config.MemberEnd( ) )
+    {
+        std::cerr << "ERROR: \"" << parameterName << "\" missing from config file!" << std::endl;
+        throw;
+    }
+    return iterator;
+}
+
+//! Remove newline characters from string.
+void removeNewline( std::string& string )
+{
+    string.erase( std::remove( string.begin( ), string.end( ), '\r' ), string.end( ) );
+    string.erase( std::remove( string.begin( ), string.end( ), '\n' ), string.end( ) );
+}
+
+//! Get TLE catalog type.
+int getTleCatalogType( const std::string& catalogFirstLine )
+{
+    int tleLines = 0;
+    if ( catalogFirstLine.substr( 0, 1 ) == "1" )
+    {
+        tleLines = 2;
+    }
+    else if ( catalogFirstLine.substr( 0, 1 ) == "0" )
+    {
+        tleLines = 3;
+    }
+    else
+    {
+        std::cerr << "ERROR: Catalog malformed!" << std::endl;
+        throw;
+    }
+
+    return tleLines;
+}
 
 } // namespace d2d

@@ -52,6 +52,14 @@ void executeLambertScanner( const rapidjson::Document& config )
     // Parse catalog and store TLE objects.
     std::ifstream catalogFile( input.catalogPath.c_str( ) );
     std::string catalogLine;
+
+    // Check if catalog is 2-line or 3-line version.
+    std::getline( catalogFile, catalogLine );
+    const int tleLines = getTleCatalogType( catalogLine );
+
+    // Reset file stream to start of file.
+    catalogFile.seekg( 0, std::ios::beg );
+
     typedef std::vector< std::string > TleStrings;
     typedef std::vector< Tle > TleObjects;
     TleObjects tleObjects;
@@ -65,7 +73,7 @@ void executeLambertScanner( const rapidjson::Document& config )
         removeNewline( catalogLine );
         tleStrings.push_back( catalogLine );
 
-        if ( input.tleLines == 3 )
+        if ( tleLines == 3 )
         {
             std::getline( catalogFile, catalogLine );
             removeNewline( catalogLine );
@@ -73,7 +81,7 @@ void executeLambertScanner( const rapidjson::Document& config )
             tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ], tleStrings[ 2 ] ) );
         }
 
-        else
+        else if ( tleLines == 2 )
         {
             tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ] ) );
         }
@@ -367,9 +375,6 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
     const std::string catalogPath = find( config, "catalog" )->value.GetString( );
     std::cout << "Catalog                       " << catalogPath << std::endl;
 
-    const int tleLines = find( config, "tle_lines" )->value.GetInt( );
-    std::cout << "# of lines per TLE            " << tleLines << std::endl;
-
     const std::string databasePath = find( config, "database" )->value.GetString( );
     std::cout << "Database                      " << databasePath << std::endl;
 
@@ -460,7 +465,6 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
     }
 
     return LambertScannerInput( catalogPath,
-                                tleLines,
                                 databasePath,
                                 departureEpoch,
                                 timeOfFlightMinimum,
