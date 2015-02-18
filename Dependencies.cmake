@@ -62,7 +62,7 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
   ExternalProject_Get_Property(keplerian_toolbox-lib source_dir)
   set(KEPLERIANTOOLBOX_INCLUDE_DIRS ${source_dir}/src
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
-  set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}
+  set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}/src
     CACHE INTERNAL "Path to include folder for KeplerianToolbox")
   set(KEPLERIANTOOLBOX_LIBRARY "keplerian_toolbox_static")
 endif(NOT KEPLERIANTOOLBOX_FOUND)
@@ -281,7 +281,7 @@ if(NOT ATOM_FOUND)
   message(STATUS "Atom will be downloaded when ${CMAKE_PROJECT_NAME} is built")
   ExternalProject_Add(atom-lib
     DEPENDS astro-lib
-    PREFIX ${EXTERNAL_PATH}/Atp,
+    PREFIX ${EXTERNAL_PATH}/Atom
     #--Download step--------------
     URL https://github.com/kartikkumar/atom/archive/master.zip
     TIMEOUT 30
