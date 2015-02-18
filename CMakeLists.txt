@@ -1,4 +1,4 @@
-# Copyright (c) 2014 Kartik Kumar (me@kartikkumar.com)
+# Copyright (c) 2015 Kartik Kumar (me@kartikkumar.com)
 # Distributed under the MIT License.
 # See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
@@ -23,9 +23,9 @@ set(TEST_SRC_PATH                              "${PROJECT_PATH}/test")
 if(NOT EXTERNAL_PATH)
   set(EXTERNAL_PATH                            "${PROJECT_PATH}/external")
 endif(NOT EXTERNAL_PATH)
-if(NOT DOCS_PATH)
-  set(DOCS_PATH                                "${PROJECT_PATH}/docs")
-endif(NOT DOCS_PATH)
+if(NOT DOXYGEN_PATH)
+  set(DOXYGEN_PATH                             "${PROJECT_PATH}/doxygen")
+endif(NOT DOXYGEN_PATH)
 set(LIB_PATH                                   "${PROJECT_BINARY_DIR}/lib")
 set(LIB_NAME                                   "d2d_methods")
 set(BIN_PATH                                   "${PROJECT_BINARY_DIR}/bin")
@@ -149,7 +149,7 @@ if(BUILD_DOCS)
   # Add a custom target to run Doxygen whenever the project is built.
   # If you do NOT want the documentation to be generated EVERY time you build the project
   # then leave out the 'ALL' keyword from the command below.
-  add_custom_target(docs ALL COMMAND ${DOXYGEN_EXECUTABLE}
+  add_custom_target(doxygen ALL COMMAND ${DOXYGEN_EXECUTABLE}
                     ${PROJECT_BINARY_DIR}/Doxyfile
                     SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
 endif(BUILD_DOCS)

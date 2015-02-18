@@ -3,6 +3,7 @@
 *.lo
 *.o
 *.obj
+*.pyc
 
 # Precompiled Headers
 *.gch
@@ -36,7 +37,7 @@
 build
 bin
 lib
-docs
+doxygen
 temp
 debug
 external

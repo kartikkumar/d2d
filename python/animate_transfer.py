@@ -1,5 +1,5 @@
 '''
-Copyright (c) 2014, K. Kumar (me@kartikkumar.com)
+Copyright (c) 2015, K. Kumar (me@kartikkumar.com)
 All rights reserved.
 '''
 
@@ -27,7 +27,7 @@ print ""
 print "------------------------------------------------------------------"
 print "                               D2D                                "
 print "                              0.0.2                               "
-print "         Copyright (c) 2014, K. Kumar (me@kartikkumar.com)        "
+print "         Copyright (c) 2015, K. Kumar (me@kartikkumar.com)        "
 print "------------------------------------------------------------------"
 print ""
 

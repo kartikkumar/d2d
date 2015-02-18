@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -50,6 +50,7 @@ public:
      * @param[in] anInclinationMinimum    Minimum inclination filter         [deg]
      * @param[in] anInclinationMaximum    Maximum inclination filter         [deg]
      * @param[in] aNameRegex              Regex filter for TLE object name
+     * @param[in] aCatalogCutoff          Cutoff that sets maximum objects
      * @param[in] aPrunedCatalogPath      Path to pruned TLE catalog
      */
     CatalogPrunerInput( const std::string& aCatalogPath,
@@ -60,6 +61,7 @@ public:
                         const double anInclinationMinimum,
                         const double anInclinationMaximum,
                         const std::string& aNameRegex,
+                        const int aCatalogCutoff,
                         const std::string& aPrunedCatalogPath )
         : catalogPath( aCatalogPath ),
           semiMajorAxisMinimum( aSemiMajorAxisMinimum ),
@@ -69,6 +71,7 @@ public:
           inclinationMinimum( anInclinationMinimum ),
           inclinationMaximum( anInclinationMaximum ),
           nameRegex( aNameRegex ),
+          catalogCutoff( aCatalogCutoff ),
           prunedCatalogPath( aPrunedCatalogPath )
     { }
 
@@ -95,6 +98,9 @@ public:
 
     //! Name regex.
     const std::string nameRegex;
+
+    //! Cutoff that sets them aximum objects in pruned catalog.
+    const int catalogCutoff;
 
     //! Pruned catalog path.
     const std::string prunedCatalogPath;

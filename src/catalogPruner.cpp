@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -42,6 +42,8 @@ void executeCatalogPruner( const rapidjson::Document& config )
 
     // Reset file stream to start of file.
     catalogFile.seekg( 0, std::ios::beg );
+
+    int numberOfPrunedObjects = 0;
 
     // Loop over file and apply filters to generate pruned catalog.
     if ( tleLines == 3 )
@@ -121,6 +123,16 @@ void executeCatalogPruner( const rapidjson::Document& config )
                 continue;
             }
 
+            // Check if the number of objects in the pruned catalog has reached the cutoff set by
+            // the user. If not, increment the counter.
+            if ( input.catalogCutoff != 0 && numberOfPrunedObjects == input.catalogCutoff )
+            {
+                std::cout << "Cutoff reached ..." << std::endl;
+                break;
+            }
+
+            numberOfPrunedObjects++;
+
             // This point is reached if TLE is not filtered: write catalog lines to pruned catalog.
             prunedCatalogFile << line0 << std::endl;
             prunedCatalogFile << line1 << std::endl;
@@ -187,6 +199,16 @@ void executeCatalogPruner( const rapidjson::Document& config )
             {
                 continue;
             }
+
+            // Check if the number of objects in the pruned catalog has reached the cutoff set by
+            // the user. If not, increment the counter.
+            if ( input.catalogCutoff != 0 && numberOfPrunedObjects == input.catalogCutoff )
+            {
+                std::cout << "Cutoff reached ..." << std::endl;
+                break;
+            }
+
+            numberOfPrunedObjects++;
 
             // This point is reached if TLE is not filtered: write catalog lines to pruned catalog.
             prunedCatalogFile << line1 << std::endl;
@@ -267,6 +289,9 @@ CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config )
     const std::string nameRegex = find( config, "name_regex" )->value.GetString( );
     std::cout << "Name regex                    " << nameRegex << std::endl;
 
+    const int catalogCutoff = find( config, "catalog_cutoff" )->value.GetInt( );
+    std::cout << "Catalog cutoff                " << catalogCutoff << std::endl;
+
     const std::string prunedCatalogPath = find( config, "catalog_pruned" )->value.GetString( );
     std::cout << "Pruned catalog                " << prunedCatalogPath << std::endl;
 
@@ -278,6 +303,7 @@ CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config )
                                inclinationMinimum,
                                inclinationMaximum,
                                nameRegex,
+                               catalogCutoff,
                                prunedCatalogPath );
 }
 

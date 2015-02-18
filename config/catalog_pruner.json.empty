@@ -1,4 +1,4 @@
-// // Copyright (c) 2014 Kartik Kumar (me@kartikkumar.com)
+// // Copyright (c) 2015 Kartik Kumar (me@kartikkumar.com)
 // // Distributed under the MIT License.
 // // See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
@@ -16,7 +16,11 @@
 //     "eccentricity_filter"       : [,],
 //     // Set inclination filter bounds (lower bound >= 0.0; upper bound <= 180.0) [deg].
 //     "inclination_filter"        : [,],
+//     // Set regex filter based on TLE object .
 //     "name_regex"                : "",
+//     // Set maximum number of objects in list.
+//     // This cutoff is switched off if set to 0.
+//     "catalog_cutoff"            : 0,
 
 //     // Set output file for pruned TLE catalog.
 //     "catalog_pruned"            : "../data/test_debris_catalog.txt"
