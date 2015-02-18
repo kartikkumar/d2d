@@ -28,6 +28,7 @@ addons:
     branch_pattern: coverity_scan
 
 before_install:
+  - sudo chmod ugo+x scripts/check_doxygen.sh
   - sudo apt-get update
   # fetch a newer cmake since at this time Travis only has version 2.8.7
   # https://github.com/bjz/glfw-rs/commit/e9353a14afa5c647497837e16fd44d0e1d6eb326
@@ -51,16 +52,7 @@ script:
       mkdir build;
       cd build;
       cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on -DBUILD_DOCS=on ..;
-      # count the number of warnings when building Doxygen output
-      warnings=$(make doxygen_docs 2>&1 >/dev/null | wc -l)
-      if [[ $warnings -ne 0 ]]; then
-        # print the output for info
-        make doxygen_docs
-        echo "Found $warnings Doxygen warnings"
-        exit 1;
-      else
-        echo "Found $warnings Doxygen warnings"
-      fi;
+      ./scripts/check_doxygen.sh
       make;
       ctest -V;
     fi
