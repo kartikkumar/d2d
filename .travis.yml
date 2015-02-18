@@ -37,9 +37,11 @@ before_install:
   - sudo apt-get update -qq
 
 install:
+  - sudo apt-get autoremove
   - sudo apt-get install cmake
   - sudo apt-get install gsl-bin libgsl0ldbl
-  - sudo apt-get install libboost1.54-dev
+  - sudo apt-get install libboost-all-dev
+  - sudo apt-get install doxygen
   - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ] && [ "$CXX" == "g++" ] && [ "$BUILD_TYPE" == "Debug" ]; then
       sudo pip install cpp-coveralls;
     fi
@@ -48,7 +50,17 @@ script:
   - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ]; then
       mkdir build;
       cd build;
-      cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on ..;
+      cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on -DBUILD_DOCS=on ..;
+      # count the number of warnings when building Doxygen output
+      warnings=$(make doxygen_docs 2>&1 >/dev/null | wc -l)
+      if [[ $warnings -ne 0 ]]; then
+        # print the output for info
+        make doxygen_docs
+        echo "Found $warnings Doxygen warnings"
+        exit 1;
+      else
+        echo "Found $warnings Doxygen warnings"
+      fi;
       make;
       ctest -V;
     fi

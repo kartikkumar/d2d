@@ -5,7 +5,7 @@
 cmake_minimum_required(VERSION 2.6)
 
 # Change this section to correspond with your project info.
-project(Atom C CXX)
+project(D2D C CXX)
 set(PROJECT_SUMMARY                            "Debris-to-debris computational tool")
 set(${CMAKE_PROJECT_NAME}_VENDOR_NAME          "Kartik Kumar")
 set(${CMAKE_PROJECT_NAME}_VENDOR_CONTACT       "me@kartikkumar.com")
@@ -24,7 +24,7 @@ if(NOT EXTERNAL_PATH)
   set(EXTERNAL_PATH                            "${PROJECT_PATH}/external")
 endif(NOT EXTERNAL_PATH)
 if(NOT DOXYGEN_PATH)
-  set(DOXYGEN_PATH                             "${PROJECT_PATH}/doxygen")
+  set(DOXYGEN_PATH                             "${PROJECT_PATH}/doxygen-docs")
 endif(NOT DOXYGEN_PATH)
 set(LIB_PATH                                   "${PROJECT_BINARY_DIR}/lib")
 set(LIB_NAME                                   "d2d_methods")
@@ -34,7 +34,7 @@ set(TEST_PATH                                  "${PROJECT_BINARY_DIR}/test")
 set(TEST_NAME                                  "test_d2d")
 
 OPTION(BUILD_MAIN                              "Build main function"            ON)
-OPTION(BUILD_DOCS                              "Build docs"                     OFF)
+OPTION(BUILD_DOXYGEN_DOCS                      "Build Doxygen docs"             OFF)
 OPTION(BUILD_TESTS                             "Build tests"                    OFF)
 OPTION(BUILD_DEPENDENCIES                      "Force build of dependencies"    OFF)
 
@@ -135,7 +135,7 @@ if(BUILD_MAIN)
   )
 endif(BUILD_MAIN)
 
-if(BUILD_DOCS)
+if(BUILD_DOXYGEN_DOCS)
   find_package(Doxygen)
 
   if(NOT DOXYGEN_FOUND)
@@ -149,10 +149,10 @@ if(BUILD_DOCS)
   # Add a custom target to run Doxygen whenever the project is built.
   # If you do NOT want the documentation to be generated EVERY time you build the project
   # then leave out the 'ALL' keyword from the command below.
-  add_custom_target(doxygen ALL COMMAND ${DOXYGEN_EXECUTABLE}
+  add_custom_target(doxygen_docs ALL COMMAND ${DOXYGEN_EXECUTABLE}
                     ${PROJECT_BINARY_DIR}/Doxyfile
                     SOURCES ${PROJECT_BINARY_DIR}/Doxyfile)
-endif(BUILD_DOCS)
+endif(BUILD_DOXYGEN_DOCS)
 
 if(BUILD_TESTS)
   enable_testing()
