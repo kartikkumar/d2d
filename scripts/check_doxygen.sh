@@ -7,5 +7,5 @@ if [[ $warnings -ne 0 ]]; then
   # Print the output.
   make doxygen_docs;
   echo "Found Doxygen warnings";
-  exit 1;
+  exit(1);
 fi;

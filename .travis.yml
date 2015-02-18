@@ -28,6 +28,7 @@ addons:
     branch_pattern: coverity_scan
 
 before_install:
+  - sudo chmod ugo+x scripts/update_doxygen.sh
   - sudo chmod ugo+x scripts/check_doxygen.sh
   # Fetch a newer CMake.
   # https://github.com/bjz/glfw-rs/commit/e9353a14afa5c647497837e16fd44d0e1d6eb326
@@ -43,6 +44,7 @@ install:
   - sudo apt-get purge libboost*1.46*
   - sudo apt-get install libboost1.48-all-dev
   - sudo apt-get autoremove
+  - sudo ./scripts/update_doxygen.sh
   - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ] && [ "$CXX" == "g++" ] && [ "$BUILD_TYPE" == "Debug" ]; then
       sudo pip install cpp-coveralls;
     fi
