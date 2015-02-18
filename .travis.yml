@@ -21,7 +21,7 @@ matrix:
 addons:
   coverity_scan:
     project:
-      name: "kartikkumar/atom"
+      name: "kartikkumar/d2d"
     notification_email: me@kartikkumar.com
     build_command_prepend: "mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on .."
     build_command: "make"
@@ -51,9 +51,10 @@ script:
   - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ]; then
       mkdir build;
       cd build;
-      cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on -DBUILD_DOCS=on ..;
-      ./scripts/check_doxygen.sh
+      cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on -DBUILD_DOXYGEN_DOCS=on ..;
       make;
+      cd ../scripts;
+      ./check_doxygen.sh
       ctest -V;
     fi
 
