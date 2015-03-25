@@ -1,5 +1,5 @@
 '''
-Copyright (c) 2015, K. Kumar (me@kartikkumar.com)
+Copyright (c) 2014-2015, Kartik Kumar (me@kartikkumar.com)
 All rights reserved.
 '''
 
@@ -73,19 +73,21 @@ except sqlite3.Error, e:
     sys.exit(1)
 
 # Fetch scan data.
-
-scan_data = pd.read_sql("SELECT departureObjectId, arrivalObjectId, min(transferDeltaV)       \
-                            FROM lambert_scanner                                              \
-                            GROUP BY departureObjectId, arrivalObjectId;",                    \
+map_order = "departure_" + config['map_order']
+scan_data = pd.read_sql("SELECT departure_object_id, arrival_object_id, min(transfer_delta_v)   \
+                            FROM lambert_scan_results                                           \
+                            GROUP BY departure_object_id, arrival_object_id;",                  \
                         database)
-scan_data.columns = ['departure_id','arrival_id','delta_v']
-scan_map = scan_data.pivot(index='departure_id', columns='arrival_id', values='delta_v')
-scan_order = pd.read_sql("SELECT DISTINCT departureObjectId, " + config['map_order'] + "     \
-                            FROM lambert_scanner                                             \
-                            ORDER BY " + config['map_order'] + " ASC",                       \
+scan_data.columns = ['departure_object_id','arrival_object_id','transfer_delta_v']
+scan_map = scan_data.pivot(index='departure_object_id',                                         \
+                           columns='arrival_object_id',                                         \
+                           values='transfer_delta_v')
+scan_order = pd.read_sql("SELECT DISTINCT departure_object_id, " + map_order + "                \
+                            FROM lambert_scan_results                                           \
+                            ORDER BY " + map_order + " ASC",                                    \
                         database)
-scan_map = scan_map.reindex(index=scan_order['departureObjectId'], \
-                            columns=scan_order['departureObjectId'])
+scan_map = scan_map.reindex(index=scan_order['departure_object_id'], \
+                            columns=scan_order['departure_object_id'])
 
 # Close SQLite database if it's still open.
 if database:
@@ -96,16 +98,17 @@ print "Plotting heat map ..."
 # Plot heat map.
 
 # Set up color map.
-bins = np.linspace(scan_data['delta_v'].min(), scan_data['delta_v'].max(), 10)
-groups = scan_data['delta_v'].groupby(np.digitize(scan_data['delta_v'], bins))
+bins = np.linspace(scan_data['transfer_delta_v'].min(), scan_data['transfer_delta_v'].max(), 10)
+groups = scan_data['transfer_delta_v'].groupby(np.digitize(scan_data['transfer_delta_v'], bins))
 levels = groups.mean().values
 cmap_lin = plt.get_cmap(config['colormap'])
 cmap = nlcmap(cmap_lin, levels)
 
 # Plot heat map.
 ax1 = plt.subplot2grid((15,15), (2, 0),rowspan=13,colspan=14)
-heatmap = ax1.pcolormesh(scan_map.values, cmap=cmap,                                        \
-                         vmin=scan_data['delta_v'].min(), vmax=scan_data['delta_v'].max())
+heatmap = ax1.pcolormesh(scan_map.values, cmap=cmap,                                            \
+                         vmin=scan_data['transfer_delta_v'].min(),                              \
+                         vmax=scan_data['transfer_delta_v'].max())
 ax1.set_xticks(np.arange(scan_map.shape[1] + 1)+0.5)
 ax1.set_xticklabels(scan_map.columns, rotation=90)
 ax1.set_yticks([])
@@ -117,7 +120,7 @@ ax1.set_ylabel('Arrival object',fontsize=config['axis_label_size'])
 
 # Plot axis ordering.
 ax2 = plt.subplot2grid((15,15), (0, 0),rowspan=2,colspan=14,sharex=ax1)
-ax2.plot(scan_order[str(config['map_order'])],'k',linewidth=2.0)
+ax2.plot(scan_order[str(map_order)],'k',linewidth=2.0)
 ax2.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%.2e'))
 ax2.tick_params(axis='both', which='major', labelsize=config['tick_label_size'])
 plt.setp(ax2.get_xticklabels(), visible=False)

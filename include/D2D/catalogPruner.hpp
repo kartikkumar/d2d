@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -11,16 +11,21 @@
 namespace d2d
 {
 
-//! Execute TLE catalog pruner.
+//! Execute catalog_pruner.
 /*!
- * Execute TLE catalog pruner (application mode: catalog_pruner). This pruner filters a catalog
- * provided by the user and produces a new catalog which is a subset of the original.
+ * Execute catalog_pruner application mode. This pruner filters a TLE catalog provided by the user
+ * and produces a new catalog which is a subset of the original.
  *
  * The filters available currently are:
  *  - altitude (semi-major axis - Earth radius) [km]
  *  - inclination                               [deg]
  *  - eccentricity                              [-]
  *  - line-0 regex (performs regex match on line-0 of TLE; only works for 3-line TLE )
+ *
+ * @todo      Add filters for other orbital elements
+ * @todo      Add filters that cross-reference fields in SATCAT (e.g., size from RCS)
+ *            (Kelso, 2014)
+ * @todo      Add filters for other TLE fields, e.g., launch year.
  *
  * @param[in] config User-defined configuration options (extracted from JSON input file)
  */
@@ -125,3 +130,8 @@ private:
 CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config );
 
 } // namespace d2d
+
+/*!
+ * Kelso, T.S. Satellite Catalog (SATCAT), http://www.celestrak.com/satcat,
+ *  last modified: 3rd June, 2014, last accessed: 28th January, 2015.
+ */

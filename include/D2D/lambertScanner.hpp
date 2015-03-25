@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -17,28 +17,26 @@
 namespace d2d
 {
 
-//! Execute Lambert scanner.
+//! Execute lambert_scanner.
 /*!
- * Executes Lambert scanner that performs a grid search to compute \f$\Delta V\f$ for
- * debris-to-debris transfers. The transfers are modelled as conic sections. The Lambert targeter
- * employed is based on Izzo (2014), implemented in PyKEP (Izzo, 2012).
+ * Executes lambert_scanner application mode that performs a grid search to compute \f$\Delta V\f$
+ * for debris-to-debris transfers. The transfers are modelled as conic sections. The Lambert
+ * targeter employed is based on Izzo (2014), implemented in PyKEP (Izzo, 2012).
  *
  * The results obtained from the grid search are stored in a SQLite database, containing the
- * following tables:
+ * following table:
  *
- *	- "metadata": contains all metadata result to execute the grid search
- *  - "transfer": contains input and output data for each transfer computed
- *
- * This function is called when the user specifies the application mode to be "lambert_scanner".
+ *	- "lambert_scanner_results": contains all Lambert transfers computed during grid search
  *
  * @param[in] config User-defined configuration options (extracted from JSON input file)
  */
 void executeLambertScanner( const rapidjson::Document& config );
 
-//! Lambert scanner input.
+//! lambert_scanner input.
 /*!
- * Data struct containing all valid Lambert scanner input parameters. This struct is populated by
- * the checkLambertScannerInput() function and can be used to execute the Lambert scanner.
+ * Data struct containing all valid lambert_scanner input parameters. This struct is populated by
+ * the checkLambertScannerInput() function and can be used to execute the lambert_scanner
+ * application mode.
  *
  * @sa checkLambertScannerInput, executeLambertScanner
  */
@@ -126,22 +124,23 @@ protected:
 private:
 };
 
-//! Check Lambert scanner input parameters.
+//! Check lambert_scanner input parameters.
 /*!
- * Checks that all Lambert scanner inputs are valid. If not, an error is thrown with a short
- * description of the problem. If all inputs are valid, a data struct containing all the inputs
- * is returned, which is subsequently used to execute the Lambert scanner and related functions.
+ * Checks that all inputs for the lambert_scanner application mode are valid. If not, an error is
+ * thrown with a short description of the problem. If all inputs are valid, a data struct
+ * containing all the inputs is returned, which is subsequently used to execute lambert_scanner
+ * and related functions.
  *
  * @sa executeLambertScanner, LambertScannerInput
  * @param[in] config User-defined configuration options (extracted from JSON input file)
- * @return           Struct containing all valid input to execute Lambert scanner
+ * @return           Struct containing all valid input to execute lambert_scanner
  */
 LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config );
 
-//! Create Lambert scanner table.
+//! Create lambert_scanner table.
 /*!
- * Creates Lambert scanner table in SQLite database used to store results obtaned from running
- * Lambert scanner.
+ * Creates lambert_scanner table in SQLite database used to store results obtaned from running
+ * the lambert_scanner application mode.
  *
  * @sa executeLambertScanner
  * @param[in] database SQLite database handle
@@ -170,5 +169,5 @@ void writeTransferShortlist( SQLite::Database& database,
  * Izzo, D. (2014) Revisiting Lambert's problem, http://arxiv.org/abs/1403.2705.
  * Izzo, D. (2012) PyGMO and PyKEP: open source tools for massively parallel optimization in
  * 	astrodynamics (the case of interplanetary trajectory optimization). Proceed. Fifth
- *  International Conf. Astrodynam. Tools and Techniques, ICATT. 2012.
+ *  International Conf. Astrodynam. Tools and Techniques, ESA/ESTEC, The Netherlands.
  */

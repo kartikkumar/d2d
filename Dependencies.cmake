@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Kartik Kumar (me@kartikkumar.com)
+# Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
 # Distributed under the MIT License.
 # See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
@@ -199,6 +199,41 @@ if(NOT APPLE)
 else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
+
+# -------------------------------
+
+if(NOT BUILD_DEPENDENCIES)
+  find_package(GSL)
+endif(NOT BUILD_DEPENDENCIES)
+
+if(NOT GSL_FOUND)
+  message(STATUS "GSL will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(gsl-lib
+    PREFIX ${EXTERNAL_PATH}/GSL
+    #--Download step--------------
+    URL https://github.com/ampl/gsl/archive/master.zip
+    TIMEOUT 30
+    #--Update/Patch step----------
+    #--Configure step-------------
+    #--Build step-----------------
+    BUILD_IN_SOURCE 1
+    #--Install step---------------
+    INSTALL_COMMAND ""
+    #--Output logging-------------
+    LOG_DOWNLOAD ON
+  )
+  ExternalProject_Get_Property(gsl-lib source_dir)
+  set(GSL_INCLUDE_DIRS ${source_dir} CACHE INTERNAL "Path to include folder for SGP4")
+  set(GSL_LIBRARY_DIRS ${source_dir} CACHE INTERNAL "Path to library folder for SGP4")
+  set(GSL_LIBRARIES "gsl" "gslcblas")
+endif(NOT GSL_FOUND)
+
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${GSL_INCLUDE_DIRS}")
+else(APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${GSL_INCLUDE_DIRS}\"")
+endif(NOT APPLE)
+link_directories(${GSL_LIBRARY_DIRS})
 
 # -------------------------------
 

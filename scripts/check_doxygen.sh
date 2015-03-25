@@ -1,4 +1,8 @@
 #!/bin/bash
+# Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+# Distributed under the MIT License.
+# See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
 set -ev
 
 # Count the number of warnings when building Doxygen output.

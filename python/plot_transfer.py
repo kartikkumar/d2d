@@ -1,5 +1,5 @@
 '''
-Copyright (c) 2015, K. Kumar (me@kartikkumar.com)
+Copyright (c) 2014-2015, Kartik Kumar (me@kartikkumar.com)
 All rights reserved.
 '''
 

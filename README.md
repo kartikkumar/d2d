@@ -97,14 +97,3 @@ Disclaimer
 ------
 
 The copyright holders are not liable for any damage(s) incurred due to improper use of D2D.
-
-TODO
-------
-
-  - Find a way to provide an option to clean installation.
-  - Parallelize lambert_scanner and atom_scanner using OpenMP if present
-  - Add atom_single mode to compute single transfers
-  - Add option to automatically download TLE catalog
-  - Add status indicator in console for scanning modes
-  - Build GUI interface
-  - Add option to compute transfers in 2D (by setting z-component to zero)

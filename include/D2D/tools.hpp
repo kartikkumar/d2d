@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -12,9 +12,11 @@
 
 #include <boost/array.hpp>
 
-#include <rapidjson/document.h>
+#include <catch/catch.hpp>
 
 #include <libsgp4/Eci.h>
+
+#include <rapidjson/document.h>
 
 #include <Astro/astro.hpp>
 
@@ -32,6 +34,36 @@ typedef std::map< double, Vector6 > StateHistory;
 
 //! JSON config iterator.
 typedef rapidjson::Value::ConstMemberIterator ConfigIterator;
+
+//! Create custom CATCH Approx object with tolerance for comparing doubles.
+/*!
+ * Creates a custom CATCH Approx object that can be used for comparing doubles in unit tests. The
+ * tolerance is set based on machine precision (epsilon) for doubles.
+ *
+ * Using this comparison object ensures that large numbers are compared in a relative sense and
+ * small numbers in an absolute sense.
+ *
+ * @see <a href="https://github.com/philsquared/Catch/include/internal/catch_approx.hpp">CATCH</a>
+ * @see <a href="http://www.thusspakeak.com/ak/2013/06/01-YoureGoingToHaveToThink01.html">
+ *      Harris, R. (2013)</a>
+ */
+static Approx approx
+  = Approx::custom( ).epsilon( std::numeric_limits< double >::epsilon( ) * 100.0 );
+
+//! Get root-path for D2D.
+/*!
+ * Returns path to root-directory of the D2D application (trailing slash included).
+ *
+ * @todo    Find a way to test the root-path function.
+ *
+ * @return  D2D root-path.
+ */
+static inline std::string getRootPath( )
+{
+    std::string filePath( __FILE__ );
+    return filePath.substr(
+      0, filePath.length( ) - std::string( "include/D2D/tools.hpp" ).length( ) );
+}
 
 //! Sample Kepler orbit.
 /*!
@@ -94,20 +126,24 @@ inline void print( std::ostream& stream,
  * @param[in]  value         Specified value to print
  * @param[in]  units         Units for value
  * @param[in]  delimiter     Character used to delimiter entries in stream (default = ' ')
+ * @param[in]  width         Width of value printed to stream, in terms of number of characters
+ *                           (default = 25)
+ * @param[in]  filler        Character used to fill fixed-width (default = ' ')
  */
 template< typename DataType >
 inline void print( std::ostream& stream,
                    const std::string& parameterName,
                    const DataType value,
                    const std::string& units,
-                   const char delimiter = ',' )
+                   const char delimiter = ',',
+                   const int width = 25,
+                   const char filler = ' ' )
 {
-    print( stream, parameterName );
+    print( stream, parameterName, width, filler );
     stream << delimiter;
-    print( stream, value );
+    print( stream, value, width, filler );
     stream << delimiter;
-    print( stream, units );
-    stream << std::endl;
+    print( stream, units, width, filler );
 }
 
 //! Print state history to stream.
@@ -141,7 +177,7 @@ ConfigIterator find( const rapidjson::Document& config, const std::string& param
 //! Remove newline characters from string.
 /*!
  * Removes newline characters from a string by making use of the STL erase() and remove()
- * functions.
+ * functions. Removes '\\n' and '\\r' characters.
  *
  * @param[in,out] string String from which newline characters should be removed
  */

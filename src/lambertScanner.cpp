@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -11,6 +11,7 @@
 #include <iterator>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 #include <boost/progress.hpp>
@@ -29,7 +30,7 @@
 namespace d2d
 {
 
-//! Execute Lambert scanner.
+//! Execute lambert_scanner.
 void executeLambertScanner( const rapidjson::Document& config )
 {
 
@@ -39,7 +40,7 @@ void executeLambertScanner( const rapidjson::Document& config )
     // Set gravitational parameter used by Lambert targeter.
     const double earthGravitationalParameter = kMU;
     std::cout << "Earth gravitational parameter " << earthGravitationalParameter
-              << " kg m^3 s_2" << std::endl;
+              << " kg m^3 s^-2" << std::endl;
 
     std::cout << std::endl;
     std::cout << "******************************************************************" << std::endl;
@@ -105,51 +106,51 @@ void executeLambertScanner( const rapidjson::Document& config )
     // Setup insert query.
     std::ostringstream lambertScannerTableInsert;
     lambertScannerTableInsert
-        << "INSERT INTO lambert_scanner VALUES ("
+        << "INSERT INTO lambert_scan_results VALUES ("
         << "NULL,"
-        << ":departureObjectId,"
-        << ":departureEpoch,"
-        << ":departurePositionX,"
-        << ":departurePositionY,"
-        << ":departurePositionZ,"
-        << ":departureVelocityX,"
-        << ":departureVelocityY,"
-        << ":departureVelocityZ,"
-        << ":departureSemiMajorAxis,"
-        << ":departureEccentricity,"
-        << ":departureInclination,"
-        << ":departureArgumentOfPeriapsis,"
-        << ":departureLongitudeOfAscendingNode,"
-        << ":departureTrueAnomaly,"
-        << ":departureDeltaVX,"
-        << ":departureDeltaVY,"
-        << ":departureDeltaVZ,"
-        << ":arrivalObjectId,"
-        << ":arrivalPositionX,"
-        << ":arrivalPositionY,"
-        << ":arrivalPositionZ,"
-        << ":arrivalVelocityX,"
-        << ":arrivalVelocityY,"
-        << ":arrivalVelocityZ,"
-        << ":arrivalSemiMajorAxis,"
-        << ":arrivalEccentricity,"
-        << ":arrivalInclination,"
-        << ":arrivalArgumentOfPeriapsis,"
-        << ":arrivalLongitudeOfAscendingNode,"
-        << ":arrivalTrueAnomaly,"
-        << ":arrivalDeltaVX,"
-        << ":arrivalDeltaVY,"
-        << ":arrivalDeltaVZ,"
-        << ":timeOfFlight,"
+        << ":departure_object_id,"
+        << ":arrival_object_id,"
+        << ":departure_epoch,"
+        << ":time_of_flight,"
         << ":revolutions,"
         << ":prograde,"
-        << ":transferSemiMajorAxis,"
-        << ":transferEccentricity,"
-        << ":transferInclination,"
-        << ":transferArgumentOfPeriapsis,"
-        << ":transferLongitudeOfAscendingNode,"
-        << ":transferTrueAnomaly,"
-        << ":transferDeltaV"
+        << ":departure_position_x,"
+        << ":departure_position_y,"
+        << ":departure_position_z,"
+        << ":departure_velocity_x,"
+        << ":departure_velocity_y,"
+        << ":departure_velocity_z,"
+        << ":departure_semi_major_axis,"
+        << ":departure_eccentricity,"
+        << ":departure_inclination,"
+        << ":departure_argument_of_periapsis,"
+        << ":departure_longitude_of_ascending_node,"
+        << ":departure_true_anomaly,"
+        << ":arrival_position_x,"
+        << ":arrival_position_y,"
+        << ":arrival_position_z,"
+        << ":arrival_velocity_x,"
+        << ":arrival_velocity_y,"
+        << ":arrival_velocity_z,"
+        << ":arrival_semi_major_axis,"
+        << ":arrival_eccentricity,"
+        << ":arrival_inclination,"
+        << ":arrival_argument_of_periapsis,"
+        << ":arrival_longitude_of_ascending_node,"
+        << ":arrival_true_anomaly,"
+        << ":transfer_semi_major_axis,"
+        << ":transfer_eccentricity,"
+        << ":transfer_inclination,"
+        << ":transfer_argument_of_periapsis,"
+        << ":transfer_longitude_of_ascending_node,"
+        << ":transfer_true_anomaly,"
+        << ":departure_delta_v_x,"
+        << ":departure_delta_v_y,"
+        << ":departure_delta_v_z,"
+        << ":arrival_delta_v_x,"
+        << ":arrival_delta_v_y,"
+        << ":arrival_delta_v_z,"
+        << ":transfer_delta_v"
         << ");";
 
     SQLite::Statement query( database, lambertScannerTableInsert.str( ) );
@@ -158,7 +159,7 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     // Loop over TLE objects and compute transfers based on Lambert targeter across time-of-flight
     // grid.
-    boost::progress_display show_progress( tleObjects.size( ) );
+    boost::progress_display showProgress( tleObjects.size( ) );
 
     // Loop over all departure objects.
     for ( unsigned int i = 0; i < tleObjects.size( ); i++ )
@@ -211,8 +212,8 @@ void executeLambertScanner( const rapidjson::Document& config )
                     = input.timeOfFlightMinimum + k * input.timeOfFlightStepSize;
 
                 const DateTime arrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
-                const Eci tleArrivalState = sgp4Arrival.FindPosition( arrivalEpoch );
-                const Vector6 arrivalState = getStateVector( tleArrivalState );
+                const Eci tleArrivalState   = sgp4Arrival.FindPosition( arrivalEpoch );
+                const Vector6 arrivalState  = getStateVector( tleArrivalState );
 
                 Vector3 arrivalPosition;
                 std::copy( arrivalState.begin( ),
@@ -252,8 +253,8 @@ void executeLambertScanner( const rapidjson::Document& config )
 
                     departureDeltaVs[ i ] = sml::add( transferDepartureVelocity,
                                                       sml::multiply( departureVelocity, -1.0 ) );
-                    arrivalDeltaVs[ i ] = sml::add( transferArrivalVelocity,
-                                                    sml::multiply( arrivalVelocity, -1.0 ) );
+                    arrivalDeltaVs[ i ]   = sml::add( transferArrivalVelocity,
+                                                      sml::multiply( arrivalVelocity, -1.0 ) );
 
                     transferDeltaVs[ i ]
                         = sml::norm< double >( departureDeltaVs[ i ] )
@@ -280,67 +281,67 @@ void executeLambertScanner( const rapidjson::Document& config )
                                                                   earthGravitationalParameter );
 
                 // Bind values to SQL insert query.
-                query.bind( ":departureObjectId", departureObjectId );
-                query.bind( ":departureEpoch", departureEpoch.ToJulian( ) );
-                query.bind( ":departurePositionX", departureState[ astro::xPositionIndex ] );
-                query.bind( ":departurePositionY", departureState[ astro::yPositionIndex ] );
-                query.bind( ":departurePositionZ", departureState[ astro::zPositionIndex ] );
-                query.bind( ":departureVelocityX", departureState[ astro::xVelocityIndex ] );
-                query.bind( ":departureVelocityY", departureState[ astro::yVelocityIndex ] );
-                query.bind( ":departureVelocityZ", departureState[ astro::zVelocityIndex ] );
-                query.bind( ":departureSemiMajorAxis",
+                query.bind( ":departure_object_id",  departureObjectId );
+                query.bind( ":arrival_object_id",    arrivalObjectId );
+                query.bind( ":departure_epoch",      departureEpoch.ToJulian( ) );
+                query.bind( ":time_of_flight",       timeOfFlight );
+                query.bind( ":revolutions",          revolutions );
+                query.bind( ":prograde",             input.isPrograde );
+                query.bind( ":departure_position_x", departureState[ astro::xPositionIndex ] );
+                query.bind( ":departure_position_y", departureState[ astro::yPositionIndex ] );
+                query.bind( ":departure_position_z", departureState[ astro::zPositionIndex ] );
+                query.bind( ":departure_velocity_x", departureState[ astro::xVelocityIndex ] );
+                query.bind( ":departure_velocity_y", departureState[ astro::yVelocityIndex ] );
+                query.bind( ":departure_velocity_z", departureState[ astro::zVelocityIndex ] );
+                query.bind( ":departure_semi_major_axis",
                     departureStateKepler[ astro::semiMajorAxisIndex ] );
-                query.bind( ":departureEccentricity",
+                query.bind( ":departure_eccentricity",
                     departureStateKepler[ astro::eccentricityIndex ] );
-                query.bind( ":departureInclination",
+                query.bind( ":departure_inclination",
                     departureStateKepler[ astro::inclinationIndex ] );
-                query.bind( ":departureArgumentOfPeriapsis",
+                query.bind( ":departure_argument_of_periapsis",
                     departureStateKepler[ astro::argumentOfPeriapsisIndex ] );
-                query.bind( ":departureLongitudeOfAscendingNode",
+                query.bind( ":departure_longitude_of_ascending_node",
                     departureStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
-                query.bind( ":departureTrueAnomaly",
+                query.bind( ":departure_true_anomaly",
                     departureStateKepler[ astro::trueAnomalyIndex ] );
-                query.bind( ":departureDeltaVX", departureDeltaVs[ minimumDeltaVIndex ][ 0 ] );
-                query.bind( ":departureDeltaVY", departureDeltaVs[ minimumDeltaVIndex ][ 1 ] );
-                query.bind( ":departureDeltaVZ", departureDeltaVs[ minimumDeltaVIndex ][ 2 ] );
-                query.bind( ":arrivalObjectId", arrivalObjectId );
-                query.bind( ":arrivalPositionX", arrivalState[ astro::xPositionIndex ] );
-                query.bind( ":arrivalPositionY", arrivalState[ astro::yPositionIndex ] );
-                query.bind( ":arrivalPositionZ", arrivalState[ astro::zPositionIndex ] );
-                query.bind( ":arrivalVelocityX", arrivalState[ astro::xVelocityIndex ] );
-                query.bind( ":arrivalVelocityY", arrivalState[ astro::yVelocityIndex ] );
-                query.bind( ":arrivalVelocityZ", arrivalState[ astro::zVelocityIndex ] );
-                query.bind( ":arrivalSemiMajorAxis",
+                query.bind( ":arrival_position_x",  arrivalState[ astro::xPositionIndex ] );
+                query.bind( ":arrival_position_y",  arrivalState[ astro::yPositionIndex ] );
+                query.bind( ":arrival_position_z",  arrivalState[ astro::zPositionIndex ] );
+                query.bind( ":arrival_velocity_x",  arrivalState[ astro::xVelocityIndex ] );
+                query.bind( ":arrival_velocity_y",  arrivalState[ astro::yVelocityIndex ] );
+                query.bind( ":arrival_velocity_z",  arrivalState[ astro::zVelocityIndex ] );
+                query.bind( ":arrival_semi_major_axis",
                     arrivalStateKepler[ astro::semiMajorAxisIndex ] );
-                query.bind( ":arrivalEccentricity",
+                query.bind( ":arrival_eccentricity",
                     arrivalStateKepler[ astro::eccentricityIndex ] );
-                query.bind( ":arrivalInclination",
+                query.bind( ":arrival_inclination",
                     arrivalStateKepler[ astro::inclinationIndex ] );
-                query.bind( ":arrivalArgumentOfPeriapsis",
+                query.bind( ":arrival_argument_of_periapsis",
                     arrivalStateKepler[ astro::argumentOfPeriapsisIndex ] );
-                query.bind( ":arrivalLongitudeOfAscendingNode",
+                query.bind( ":arrival_longitude_of_ascending_node",
                     arrivalStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
-                query.bind( ":arrivalTrueAnomaly",
+                query.bind( ":arrival_true_anomaly",
                     arrivalStateKepler[ astro::trueAnomalyIndex ] );
-                query.bind( ":arrivalDeltaVX", arrivalDeltaVs[ minimumDeltaVIndex ][ 0 ] );
-                query.bind( ":arrivalDeltaVY", arrivalDeltaVs[ minimumDeltaVIndex ][ 1 ] );
-                query.bind( ":arrivalDeltaVZ", arrivalDeltaVs[ minimumDeltaVIndex ][ 2 ] );
-                query.bind( ":timeOfFlight", timeOfFlight );
-                query.bind( ":revolutions", revolutions );
-                query.bind( ":prograde", input.isPrograde );
-                query.bind( ":transferSemiMajorAxis",
+                query.bind( ":transfer_semi_major_axis",
                     transferStateKepler[ astro::semiMajorAxisIndex ] );
-                query.bind( ":transferEccentricity",
+                query.bind( ":transfer_eccentricity",
                     transferStateKepler[ astro::eccentricityIndex ] );
-                query.bind( ":transferInclination",
+                query.bind( ":transfer_inclination",
                     transferStateKepler[ astro::inclinationIndex ] );
-                query.bind( ":transferArgumentOfPeriapsis",
+                query.bind( ":transfer_argument_of_periapsis",
                     transferStateKepler[ astro::argumentOfPeriapsisIndex ] );
-                query.bind( ":transferLongitudeOfAscendingNode",
+                query.bind( ":transfer_longitude_of_ascending_node",
                     transferStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
-                query.bind( ":transferTrueAnomaly",
+                query.bind( ":transfer_true_anomaly",
                     transferStateKepler[ astro::trueAnomalyIndex ] );
-                query.bind( ":transferDeltaV", *minimumDeltaVIterator );
+                query.bind( ":departure_delta_v_x", departureDeltaVs[ minimumDeltaVIndex ][ 0 ] );
+                query.bind( ":departure_delta_v_y", departureDeltaVs[ minimumDeltaVIndex ][ 1 ] );
+                query.bind( ":departure_delta_v_z", departureDeltaVs[ minimumDeltaVIndex ][ 2 ] );
+                query.bind( ":arrival_delta_v_x",   arrivalDeltaVs[ minimumDeltaVIndex ][ 0 ] );
+                query.bind( ":arrival_delta_v_y",   arrivalDeltaVs[ minimumDeltaVIndex ][ 1 ] );
+                query.bind( ":arrival_delta_v_z",   arrivalDeltaVs[ minimumDeltaVIndex ][ 2 ] );
+                query.bind( ":transfer_delta_v",    *minimumDeltaVIterator );
 
                 // Execute insert query.
                 query.executeStep( );
@@ -350,7 +351,7 @@ void executeLambertScanner( const rapidjson::Document& config )
             }
         }
 
-        ++show_progress;
+        ++showProgress;
     }
 
     // Commit transaction.
@@ -369,7 +370,7 @@ void executeLambertScanner( const rapidjson::Document& config )
     }
 }
 
-//! Check Lambert scanner input parameters.
+//! Check lambert_scanner input parameters.
 LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config )
 {
     const std::string catalogPath = find( config, "catalog" )->value.GetString( );
@@ -437,6 +438,12 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
     const double timeOfFlightMaximum
         = find( config, "time_of_flight_grid" )->value[ 1 ].GetDouble( );
     std::cout << "Maximum Time-of-Flight        " << timeOfFlightMaximum << std::endl;
+
+    if ( timeOfFlightMinimum > timeOfFlightMaximum )
+    {
+        throw std::runtime_error( "ERROR: Maximum time-of-flight must be larger than minimum!" );
+    }
+
     const double timeOfFlightSteps
         = find( config, "time_of_flight_grid" )->value[ 2 ].GetDouble( );
     std::cout << "# Time-of-Flight steps        " << timeOfFlightSteps << std::endl;
@@ -477,75 +484,75 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
                                 shortlistPath );
 }
 
-//! Create Lambert scanner table.
+//! Create lambert_scanner table.
 void createLambertScannerTable( SQLite::Database& database )
 {
     // Drop table from database if it exists.
-    database.exec( "DROP TABLE IF EXISTS lambert_scanner;" );
+    database.exec( "DROP TABLE IF EXISTS lambert_scan_results;" );
 
-    // Set up SQL command to create table to store Lambert scanner results.
+    // Set up SQL command to create table to store lambert_scanner results.
     std::ostringstream lambertScannerTableCreate;
     lambertScannerTableCreate
-        << "CREATE TABLE lambert_scanner ("
-        << "\"transferId\" INTEGER PRIMARY KEY AUTOINCREMENT,"
-        << "\"departureObjectId\" INTEGER,"
-        << "\"departureEpoch\" REAL,"
-        << "\"departurePositionX\" REAL,"
-        << "\"departurePositionY\" REAL,"
-        << "\"departurePositionZ\" REAL,"
-        << "\"departureVelocityX\" REAL,"
-        << "\"departureVelocityY\" REAL,"
-        << "\"departureVelocityZ\" REAL,"
-        << "\"departureSemiMajorAxis\" REAL,"
-        << "\"departureEccentricity\" REAL,"
-        << "\"departureInclination\" REAL,"
-        << "\"departureArgumentOfPeriapsis\" REAL,"
-        << "\"departureLongitudeOfAscendingNode\" REAL,"
-        << "\"departureTrueAnomaly\" REAL,"
-        << "\"departureDeltaVX\" REAL,"
-        << "\"departureDeltaVY\" REAL,"
-        << "\"departureDeltaVZ\" REAL,"
-        << "\"arrivalObjectId\" INTEGER,"
-        << "\"arrivalPositionX\" REAL,"
-        << "\"arrivalPositionY\" REAL,"
-        << "\"arrivalPositionZ\" REAL,"
-        << "\"arrivalVelocityX\" REAL,"
-        << "\"arrivalVelocityY\" REAL,"
-        << "\"arrivalVelocityZ\" REAL,"
-        << "\"arrivalSemiMajorAxis\" REAL,"
-        << "\"arrivalEccentricity\" REAL,"
-        << "\"arrivalInclination\" REAL,"
-        << "\"arrivalArgumentOfPeriapsis\" REAL,"
-        << "\"arrivalLongitudeOfAscendingNode\" REAL,"
-        << "\"arrivalTrueAnomaly\" REAL,"
-        << "\"arrivalDeltaVX\" REAL,"
-        << "\"arrivalDeltaVY\" REAL,"
-        << "\"arrivalDeltaVZ\" REAL,"
-        << "\"timeOfFlight\" REAL,"
-        << "\"revolutions\" INTEGER,"
-        << "\"prograde\" INTEGER," // N.B.: SQLite doesn't support booleans so 0 = false, 1 = true
-        << "\"transferSemiMajorAxis\" REAL,"
-        << "\"transferEccentricity\" REAL,"
-        << "\"transferInclination\" REAL,"
-        << "\"transferArgumentOfPeriapsis\" REAL,"
-        << "\"transferLongitudeOfAscendingNode\" REAL,"
-        << "\"transferTrueAnomaly\" REAL,"
-        << "\"transferDeltaV\" REAL"
-        << ");";
+        << "CREATE TABLE lambert_scan_results ("
+        << "\"transfer_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,"
+        << "\"departure_object_id\"                     TEXT,"
+        << "\"arrival_object_id\"                       TEXT,"
+        << "\"departure_epoch\"                         REAL,"
+        << "\"time_of_flight\"                          REAL,"
+        << "\"revolutions\"                             INTEGER,"
+        // N.B.: SQLite doesn't support booleans so 0 = false, 1 = true for 'prograde'
+        << "\"prograde\"                                INTEGER,"
+        << "\"departure_position_x\"                    REAL,"
+        << "\"departure_position_y\"                    REAL,"
+        << "\"departure_position_z\"                    REAL,"
+        << "\"departure_velocity_x\"                    REAL,"
+        << "\"departure_velocity_y\"                    REAL,"
+        << "\"departure_velocity_z\"                    REAL,"
+        << "\"departure_semi_major_axis\"               REAL,"
+        << "\"departure_eccentricity\"                  REAL,"
+        << "\"departure_inclination\"                   REAL,"
+        << "\"departure_argument_of_periapsis\"         REAL,"
+        << "\"departure_longitude_of_ascending_node\"   REAL,"
+        << "\"departure_true_anomaly\"                  REAL,"
+        << "\"arrival_position_x\"                      REAL,"
+        << "\"arrival_position_y\"                      REAL,"
+        << "\"arrival_position_z\"                      REAL,"
+        << "\"arrival_velocity_x\"                      REAL,"
+        << "\"arrival_velocity_y\"                      REAL,"
+        << "\"arrival_velocity_z\"                      REAL,"
+        << "\"arrival_semi_major_axis\"                 REAL,"
+        << "\"arrival_eccentricity\"                    REAL,"
+        << "\"arrival_inclination\"                     REAL,"
+        << "\"arrival_argument_of_periapsis\"           REAL,"
+        << "\"arrival_longitude_of_ascending_node\"     REAL,"
+        << "\"arrival_true_anomaly\"                    REAL,"
+        << "\"transfer_semi_major_axis\"                REAL,"
+        << "\"transfer_eccentricity\"                   REAL,"
+        << "\"transfer_inclination\"                    REAL,"
+        << "\"transfer_argument_of_periapsis\"          REAL,"
+        << "\"transfer_longitude_of_ascending_node\"    REAL,"
+        << "\"transfer_true_anomaly\"                   REAL,"
+        << "\"departure_delta_v_x\"                     REAL,"
+        << "\"departure_delta_v_y\"                     REAL,"
+        << "\"departure_delta_v_z\"                     REAL,"
+        << "\"arrival_delta_v_x\"                       REAL,"
+        << "\"arrival_delta_v_y\"                       REAL,"
+        << "\"arrival_delta_v_z\"                       REAL,"
+        << "\"transfer_delta_v\"                        REAL"
+        <<                                              ");";
 
     // Execute command to create table.
     database.exec( lambertScannerTableCreate.str( ).c_str( ) );
 
-    // Execute commant to create index on transfer Delta-V column.
+    // Execute command to create index on transfer Delta-V column.
     std::ostringstream transferDeltaVIndexCreate;
-    transferDeltaVIndexCreate << "CREATE INDEX IF NOT EXISTS \"transferDeltaV\" on "
-                              << "lambert_scanner (transferDeltaV ASC);";
+    transferDeltaVIndexCreate << "CREATE INDEX IF NOT EXISTS \"transfer_delta_v\" on "
+                              << "lambert_scan_results (transfer_delta_v ASC);";
     database.exec( transferDeltaVIndexCreate.str( ).c_str( ) );
 
-    if ( !database.tableExists( "lambert_scanner" ) )
+    if ( !database.tableExists( "lambert_scan_results" ) )
     {
-        std::cerr << "ERROR: Creating table 'lambert_scanner' failed!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: Creating table 'lambert_scan_results' failed!" );
     }
 }
 
@@ -555,60 +562,60 @@ void writeTransferShortlist( SQLite::Database& database,
                              const std::string& shortlistPath )
 {
     // Fetch transfers to include in shortlist.
-    // Database table is sorted by transferDeltaV, in ascending order.
+    // Database table is sorted by transfer_delta_v, in ascending order.
     std::ostringstream shortlistSelect;
-    shortlistSelect << "SELECT * FROM lambert_scanner ORDER BY transferDeltaV ASC LIMIT "
-                    << shortlistNumber;
+    shortlistSelect << "SELECT * FROM lambert_scan_results ORDER BY transfer_delta_v ASC LIMIT "
+                    << shortlistNumber << ";";
     SQLite::Statement query( database, shortlistSelect.str( ) );
 
     // Write fetch data to file.
     std::ofstream shortlistFile( shortlistPath.c_str( ) );
 
     // Print file header.
-    shortlistFile << "transferId,"
-                  << "departureObjectId,"
-                  << "departureEpoch,"
-                  << "departurePositionX,"
-                  << "departurePositionY,"
-                  << "departurePositionZ,"
-                  << "departureVelocityX,"
-                  << "departureVelocityY,"
-                  << "departureVelocityZ,"
-                  << "departureSemiMajorAxis,"
-                  << "departureEccentricity,"
-                  << "departureInclination,"
-                  << "departureArgumentOfPeriapsis,"
-                  << "departureLongitudeOfAscendingNode,"
-                  << "departureTrueAnomaly,"
-                  << "departureDeltaVX,"
-                  << "departureDeltaVY,"
-                  << "departureDeltaVZ,"
-                  << "arrivalObjectId,"
-                  << "arrivalPositionX,"
-                  << "arrivalPositionY,"
-                  << "arrivalPositionZ,"
-                  << "arrivalVelocityX,"
-                  << "arrivalVelocityY,"
-                  << "arrivalVelocityZ,"
-                  << "arrivalSemiMajorAxis,"
-                  << "arrivalEccentricity,"
-                  << "arrivalInclination,"
-                  << "arrivalArgumentOfPeriapsis,"
-                  << "arrivalLongitudeOfAscendingNode,"
-                  << "arrivalTrueAnomaly,"
-                  << "arrivalDeltaVX,"
-                  << "arrivalDeltaVY,"
-                  << "arrivalDeltaVZ,"
-                  << "timeOfFlight,"
+    shortlistFile << "transfer_id,"
+                  << "departure_object_id,"
+                  << "arrival_object_id,"
+                  << "departure_epoch,"
+                  << "time_of_flight,"
                   << "revolutions,"
                   << "prograde,"
-                  << "transferSemiMajorAxis,"
-                  << "transferEccentricity,"
-                  << "transferInclination,"
-                  << "transferArgumentOfPeriapsis,"
-                  << "transferLongitudeOfAscendingNode,"
-                  << "transferTrueAnomaly,"
-                  << "transferDeltaV"
+                  << "departure_position_x,"
+                  << "departure_position_y,"
+                  << "departure_position_z,"
+                  << "departure_velocity_x,"
+                  << "departure_velocity_y,"
+                  << "departure_velocity_z,"
+                  << "departure_semi_major_axis,"
+                  << "departure_eccentricity,"
+                  << "departure_inclination,"
+                  << "departure_argument_of_periapsis,"
+                  << "departure_longitude_of_ascending_node,"
+                  << "departure_true_anomaly,"
+                  << "arrival_position_x,"
+                  << "arrival_position_y,"
+                  << "arrival_position_z,"
+                  << "arrival_velocity_x,"
+                  << "arrival_velocity_y,"
+                  << "arrival_velocity_z,"
+                  << "arrival_semi_major_axis,"
+                  << "arrival_eccentricity,"
+                  << "arrival_inclination,"
+                  << "arrival_argument_of_periapsis,"
+                  << "arrival_longitude_of_ascending_node,"
+                  << "arrival_true_anomaly,"
+                  << "transfer_semi_major_axis,"
+                  << "transfer_eccentricity,"
+                  << "transfer_inclination,"
+                  << "transfer_argument_of_periapsis,"
+                  << "transfer_longitude_of_ascending_node,"
+                  << "transfer_true_anomaly,"
+                  << "departure_delta_v_x,"
+                  << "departure_delta_v_y,"
+                  << "departure_delta_v_z,"
+                  << "arrival_delta_v_x,"
+                  << "arrival_delta_v_y,"
+                  << "arrival_delta_v_z,"
+                  << "transfer_delta_v"
                   << std::endl;
 
     // Loop through data retrieved from database and write to file.
@@ -616,23 +623,23 @@ void writeTransferShortlist( SQLite::Database& database,
     {
         const int    transferId                         = query.getColumn( 0 );
         const int    departureObjectId                  = query.getColumn( 1 );
-        const double departureEpoch                     = query.getColumn( 2 );
-        const double departurePositionX                 = query.getColumn( 3 );
-        const double departurePositionY                 = query.getColumn( 4 );
-        const double departurePositionZ                 = query.getColumn( 5 );
-        const double departureVelocityX                 = query.getColumn( 6 );
-        const double departureVelocityY                 = query.getColumn( 7 );
-        const double departureVelocityZ                 = query.getColumn( 8 );
-        const double departureSemiMajorAxis             = query.getColumn( 9 );
-        const double departureEccentricity              = query.getColumn( 10 );
-        const double departureInclination               = query.getColumn( 11 );
-        const double departureArgumentOfPeriapsis       = query.getColumn( 12 );
-        const double departureLongitudeOfAscendingNode  = query.getColumn( 13 );
-        const double departureTrueAnomaly               = query.getColumn( 14 );
-        const double departureDeltaVX                   = query.getColumn( 15 );
-        const double departureDeltaVY                   = query.getColumn( 16 );
-        const double departureDeltaVZ                   = query.getColumn( 17 );
-        const int    arrivalObjectId                    = query.getColumn( 18 );
+        const int    arrivalObjectId                    = query.getColumn( 2 );
+        const double departureEpoch                     = query.getColumn( 3 );
+        const double timeOfFlight                       = query.getColumn( 4 );
+        const int    revolutions                        = query.getColumn( 5 );
+        const int    prograde                           = query.getColumn( 6 );
+        const double departurePositionX                 = query.getColumn( 7 );
+        const double departurePositionY                 = query.getColumn( 8 );
+        const double departurePositionZ                 = query.getColumn( 9 );
+        const double departureVelocityX                 = query.getColumn( 10 );
+        const double departureVelocityY                 = query.getColumn( 11 );
+        const double departureVelocityZ                 = query.getColumn( 12 );
+        const double departureSemiMajorAxis             = query.getColumn( 13 );
+        const double departureEccentricity              = query.getColumn( 14 );
+        const double departureInclination               = query.getColumn( 15 );
+        const double departureArgumentOfPeriapsis       = query.getColumn( 16 );
+        const double departureLongitudeOfAscendingNode  = query.getColumn( 17 );
+        const double departureTrueAnomaly               = query.getColumn( 18 );
         const double arrivalPositionX                   = query.getColumn( 19 );
         const double arrivalPositionY                   = query.getColumn( 20 );
         const double arrivalPositionZ                   = query.getColumn( 21 );
@@ -645,63 +652,63 @@ void writeTransferShortlist( SQLite::Database& database,
         const double arrivalArgumentOfPeriapsis         = query.getColumn( 28 );
         const double arrivalLongitudeOfAscendingNode    = query.getColumn( 29 );
         const double arrivalTrueAnomaly                 = query.getColumn( 30 );
-        const double arrivalDeltaVX                     = query.getColumn( 31 );
-        const double arrivalDeltaVY                     = query.getColumn( 32 );
-        const double arrivalDeltaVZ                     = query.getColumn( 33 );
-        const double timeOfFlight                       = query.getColumn( 34 );
-        const int    revolutions                        = query.getColumn( 35 );
-        const int    prograde                           = query.getColumn( 36 );
-        const double transferSemiMajorAxis              = query.getColumn( 37 );
-        const double transferEccentricity               = query.getColumn( 38 );
-        const double transferInclination                = query.getColumn( 39 );
-        const double transferArgumentOfPeriapsis        = query.getColumn( 40 );
-        const double transferLongitudeOfAscendingNode   = query.getColumn( 41 );
-        const double transferTrueAnomaly                = query.getColumn( 42 );
+        const double transferSemiMajorAxis              = query.getColumn( 31 );
+        const double transferEccentricity               = query.getColumn( 32 );
+        const double transferInclination                = query.getColumn( 33 );
+        const double transferArgumentOfPeriapsis        = query.getColumn( 34 );
+        const double transferLongitudeOfAscendingNode   = query.getColumn( 35 );
+        const double transferTrueAnomaly                = query.getColumn( 36 );
+        const double departureDeltaVX                   = query.getColumn( 37 );
+        const double departureDeltaVY                   = query.getColumn( 38 );
+        const double departureDeltaVZ                   = query.getColumn( 39 );
+        const double arrivalDeltaVX                     = query.getColumn( 40 );
+        const double arrivalDeltaVY                     = query.getColumn( 41 );
+        const double arrivalDeltaVZ                     = query.getColumn( 42 );
         const double transferDeltaV                     = query.getColumn( 43 );
 
-        shortlistFile << transferId << ","
-                      << departureObjectId << ","
-                      << departureEpoch << ","
-                      << departurePositionX << ","
-                      << departurePositionY << ","
-                      << departurePositionZ << ","
-                      << departureVelocityX << ","
-                      << departureVelocityY << ","
-                      << departureVelocityZ << ","
-                      << departureSemiMajorAxis << ","
-                      << departureEccentricity << ","
-                      << departureInclination << ","
-                      << departureArgumentOfPeriapsis << ","
-                      << departureLongitudeOfAscendingNode << ","
-                      << departureTrueAnomaly << ","
-                      << departureDeltaVX << ","
-                      << departureDeltaVY << ","
-                      << departureDeltaVZ << ","
-                      << arrivalObjectId << ","
-                      << arrivalPositionX << ","
-                      << arrivalPositionY << ","
-                      << arrivalPositionZ << ","
-                      << arrivalVelocityX << ","
-                      << arrivalVelocityY << ","
-                      << arrivalVelocityZ << ","
-                      << arrivalSemiMajorAxis << ","
-                      << arrivalEccentricity << ","
-                      << arrivalInclination << ","
-                      << arrivalArgumentOfPeriapsis << ","
-                      << arrivalLongitudeOfAscendingNode << ","
-                      << arrivalTrueAnomaly << ","
-                      << arrivalDeltaVX << ","
-                      << arrivalDeltaVY << ","
-                      << arrivalDeltaVZ << ","
-                      << timeOfFlight << ","
-                      << revolutions << ","
-                      << prograde << ","
-                      << transferSemiMajorAxis << ","
-                      << transferEccentricity << ","
-                      << transferInclination << ","
-                      << transferArgumentOfPeriapsis << ","
-                      << transferLongitudeOfAscendingNode << ","
-                      << transferTrueAnomaly << ","
+        shortlistFile << transferId                         << ","
+                      << departureObjectId                  << ","
+                      << arrivalObjectId                    << ","
+                      << departureEpoch                     << ","
+                      << timeOfFlight                       << ","
+                      << revolutions                        << ","
+                      << prograde                           << ","
+                      << departurePositionX                 << ","
+                      << departurePositionY                 << ","
+                      << departurePositionZ                 << ","
+                      << departureVelocityX                 << ","
+                      << departureVelocityY                 << ","
+                      << departureVelocityZ                 << ","
+                      << departureSemiMajorAxis             << ","
+                      << departureEccentricity              << ","
+                      << departureInclination               << ","
+                      << departureArgumentOfPeriapsis       << ","
+                      << departureLongitudeOfAscendingNode  << ","
+                      << departureTrueAnomaly               << ","
+                      << arrivalPositionX                   << ","
+                      << arrivalPositionY                   << ","
+                      << arrivalPositionZ                   << ","
+                      << arrivalVelocityX                   << ","
+                      << arrivalVelocityY                   << ","
+                      << arrivalVelocityZ                   << ","
+                      << arrivalSemiMajorAxis               << ","
+                      << arrivalEccentricity                << ","
+                      << arrivalInclination                 << ","
+                      << arrivalArgumentOfPeriapsis         << ","
+                      << arrivalLongitudeOfAscendingNode    << ","
+                      << arrivalTrueAnomaly                 << ","
+                      << transferSemiMajorAxis              << ","
+                      << transferEccentricity               << ","
+                      << transferInclination                << ","
+                      << transferArgumentOfPeriapsis        << ","
+                      << transferLongitudeOfAscendingNode   << ","
+                      << transferTrueAnomaly                << ","
+                      << departureDeltaVX                   << ","
+                      << departureDeltaVY                   << ","
+                      << departureDeltaVZ                   << ","
+                      << arrivalDeltaVX                     << ","
+                      << arrivalDeltaVY                     << ","
+                      << arrivalDeltaVZ                     << ","
                       << transferDeltaV
                       << std::endl;
     }

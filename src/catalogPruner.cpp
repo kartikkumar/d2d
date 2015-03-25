@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
 
 #include <boost/xpressive/xpressive.hpp>
 
@@ -20,7 +21,7 @@
 namespace d2d
 {
 
-//! Execute TLE catalog pruner.
+//! Execute catalog_pruner.
 void executeCatalogPruner( const rapidjson::Document& config )
 {
     // Verify config parameters. Exception is thrown if any of the parameters are missing.
@@ -54,11 +55,10 @@ void executeCatalogPruner( const rapidjson::Document& config )
 
         while ( std::getline( catalogFile, catalogLine ) )
         {
-            if ( catalogLine.substr( 0, 1 ) != "0" )
+            if ( catalogLine.substr( 0, 1 ).compare( "0" ) != 0 )
             {
                 // TODO: print catalog line in error message.
-                std::cerr << "ERROR: Catalog malformed!" << std::endl;
-                throw;
+                throw std::runtime_error( "ERROR: Catalog malformed!" );
             }
             const std::string line0 = catalogLine;
 
@@ -74,21 +74,19 @@ void executeCatalogPruner( const rapidjson::Document& config )
             }
 
             std::getline( catalogFile, catalogLine );
-            if ( catalogLine.substr( 0, 1 ) != "1" )
+            if ( catalogLine.substr( 0, 1 ).compare( "1" ) != 0 )
             {
                 // Print catalog line in error message.
-                std::cerr << "ERROR: Catalog malformed!" << std::endl;
-                throw;
+                throw std::runtime_error( "ERROR: Catalog malformed!" );
             }
             removeNewline( catalogLine );
             const std::string line1 = catalogLine;
 
             std::getline( catalogFile, catalogLine );
-            if ( catalogLine.substr( 0, 1 ) != "2" )
+            if ( catalogLine.substr( 0, 1 ).compare( "2" ) != 0 )
             {
                 // Print catalog line in error message.
-                std::cerr << "ERROR: Catalog malformed!" << std::endl;
-                throw;
+                throw std::runtime_error( "ERROR: Catalog malformed!" );
             }
             removeNewline( catalogLine );
             const std::string line2 = catalogLine;
@@ -144,28 +142,25 @@ void executeCatalogPruner( const rapidjson::Document& config )
     else if ( tleLines == 2 )
     {
         std::cout << "2-line catalog detected ... " << std::endl;
-        std::cerr << "WARNING: regex name filter will be skipped!" << std::endl;
+        std::cout << "WARNING: regex name filter will be skipped!" << std::endl;
 
         std::ofstream prunedCatalogFile( input.prunedCatalogPath.c_str( ) );
 
         while ( std::getline( catalogFile, catalogLine ) )
         {
-            std::getline( catalogFile, catalogLine );
-            if ( catalogLine.substr( 0, 1 ) != "1" )
+            if ( catalogLine.substr( 0, 1 ).compare( "1" ) != 0 )
             {
                 // Print catalog line in error message.
-                std::cerr << "ERROR: Catalog malformed!" << std::endl;
-                throw;
+                throw std::runtime_error( "ERROR: Catalog malformed!" );
             }
             removeNewline( catalogLine );
             const std::string line1 = catalogLine;
 
             std::getline( catalogFile, catalogLine );
-            if ( catalogLine.substr( 0, 1 ) != "2" )
+            if ( catalogLine.substr( 0, 1 ).compare( "2" ) != 0 )
             {
                 // Print catalog line in error message.
-                std::cerr << "ERROR: Catalog malformed!" << std::endl;
-                throw;
+                throw std::runtime_error( "ERROR: Catalog malformed!" );
             }
             removeNewline( catalogLine );
             const std::string line2 = catalogLine;
@@ -219,9 +214,10 @@ void executeCatalogPruner( const rapidjson::Document& config )
     }
     else
     {
-        std::cerr << "ERROR: # of lines per TLE must be 2 or 3!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: # of lines per TLE must be 2 or 3!" );
     }
+
+    std::cout << "Number of objects in pruned catalog: " << numberOfPrunedObjects << std::endl;
 
     catalogFile.close( );
 }
@@ -242,8 +238,7 @@ CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config )
 
     if ( semiMajorAxisMinimum > semiMajorAxisMaximum )
     {
-        std::cerr << "ERROR: Minimum altitude filter is greater the maximum!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: Minimum altitude filter is greater the maximum!" );
     }
 
     const double eccentricityMinimum
@@ -252,8 +247,7 @@ CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config )
 
     if ( eccentricityMinimum < 0.0 )
     {
-        std::cerr << "ERROR: Minimum eccentricity is less than 0.0!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: Minimum eccentricity is less than 0.0!" );
     }
 
     const double eccentricityMaximum
@@ -262,14 +256,12 @@ CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config )
 
     if ( eccentricityMaximum > 1.0 )
     {
-        std::cerr << "ERROR: Maximum eccentricity is greater than 1.0!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: Maximum eccentricity is greater than 1.0!" );
     }
 
     if ( eccentricityMinimum > eccentricityMaximum )
     {
-        std::cerr << "ERROR: Minimum eccentricity filter is greater the maximum!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: Minimum eccentricity filter is greater the maximum!" );
     }
 
     const double inclinationMinimum
@@ -282,8 +274,7 @@ CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config )
 
     if ( inclinationMinimum > inclinationMaximum )
     {
-        std::cerr << "ERROR: Minimum inclination filter is greater the maximum!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: Minimum inclination filter is greater the maximum!" );
     }
 
     const std::string nameRegex = find( config, "name_regex" )->value.GetString( );

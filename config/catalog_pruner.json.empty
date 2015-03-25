@@ -1,27 +1,30 @@
-// // Copyright (c) 2015 Kartik Kumar (me@kartikkumar.com)
-// // Distributed under the MIT License.
-// // See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+// Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
-// // Configuration file for D2D "catalog_pruner" application mode.
-// {
-//     "mode"                      : "catalog_pruner",
+// Configuration file for D2D "catalog_pruner" application mode.
+{
+    "mode"                      : "catalog_pruner",
 
-//     // Set path to TLE catalog file.
-//     "catalog"                   : "../data/catalog/test_catalog.txt",
+    // Set path to TLE catalog file.
+    // N.B.: Provide an absolute path!
+    //       A relative path is possible but note that this must be relative to the location
+    //       where D2D is executed.
+    "catalog"                   : "../data/catalog/test_catalog.txt",
 
-//     // Set filters.
-//     // Set semi-major axis filter bounds (with Earth radius subtracted) [km].
-//     "semi_major_axis_filter"    : [,],
-//     // Set eccentricity filter bounds (lower bound >= 0.0; upper bound <= 1.0) [-].
-//     "eccentricity_filter"       : [,],
-//     // Set inclination filter bounds (lower bound >= 0.0; upper bound <= 180.0) [deg].
-//     "inclination_filter"        : [,],
-//     // Set regex filter based on TLE object .
-//     "name_regex"                : "",
-//     // Set maximum number of objects in list.
-//     // This cutoff is switched off if set to 0.
-//     "catalog_cutoff"            : 0,
+    // Set filters.
+    // Set semi-major axis filter bounds (with Earth radius subtracted) [km].
+    "semi_major_axis_filter"    : [,],
+    // Set eccentricity filter bounds (lower bound >= 0.0; upper bound <= 1.0) [-].
+    "eccentricity_filter"       : [,],
+    // Set inclination filter bounds (lower bound >= 0.0; upper bound <= 180.0) [deg].
+    "inclination_filter"        : [,],
+    // Set regex filter based on TLE object.
+    "name_regex"                : "",
+    // Set maximum number of objects in list.
+    // This cutoff is switched off if set to 0.
+    "catalog_cutoff"            : 0,
 
-//     // Set output file for pruned TLE catalog.
-//     "catalog_pruned"            : "../data/test_debris_catalog.txt"
-// }
+    // Set output file for pruned TLE catalog.
+    "catalog_pruned"            : "../data/test_debris_catalog.txt"
+}

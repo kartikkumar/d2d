@@ -1,11 +1,13 @@
 /*
- * Copyright (c) 2015 K. Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
 #include <algorithm>
 #include <iomanip>
+#include <sstream>
+#include <stdexcept>
 
 #include <keplerian_toolbox.h>
 
@@ -40,7 +42,8 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
         kep_toolbox::propagate_lagrangian( position, velocity, timeStep, gravitationalParameter );
         std::copy( position.begin( ), position.begin( ) + 3, state.begin( ) );
         std::copy( velocity.begin( ), velocity.begin( ) + 3, state.begin( ) + 3 );
-        stateHistory[ ( i + 1 ) * timeStep + initialEpoch ] = state;
+        const double epoch = ( ( i + 1 ) * timeStep ) / ( 24 * 3600.0 ) + initialEpoch;
+        stateHistory[ epoch ] = state;
     }
 
     return stateHistory;
@@ -88,8 +91,9 @@ ConfigIterator find( const rapidjson::Document& config, const std::string& param
     const ConfigIterator iterator = config.FindMember( parameterName.c_str( ) );
     if ( iterator == config.MemberEnd( ) )
     {
-        std::cerr << "ERROR: \"" << parameterName << "\" missing from config file!" << std::endl;
-        throw;
+        std::ostringstream error;
+        error << "ERROR: \"" << parameterName << "\" missing from config file!";
+        throw std::runtime_error( error.str( ) );
     }
     return iterator;
 }
@@ -115,8 +119,7 @@ int getTleCatalogType( const std::string& catalogFirstLine )
     }
     else
     {
-        std::cerr << "ERROR: Catalog malformed!" << std::endl;
-        throw;
+        throw std::runtime_error( "ERROR: Catalog malformed!" );
     }
 
     return tleLines;

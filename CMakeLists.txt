@@ -1,4 +1,4 @@
-# Copyright (c) 2015 Kartik Kumar (me@kartikkumar.com)
+# Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
 # Distributed under the MIT License.
 # See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
@@ -10,7 +10,7 @@ set(PROJECT_SUMMARY                            "Debris-to-debris computational t
 set(${CMAKE_PROJECT_NAME}_VENDOR_NAME          "Kartik Kumar")
 set(${CMAKE_PROJECT_NAME}_VENDOR_CONTACT       "me@kartikkumar.com")
 set(${CMAKE_PROJECT_NAME}_VERSION_MAJOR        0)
-set(${CMAKE_PROJECT_NAME}_VERSION_MINOR        1)
+set(${CMAKE_PROJECT_NAME}_VERSION_MINOR        3)
 set(${CMAKE_PROJECT_NAME}_VERSION_PATCH        0)
 set(PROJECT_VERSION
   "${${CMAKE_PROJECT_NAME}_VERSION_MAJOR}.${${CMAKE_PROJECT_NAME}_VERSION_MINOR}.${${CMAKE_PROJECT_NAME}_VERSION_PATCH}")
@@ -26,6 +26,9 @@ endif(NOT EXTERNAL_PATH)
 if(NOT DOXYGEN_PATH)
   set(DOXYGEN_PATH                             "${PROJECT_PATH}/doxygen-docs")
 endif(NOT DOXYGEN_PATH)
+if(NOT DOCS_PATH)
+  set(DOCS_PATH                                "${PROJECT_PATH}/docs")
+endif(NOT DOCS_PATH)
 set(LIB_PATH                                   "${PROJECT_BINARY_DIR}/lib")
 set(LIB_NAME                                   "d2d_methods")
 set(BIN_PATH                                   "${PROJECT_BINARY_DIR}/bin")
@@ -39,16 +42,15 @@ OPTION(BUILD_TESTS                             "Build tests"                    
 OPTION(BUILD_DEPENDENCIES                      "Force build of dependencies"    OFF)
 
 include(CMakeDependentOption)
-CMAKE_DEPENDENT_OPTION(BUILD_TESTS_WITH_EIGEN  "Build tests with Eigen library" OFF
-                                               "BUILD_TESTS"                    OFF)
 CMAKE_DEPENDENT_OPTION(BUILD_COVERAGE_ANALYSIS "Build code coverage analysis"   OFF
                                                "BUILD_TESTS"                    OFF)
 
 set(SRC
   "${SRC_PATH}/catalogPruner.cpp"
-  "${SRC_PATH}/lambertFetch.cpp"
+#  "${SRC_PATH}/lambertFetch.cpp"
   "${SRC_PATH}/lambertScanner.cpp"
-  "${SRC_PATH}/lambertTransfer.cpp"
+#  "${SRC_PATH}/lambertTransfer.cpp"
+#  "${SRC_PATH}/sgp4Propagator.cpp"
   "${SRC_PATH}/tools.cpp"
 )
 
@@ -58,6 +60,9 @@ set(MAIN_SRC
 
 set(TEST_SRC
   "${TEST_SRC_PATH}/testD2D.cpp"
+  "${TEST_SRC_PATH}/testTools.cpp"
+  "${TEST_SRC_PATH}/testCatalogPruner.cpp"
+  "${TEST_SRC_PATH}/testLambertScanner.cpp"
 )
 
 # Set CMake build-type. If it not supplied by the user, the default built type is "Release".
@@ -120,12 +125,16 @@ endif(NOT SQLITECPP_FOUND)
 if(NOT SGP4_FOUND)
   add_dependencies(${LIB_NAME} sgp4-deorbit)
 endif(NOT SGP4_FOUND)
+if(NOT GSL_FOUND)
+  add_dependencies(${LIB_NAME} gsl-lib)
+endif(NOT GSL_FOUND)
 
 if(BUILD_MAIN)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${BIN_PATH})
   add_executable(${MAIN_NAME} ${MAIN_SRC})
   target_link_libraries(${MAIN_NAME}
     ${LIB_NAME}
+    ${GSL_LIBRARIES}
     ${SGP4_LIBRARY}
     ${KEPLERIANTOOLBOX_LIBRARY}
     ${SQLITECPP_LIBRARY}
@@ -158,17 +167,14 @@ if(BUILD_TESTS)
   enable_testing()
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${TEST_PATH})
 
-  if(BUILD_TESTS_WITH_EIGEN)
-   #string(REPLACE "Elements" "ElementsEigen" TESTS_SRC_EIGEN "${TEST_SRC}")
-   #add_executable(${TEST_NAME}_eigen ${TESTS_SRC_EIGEN})
-   #add_dependencies(${TEST_NAME}_eigen)
-   #target_link_libraries(${TEST_NAME}_eigen ${SGP4_LIBRARY} ${GSL_LIBRARY})
-   #add_test(NAME ${TEST_NAME}_eigen COMMAND "${TEST_PATH}/${TEST_NAME}_eigen")
-  endif(BUILD_TESTS_WITH_EIGEN)
-
   add_executable(${TEST_NAME} ${TEST_SRC})
-  #add_dependencies(${TEST_NAME} atom-lib)
-  target_link_libraries(${TEST_NAME})
+  target_link_libraries(${TEST_NAME}
+    ${LIB_NAME}
+    ${SGP4_LIBRARY}
+    ${KEPLERIANTOOLBOX_LIBRARY}
+    ${SQLITECPP_LIBRARY}
+    ${SQLITE3_LIBRARY}
+    )
   add_test(NAME ${TEST_NAME} COMMAND "${TEST_PATH}/${TEST_NAME}")
 
   if(BUILD_COVERAGE_ANALYSIS)
