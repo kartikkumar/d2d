@@ -12,7 +12,7 @@
 
 #include <boost/array.hpp>
 
-#include <catch/catch.hpp>
+#include <catch.hpp>
 
 #include <libsgp4/Eci.h>
 
