@@ -1,0 +1,10 @@
+{
+    "mode"                      : "lambert_scanner",
+    "catalog"                   : "lambert_scanner_tle_3line_catalog_test.txt",
+    "database"                  : "lambert_scanner_test.db",
+    "departure_epoch"           : [2015,3,24,16,3,30],
+    "time_of_flight_grid"       : [36000.0,72000.0,2],
+    "is_prograde"               : true,
+    "revolutions_maximum"       : 2,
+    "shortlist"                 : [10,"lambert_scanner_shortlist_test.csv"]
+}

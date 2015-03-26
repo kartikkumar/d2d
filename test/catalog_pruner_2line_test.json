@@ -1,0 +1,10 @@
+{
+    "mode"                      : "catalog_pruner",
+    "catalog"                   : "catalog_pruner_tle_2line_catalog_full.txt",
+    "semi_major_axis_filter"    : [200.0,2000.0],
+    "eccentricity_filter"       : [0.0,0.1],
+    "inclination_filter"        : [95.0,100.0],
+    "name_regex"                : "(ARIANE)",
+    "catalog_cutoff"            : 0,
+    "catalog_pruned"            : "catalog_pruner_tle_2line_pruned_catalog.txt"
+}
