@@ -105,7 +105,7 @@ TEST_CASE( "Test execution of lambert_scanner application mode", "[lambert-scann
             for ( int i = 3; i < 5; i++ )
             {
                 REQUIRE( query.getColumn( i ).getDouble( )
-                    == queryExpected.getColumn( i ).getDouble( ) );
+                    == approx( queryExpected.getColumn( i ).getDouble( ) ) );
             }
 
             for ( int i = 5; i < 7; i++ )
@@ -117,7 +117,7 @@ TEST_CASE( "Test execution of lambert_scanner application mode", "[lambert-scann
             for ( int i = 7; i < query.getColumnCount( ); i++ )
             {
                 REQUIRE( query.getColumn( i ).getDouble( )
-                    == queryExpected.getColumn( i ).getDouble( ) );
+                    == approx( queryExpected.getColumn( i ).getDouble( ) ) );
             }
         }
 
