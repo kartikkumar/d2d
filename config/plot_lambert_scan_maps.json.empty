@@ -13,7 +13,7 @@
     // - argument_of_periapsis
     // - longitude_of_ascending_node
     // The map order is generated based on the corresponding departure column in the
-    // lambert_scan_results table in the SQLite database.
+    // lambert_scanner_results table in the SQLite database.
     "map_order"                 : "",
 
     // Directory where scan figure is stored.

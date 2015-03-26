@@ -75,7 +75,7 @@ except sqlite3.Error, e:
 # Fetch scan data.
 map_order = "departure_" + config['map_order']
 scan_data = pd.read_sql("SELECT departure_object_id, arrival_object_id, min(transfer_delta_v)   \
-                            FROM lambert_scan_results                                           \
+                            FROM lambert_scanner_results                                        \
                             GROUP BY departure_object_id, arrival_object_id;",                  \
                         database)
 scan_data.columns = ['departure_object_id','arrival_object_id','transfer_delta_v']
@@ -83,7 +83,7 @@ scan_map = scan_data.pivot(index='departure_object_id',                         
                            columns='arrival_object_id',                                         \
                            values='transfer_delta_v')
 scan_order = pd.read_sql("SELECT DISTINCT departure_object_id, " + map_order + "                \
-                            FROM lambert_scan_results                                           \
+                            FROM lambert_scanner_results                                        \
                             ORDER BY " + map_order + " ASC",                                    \
                         database)
 scan_map = scan_map.reindex(index=scan_order['departure_object_id'], \

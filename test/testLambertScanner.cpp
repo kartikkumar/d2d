@@ -87,8 +87,9 @@ TEST_CASE( "Test execution of lambert_scanner application mode", "[lambert-scann
         SQLite::Database database( databasePathConfig.GetString( ), SQLITE_OPEN_READONLY );
         SQLite::Database databaseExpected( databaseExpectedPath.c_str( ), SQLITE_OPEN_READONLY );
 
-        SQLite::Statement query( database, "SELECT * FROM lambert_scan_results;" );
-        SQLite::Statement queryExpected( databaseExpected, "SELECT * FROM lambert_scan_results;" );
+        SQLite::Statement query( database, "SELECT * FROM lambert_scanner_results;" );
+        SQLite::Statement queryExpected(
+            databaseExpected, "SELECT * FROM lambert_scanner_results;" );
 
         while ( query.executeStep( ) )
         {
@@ -282,12 +283,12 @@ TEST_CASE( "Test function to check input to lambert scanner", "[lambert-scanner]
     std::cout.rdbuf( coutBuffer );
 }
 
-TEST_CASE( "Test creation of lambert_scan_results table in SQLite database",
+TEST_CASE( "Test creation of lambert_scanner_results table in SQLite database",
            "[lambert-scanner],[input-output]" )
 {
     // Set database path, table name, and open database in read/write mode.
     const std::string databasePath = getRootPath( ) + "/test/lambert_scanner_test.db";
-    const std::string tableName = "lambert_scan_results";
+    const std::string tableName = "lambert_scanner_results";
     SQLite::Database database( databasePath.c_str( ), SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE );
 
     // Create table and check if it is created correctly.
@@ -305,7 +306,7 @@ TEST_CASE( "Test writing transfer shortlist to file", "[lambert-scanner],[input-
     // Set database path, table name, shortlist path, expected shortlist path and open database in
     // read mode.
     const std::string databasePath = getRootPath( ) + "/test/lambert_scanner_expected.db";
-    const std::string tableName = "lambert_scan_results";
+    const std::string tableName = "lambert_scanner_results";
     const std::string shortlistAbsolutePath = getRootPath( ) + "/test/" + shortlistPath;
     const std::string shortlistExpectedPath
         = getRootPath( ) + "/test/lambert_scanner_shortlist_expected.csv";
