@@ -106,7 +106,7 @@ void executeLambertScanner( const rapidjson::Document& config )
     // Setup insert query.
     std::ostringstream lambertScannerTableInsert;
     lambertScannerTableInsert
-        << "INSERT INTO lambert_scan_results VALUES ("
+        << "INSERT INTO lambert_scanner_results VALUES ("
         << "NULL,"
         << ":departure_object_id,"
         << ":arrival_object_id,"
@@ -488,12 +488,12 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
 void createLambertScannerTable( SQLite::Database& database )
 {
     // Drop table from database if it exists.
-    database.exec( "DROP TABLE IF EXISTS lambert_scan_results;" );
+    database.exec( "DROP TABLE IF EXISTS lambert_scanner_results;" );
 
     // Set up SQL command to create table to store lambert_scanner results.
     std::ostringstream lambertScannerTableCreate;
     lambertScannerTableCreate
-        << "CREATE TABLE lambert_scan_results ("
+        << "CREATE TABLE lambert_scanner_results ("
         << "\"transfer_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,"
         << "\"departure_object_id\"                     TEXT,"
         << "\"arrival_object_id\"                       TEXT,"
@@ -547,12 +547,12 @@ void createLambertScannerTable( SQLite::Database& database )
     // Execute command to create index on transfer Delta-V column.
     std::ostringstream transferDeltaVIndexCreate;
     transferDeltaVIndexCreate << "CREATE INDEX IF NOT EXISTS \"transfer_delta_v\" on "
-                              << "lambert_scan_results (transfer_delta_v ASC);";
+                              << "lambert_scanner_results (transfer_delta_v ASC);";
     database.exec( transferDeltaVIndexCreate.str( ).c_str( ) );
 
-    if ( !database.tableExists( "lambert_scan_results" ) )
+    if ( !database.tableExists( "lambert_scanner_results" ) )
     {
-        throw std::runtime_error( "ERROR: Creating table 'lambert_scan_results' failed!" );
+        throw std::runtime_error( "ERROR: Creating table 'lambert_scanner_results' failed!" );
     }
 }
 
@@ -564,7 +564,7 @@ void writeTransferShortlist( SQLite::Database& database,
     // Fetch transfers to include in shortlist.
     // Database table is sorted by transfer_delta_v, in ascending order.
     std::ostringstream shortlistSelect;
-    shortlistSelect << "SELECT * FROM lambert_scan_results ORDER BY transfer_delta_v ASC LIMIT "
+    shortlistSelect << "SELECT * FROM lambert_scanner_results ORDER BY transfer_delta_v ASC LIMIT "
                     << shortlistNumber << ";";
     SQLite::Statement query( database, shortlistSelect.str( ) );
 
