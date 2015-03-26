@@ -48,7 +48,7 @@ typedef rapidjson::Value::ConstMemberIterator ConfigIterator;
  *      Harris, R. (2013)</a>
  */
 static Approx approx
-  = Approx::custom( ).epsilon( std::numeric_limits< double >::epsilon( ) * 100.0 );
+  = Approx::custom( ).epsilon( std::numeric_limits< double >::epsilon( ) * 1000.0 );
 
 //! Get root-path for D2D.
 /*!
