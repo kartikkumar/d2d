@@ -90,21 +90,21 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::string mode = modeIterator->value.GetString( );
     std::transform( mode.begin( ), mode.end( ), mode.begin( ), ::tolower );
 
-    // if ( mode.compare( "catalog_pruner") == 0 )
-    // {
-    //     std::cout << "Mode                          " << mode << std::endl;
-    //     d2d::executeCatalogPruner( config );
-    // }
+    if ( mode.compare( "catalog_pruner") == 0 )
+    {
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeCatalogPruner( config );
+    }
     // else if ( mode.compare( "lambert_transfer" ) == 0 )
     // {
     //     std::cout << "Mode                          " << mode << std::endl;
     //     d2d::executeLambertTransfer( config );
     // }
-    // else if ( mode.compare( "lambert_scanner" ) == 0 )
-    // {
-    //     std::cout << "Mode                          " << mode << std::endl;
-    //     d2d::executeLambertScanner( config );
-    // }
+    else if ( mode.compare( "lambert_scanner" ) == 0 )
+    {
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeLambertScanner( config );
+    }
     // else if ( mode.compare( "lambert_fetch" ) == 0 )
     // {
     //     std::cout << "Mode:                         " << mode << std::endl;
