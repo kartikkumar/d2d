@@ -4,6 +4,9 @@
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
+#ifndef D2D_CATALOG_PRUNER_HPP
+#define D2D_CATALOG_PRUNER_HPP
+
 #include <string>
 
 #include <rapidjson/document.h>
@@ -135,3 +138,5 @@ CatalogPrunerInput checkCatalogPrunerInput( const rapidjson::Document& config );
  * Kelso, T.S. Satellite Catalog (SATCAT), http://www.celestrak.com/satcat,
  *  last modified: 3rd June, 2014, last accessed: 28th January, 2015.
  */
+
+#endif // D2D_CATALOG_PRUNER_HPP

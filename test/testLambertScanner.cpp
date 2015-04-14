@@ -39,7 +39,7 @@ const static int         revolutionsMaximum    = 2;
 const static int         shortlistLength       = 10;
 const static std::string shortlistPath         = "lambert_scanner_shortlist_test.csv";
 
-TEST_CASE( "Test execution of lambert_scanner application mode", "[lambert-scanner]" )
+TEST_CASE( "Test execution of lambert_scanner application mode", "[lambert_scanner]" )
 {
     // Redirect cout to buffer.
     // http://www.cplusplus.com/reference/ios/ios/rdbuf/
@@ -72,7 +72,6 @@ TEST_CASE( "Test execution of lambert_scanner application mode", "[lambert-scann
         = getRootPath( ) + "/test/" + shortlistConfig[ 1 ].GetString( );
     shortlistConfig[ 1 ].SetString(
         shortlistPathAbsolute.c_str( ), shortlistPathAbsolute.size( ) );
-
 
     SECTION( "Test scanner using 3-line TLE catalog" )
     {
@@ -157,7 +156,7 @@ TEST_CASE( "Test execution of lambert_scanner application mode", "[lambert-scann
     std::cout.rdbuf( coutBuffer );
 }
 
-TEST_CASE( "Test LambertScannerInput struct", "[lambert-scanner],[input-output]" )
+TEST_CASE( "Test LambertScannerInput struct", "[lambert_scanner],[input-output]" )
 {
     const LambertScannerInput lambertScannerInput( catalogPath,
                                                    databasePath,
@@ -184,7 +183,7 @@ TEST_CASE( "Test LambertScannerInput struct", "[lambert-scanner],[input-output]"
     REQUIRE( lambertScannerInput.shortlistPath          == shortlistPath );
 }
 
-TEST_CASE( "Test function to check input to lambert scanner", "[lambert-scanner],[input-output]" )
+TEST_CASE( "Test function to check input to lambert scanner", "[lambert_scanner],[input-output]" )
 {
     // Redirect cout to buffer.
     // http://www.cplusplus.com/reference/ios/ios/rdbuf/
@@ -284,7 +283,7 @@ TEST_CASE( "Test function to check input to lambert scanner", "[lambert-scanner]
 }
 
 TEST_CASE( "Test creation of lambert_scanner_results table in SQLite database",
-           "[lambert-scanner],[input-output]" )
+           "[lambert_scanner],[input-output]" )
 {
     // Set database path, table name, and open database in read/write mode.
     const std::string databasePath = getRootPath( ) + "/test/lambert_scanner_test.db";
@@ -301,7 +300,7 @@ TEST_CASE( "Test creation of lambert_scanner_results table in SQLite database",
     std::remove( databasePath.c_str( ) );
 }
 
-TEST_CASE( "Test writing transfer shortlist to file", "[lambert-scanner],[input-output]" )
+TEST_CASE( "Test writing transfer shortlist to file", "[lambert_scanner],[input-output]" )
 {
     // Set database path, table name, shortlist path, expected shortlist path and open database in
     // read mode.

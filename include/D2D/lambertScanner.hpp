@@ -4,6 +4,9 @@
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
+#ifndef D2D_LAMBERT_SCANNER_HPP
+#define D2D_LAMBERT_SCANNER_HPP
+
 #include <string>
 
 #include <keplerian_toolbox.h>
@@ -171,3 +174,5 @@ void writeTransferShortlist( SQLite::Database& database,
  * 	astrodynamics (the case of interplanetary trajectory optimization). Proceed. Fifth
  *  International Conf. Astrodynam. Tools and Techniques, ESA/ESTEC, The Netherlands.
  */
+
+#endif // D2D_LAMBERT_SCANNER_HPP
