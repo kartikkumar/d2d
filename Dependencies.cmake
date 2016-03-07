@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+# Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
 # Distributed under the MIT License.
 # See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
@@ -40,13 +40,13 @@ endif(NOT APPLE)
 # -------------------------------
 
 if(NOT BUILD_DEPENDENCIES)
-  find_package(KeplerianToolbox)
+  find_package(PyKEP)
 endif(NOT BUILD_DEPENDENCIES)
 
-if(NOT KEPLERIANTOOLBOX_FOUND)
-  message(STATUS "KeplerianToolbox will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  ExternalProject_Add(keplerian_toolbox-lib
-    PREFIX ${EXTERNAL_PATH}/KeplerianToolbox
+if(NOT PYKEP_FOUND)
+  message(STATUS "PyKEP will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(pykep-lib
+    PREFIX ${EXTERNAL_PATH}/PyKEP
     #--Download step--------------
     URL https://github.com/esa/pykep/archive/master.zip
     TIMEOUT 120
@@ -59,87 +59,31 @@ if(NOT KEPLERIANTOOLBOX_FOUND)
     #--Output logging-------------
     LOG_DOWNLOAD ON
   )
-  ExternalProject_Get_Property(keplerian_toolbox-lib source_dir)
-  set(KEPLERIANTOOLBOX_INCLUDE_DIRS ${source_dir}/src
-    CACHE INTERNAL "Path to include folder for KeplerianToolbox")
-  set(KEPLERIANTOOLBOX_LIBRARY_DIR ${source_dir}/src
-    CACHE INTERNAL "Path to include folder for KeplerianToolbox")
-  set(KEPLERIANTOOLBOX_LIBRARY "keplerian_toolbox_static")
-endif(NOT KEPLERIANTOOLBOX_FOUND)
+  ExternalProject_Get_Property(pykep-lib source_dir)
+  set(PYKEP_INCLUDE_DIRS ${source_dir}/src CACHE INTERNAL "Path to include folder for PyKEP")
+  set(PYKEP_LIBRARY_DIR ${source_dir}/src CACHE INTERNAL "Path to include folder for PyKEP")
+  set(PYKEP_LIBRARY "keplerian_toolbox_static")
+endif(NOT PYKEP_FOUND)
 
 if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${KEPLERIANTOOLBOX_INCLUDE_DIRS}")
+  include_directories(SYSTEM AFTER "${PYKEP_INCLUDE_DIRS}")
 else(APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${KEPLERIANTOOLBOX_INCLUDE_DIRS}\"")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${PYKEP_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
-link_directories(${KEPLERIANTOOLBOX_LIBRARY_DIR})
-
-# -------------------------------
-
-find_package(Threads)
-
-if(NOT BUILD_DEPENDENCIES)
-  find_package(sqlite3)
-endif(NOT BUILD_DEPENDENCIES)
-
-if(NOT SQLITE3_FOUND)
-  message(STATUS "SQLite3 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  ExternalProject_Add(sqlite3-lib
-    PREFIX ${EXTERNAL_PATH}/SQLite3
-    #--Download step--------------
-    URL https://github.com/kartikkumar/sqlite3-cmake/archive/master.zip
-    TIMEOUT 30
-    #--Update/Patch step----------
-    #--Configure step-------------
-    #--Build step-----------------
-    BUILD_IN_SOURCE 1
-    #--Install step---------------
-    INSTALL_COMMAND ""
-    #--Output logging-------------
-    LOG_DOWNLOAD ON
-  )
-  ExternalProject_Get_Property(sqlite3-lib source_dir)
-  set(SQLITE3_INCLUDE_DIR ${source_dir}/src CACHE INTERNAL "Path to include folder for SQLite3")
-  set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
-  set(SQLITE3_LIBRARY "sqlite3-static")
-endif(NOT SQLITE3_FOUND)
-link_directories(${SQLITE3_LIBRARY_DIR})
-
-if(NOT APPLE)
-  include_directories(SYSTEM AFTER "${SQLITE3_INCLUDE_DIR}")
-else(NOT APPLE)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITE3_INCLUDE_DIR}\"")
-endif(NOT APPLE)
+link_directories(${PYKEP_LIBRARY_DIR})
 
 # -------------------------------
 
 if(NOT BUILD_DEPENDENCIES)
-  find_package(SQLiteCpp 0.099)
+  find_package(SQLiteCpp 1003001)
 endif(NOT BUILD_DEPENDENCIES)
 
 if(NOT SQLITECPP_FOUND)
   message(STATUS "SQLiteCpp will be downloaded when ${CMAKE_PROJECT_NAME} is built")
-  if(NOT SQLITE3_FOUND)
-    ExternalProject_Add(sqlitecpp-lib
-      DEPENDS sqlite3-lib
-      PREFIX ${EXTERNAL_PATH}/SQLiteCpp
-      #--Download step--------------
-      URL https://github.com/kartikkumar/sqlitecpp/archive/master.zip
-      TIMEOUT 30
-      #--Update/Patch step----------
-      #--Configure step-------------
-      #--Build step-----------------
-      BUILD_IN_SOURCE 1
-      #--Install step---------------
-      INSTALL_COMMAND ""
-      #--Output logging-------------
-      LOG_DOWNLOAD ON
-    )
-  else(NOT SQLITE3_FOUND)
-    ExternalProject_Add(sqlitecpp-lib
+  ExternalProject_Add(sqlitecpp-lib
     PREFIX ${EXTERNAL_PATH}/SQLiteCpp
     #--Download step--------------
-    URL https://github.com/kartikkumar/sqlitecpp/archive/master.zip
+    URL https://github.com/SRombauts/SQLiteCpp/archive/master.zip
     TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
@@ -150,7 +94,6 @@ if(NOT SQLITECPP_FOUND)
     #--Output logging-------------
     LOG_DOWNLOAD ON
   )
-  endif(NOT SQLITE3_FOUND)
   ExternalProject_Get_Property(sqlitecpp-lib source_dir)
   set(SQLITECPP_INCLUDE_DIRS ${source_dir}/include
     CACHE INTERNAL "Path to include folder for SQLiteCpp")
@@ -176,7 +119,7 @@ if(NOT SGP4_FOUND)
   ExternalProject_Add(sgp4-deorbit
     PREFIX ${EXTERNAL_PATH}/SGP4
     #--Download step--------------
-    URL https://github.com/kartikkumar/sgp4deorbit/archive/master.zip
+    URL https://github.com/astropnp/sgp4deorbit/archive/master.zip
     TIMEOUT 30
     #--Update/Patch step----------
     #--Configure step-------------
@@ -192,13 +135,13 @@ if(NOT SGP4_FOUND)
   set(SGP4_LIBRARY_DIR ${source_dir}/libsgp4 CACHE INTERNAL "Path to library folder for SGP4")
   set(SGP4_LIBRARY "sgp4")
 endif(NOT SGP4_FOUND)
-link_directories(${SGP4_LIBRARY_DIR})
 
 if(NOT APPLE)
   include_directories(SYSTEM AFTER "${SGP4_INCLUDE_DIRS}")
 else(APPLE)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SGP4_INCLUDE_DIRS}\"")
 endif(NOT APPLE)
+link_directories(${SGP4_LIBRARY_DIR})
 
 # -------------------------------
 
@@ -318,7 +261,7 @@ if(NOT ATOM_FOUND)
     DEPENDS astro-lib
     PREFIX ${EXTERNAL_PATH}/Atom
     #--Download step--------------
-    URL https://github.com/kartikkumar/atom/archive/master.zip
+    URL https://github.com/astropnp/atom/archive/master.zip
     TIMEOUT 30
     #--Update/Patch step----------
     UPDATE_COMMAND ""
@@ -354,7 +297,7 @@ if(BUILD_TESTS)
     ExternalProject_Add(catch
       PREFIX ${EXTERNAL_PATH}/Catch
       #--Download step--------------
-      URL https://github.com/kartikkumar/Catch/archive/master.zip
+      URL https://github.com/philsquared/Catch/archive/master.zip
       TIMEOUT 30
       #--Update/Patch step----------
       UPDATE_COMMAND ""

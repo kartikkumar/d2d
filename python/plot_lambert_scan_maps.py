@@ -1,6 +1,7 @@
 '''
-Copyright (c) 2014-2015, Kartik Kumar (me@kartikkumar.com)
-All rights reserved.
+Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+Distributed under the MIT License.
+See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 '''
 
 # Set up modules and packages

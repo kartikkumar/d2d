@@ -1,8 +1,11 @@
 /*
- * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
+
+#ifndef D2D_TOOLS_HPP
+#define D2D_TOOLS_HPP
 
 #include <algorithm>
 #include <iostream>
@@ -193,3 +196,5 @@ void removeNewline( std::string& string );
 int getTleCatalogType( const std::string& catalogFirstLine );
 
 } // namespace d2d
+
+#endif // D2D_TOOLS_HPP

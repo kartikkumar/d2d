@@ -1,8 +1,10 @@
-# Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+# Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
 # Distributed under the MIT License.
 # See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
 language: cpp
+
+sudo: false
 
 compiler:
   - gcc
@@ -23,46 +25,43 @@ matrix:
       env: COVERITY_SCAN_BRANCH_PATTERN=coverity_scan BUILD_TYPE=Release
 
 addons:
+  apt:
+    packages:
+      - texlive
+      - libboost-all-dev
+      - libgsl0-dev
   coverity_scan:
     project:
       name: "kartikkumar/d2d"
     notification_email: me@kartikkumar.com
-    build_command_prepend: "mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on .."
+    build_command_prepend: "mkdir build; cd build; cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on .."
     build_command: "make"
     branch_pattern: coverity_scan
 
-before_install:
-  - sudo chmod ugo+x scripts/update_doxygen.sh
-  - sudo chmod ugo+x scripts/check_doxygen.sh
-  # Fetch a newer CMake.
-  # https://github.com/bjz/glfw-rs/commit/e9353a14afa5c647497837e16fd44d0e1d6eb326
-  - yes | sudo add-apt-repository ppa:kalakris/cmake
-  # Fetch a newer Boost.
-  - yes | sudo add-apt-repository ppa:boost-latest/ppa
-  - sudo apt-get update -qq
 
-install:
-  - sudo apt-get install cmake
-  - sudo apt-get install gsl-bin libgsl0ldbl libgsl0-dev
-  - sudo apt-get purge libboost*1.46*
-  - sudo apt-get install libboost1.48-all-dev
-  - sudo apt-get install texlive
-  - sudo apt-get autoremove
-  - sudo ./scripts/update_doxygen.sh
+before_install:
+  - bash scripts/install_cmake.sh
+  - bash scripts/install_doxygen.sh
+  - chmod ugo+x scripts/check_doxygen.sh
   - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ] && [ "$CXX" == "g++" ] && [ "$BUILD_TYPE" == "Debug" ]; then
-      sudo pip install cpp-coveralls;
+      pip install --user cpp-coveralls;
     fi
+
+before_script::
+  - ls -R $HOME/cmake
+  - ls -R $HOME/doxygen
 
 script:
   - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ]; then
-      mkdir build && cd build;
-      cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DBUILD_TESTS_WITH_EIGEN=on -DBUILD_DOXYGEN_DOCS=on ..;
+      mkdir build;
+      cd build;
+      $HOME/cmake/bin/cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DBUILD_TESTS=on -DDOXYGEN_EXECUTABLE=$HOME/doxygen/bin/doxygen -DBUILD_DOXYGEN_DOCS=on ..;
       make;
-      ../scripts/check_doxygen.sh;
       ctest -V;
+      ../scripts/check_doxygen.sh;
     fi
 
 after_success:
   - if [ "$COVERITY_SCAN_BRANCH_PATTERN" != "coverity_scan" ] && [ "$CXX" == "g++" ] && [ "$BUILD_TYPE" == "Debug" ]; then
-      coveralls --root .. -E ".*external.*" -E ".*CMakeFiles.*" -E ".*test/.*.cpp.*";
+      coveralls --root .. -E ".*external.*" -E ".*CMakeFiles.*" -E ".*test/.*.cpp.*" -E ".*src/main.cpp.*";
     fi

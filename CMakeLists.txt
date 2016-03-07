@@ -1,4 +1,4 @@
-# Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+# Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
 # Distributed under the MIT License.
 # See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
@@ -24,46 +24,28 @@ if(NOT EXTERNAL_PATH)
   set(EXTERNAL_PATH                            "${PROJECT_PATH}/external")
 endif(NOT EXTERNAL_PATH)
 if(NOT DOXYGEN_PATH)
-  set(DOXYGEN_PATH                             "${PROJECT_PATH}/doxygen-docs")
+  set(DOXYGEN_PATH                             "${PROJECT_PATH}/doxydocs")
 endif(NOT DOXYGEN_PATH)
 if(NOT DOCS_PATH)
   set(DOCS_PATH                                "${PROJECT_PATH}/docs")
 endif(NOT DOCS_PATH)
 set(LIB_PATH                                   "${PROJECT_BINARY_DIR}/lib")
-set(LIB_NAME                                   "d2d_methods")
+set(LIB_NAME                                   "${CMAKE_PROJECT_NAME}_methods")
 set(BIN_PATH                                   "${PROJECT_BINARY_DIR}/bin")
 set(MAIN_NAME                                  "d2d")
 set(TEST_PATH                                  "${PROJECT_BINARY_DIR}/test")
-set(TEST_NAME                                  "test_d2d")
+set(TEST_NAME                                  "test_${CMAKE_PROJECT_NAME}")
 
-OPTION(BUILD_MAIN                              "Build main function"            ON)
-OPTION(BUILD_DOXYGEN_DOCS                      "Build Doxygen docs"             OFF)
-OPTION(BUILD_TESTS                             "Build tests"                    OFF)
-OPTION(BUILD_DEPENDENCIES                      "Force build of dependencies"    OFF)
+OPTION(BUILD_MAIN                              "Build main function"                ON)
+OPTION(BUILD_DOXYGEN_DOCS                      "Build Doxygen docs"                 OFF)
+OPTION(BUILD_TESTS                             "Build tests"                        OFF)
+OPTION(BUILD_DEPENDENCIES                      "Force local build of dependencies"  OFF)
 
 include(CMakeDependentOption)
-CMAKE_DEPENDENT_OPTION(BUILD_COVERAGE_ANALYSIS "Build code coverage analysis"   OFF
-                                               "BUILD_TESTS"                    OFF)
+CMAKE_DEPENDENT_OPTION(BUILD_COVERAGE_ANALYSIS "Build code coverage analysis"       OFF
+                                               "BUILD_TESTS"                        OFF)
 
-set(SRC
-  "${SRC_PATH}/catalogPruner.cpp"
-#  "${SRC_PATH}/lambertFetch.cpp"
-  "${SRC_PATH}/lambertScanner.cpp"
-#  "${SRC_PATH}/lambertTransfer.cpp"
-#  "${SRC_PATH}/sgp4Propagator.cpp"
-  "${SRC_PATH}/tools.cpp"
-)
-
-set(MAIN_SRC
-  "${SRC_PATH}/d2d.cpp"
-)
-
-set(TEST_SRC
-  "${TEST_SRC_PATH}/testD2D.cpp"
-  "${TEST_SRC_PATH}/testTools.cpp"
-  "${TEST_SRC_PATH}/testCatalogPruner.cpp"
-  "${TEST_SRC_PATH}/testLambertScanner.cpp"
-)
+include(ProjectFiles.cmake)
 
 # Set CMake build-type. If it not supplied by the user, the default built type is "Release".
 if(((NOT CMAKE_BUILD_TYPE)
@@ -116,9 +98,9 @@ add_library(${LIB_NAME} ${SRC})
 if(NOT RAPIDJSON_FOUND)
   add_dependencies(${LIB_NAME} rapidjson-lib)
 endif(NOT RAPIDJSON_FOUND)
-if(NOT KEPLERIANTOOLBOX_FOUND)
-  add_dependencies(${LIB_NAME} keplerian_toolbox-lib)
-endif(NOT KEPLERIANTOOLBOX_FOUND)
+if(NOT PYKEP_FOUND)
+  add_dependencies(${LIB_NAME} pykep-lib)
+endif(NOT PYKEP_FOUND)
 if(NOT SQLITECPP_FOUND)
   add_dependencies(${LIB_NAME} sqlitecpp-lib)
 endif(NOT SQLITECPP_FOUND)
@@ -136,7 +118,7 @@ if(BUILD_MAIN)
     ${LIB_NAME}
     ${GSL_LIBRARIES}
     ${SGP4_LIBRARY}
-    ${KEPLERIANTOOLBOX_LIBRARY}
+    ${PYKEP_LIBRARY}
     ${SQLITECPP_LIBRARY}
     ${SQLITE3_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT}
@@ -171,7 +153,7 @@ if(BUILD_TESTS)
   target_link_libraries(${TEST_NAME}
     ${LIB_NAME}
     ${SGP4_LIBRARY}
-    ${KEPLERIANTOOLBOX_LIBRARY}
+    ${PYKEP_LIBRARY}
     ${SQLITECPP_LIBRARY}
     ${SQLITE3_LIBRARY}
     )
@@ -184,7 +166,7 @@ if(BUILD_TESTS)
   endif(BUILD_COVERAGE_ANALYSIS)
 endif(BUILD_TESTS)
 
-# Install header files and library.
+# Install files.
 # Destination is set by CMAKE_INSTALL_PREFIX and defaults to usual locations, unless overridden by
 # user.
 install(DIRECTORY ${INCLUDE_PATH}/${CMAKE_PROJECT_NAME}
