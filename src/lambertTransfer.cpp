@@ -153,9 +153,13 @@ void executeLambertTransfer( const rapidjson::Document& config )
                      << input.metadataFilename;
         std::ofstream metadataFile( metadataPath.str( ).c_str( ) );
         print( metadataFile, "departure_id", input.departureObject.NoradNumber( ), "-" );
+        metadataFile << std::endl;
         print( metadataFile, "arrival_id", input.arrivalObject.NoradNumber( ), "-" );
+        metadataFile << std::endl;
         print( metadataFile, "departure_epoch", input.departureEpoch.ToJulian( ), "JD" );
+        metadataFile << std::endl;
         print( metadataFile, "time_of_flight", targeter.get_tof( ), "s" );
+        metadataFile << std::endl;
 
         if ( input.isPrograde == true )
         {
@@ -165,8 +169,10 @@ void executeLambertTransfer( const rapidjson::Document& config )
         {
             print( metadataFile, "is_prograde", "false", "-" );
         }
+        metadataFile << std::endl;
 
         print( metadataFile, "revolutions", revolutions, "-" );
+        metadataFile << std::endl;
         print( metadataFile, "transfer_delta_v", transferDeltaVs[ i ], "km/s" );
         metadataFile.close( );
 
