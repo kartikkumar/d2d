@@ -63,7 +63,7 @@ print ""
 print "Input data files being read ..."
 
 input_path_prefix = config["input_directory"] + "/"
-output_path_prefix = config["output_directory"] + str(config["tag"]) + "_"
+output_path_prefix = config["output_directory"] + '/'
 
 # Read and store data files.
 metadata = pd.read_csv(input_path_prefix + config["metadata"], header=None)

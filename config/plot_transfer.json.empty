@@ -15,14 +15,11 @@
     "transfer_orbit"            : "",
     "transfer_path"             : "",
 
-    // Tag that is used in prefix for files.
-    "tag"                        : "",
-
     // Directory where 2D figure is stored.
     "output_directory"          : "",
 
     // Filename for 2D figure.
-    "2D_figure"                 : "2dplot.png",
+    "2D_figure"                 : "",
 
     // Flag that sets whether interactive 3D figure should be shown (a Python plotting window pops
     // up).
