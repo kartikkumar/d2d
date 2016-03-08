@@ -34,7 +34,7 @@ namespace d2d
  */
 void executeCatalogPruner( const rapidjson::Document& config );
 
-//! catalog_pruner input.
+//! Input for catalog_pruner application mode.
 /*!
  * Data struct containing all valid input parameters for the "catalog_pruner application mode.
  * This struct is populated by the checkCatalogPrunerInput() function.
