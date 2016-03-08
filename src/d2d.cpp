@@ -17,7 +17,7 @@
 #include "D2D/catalogPruner.hpp"
 // #include "D2D/lambertFetch.hpp"
 #include "D2D/lambertScanner.hpp"
-// #include "D2D/lambertTransfer.hpp"
+#include "D2D/lambertTransfer.hpp"
 // #include "D2D/sgp4Propagator.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
@@ -95,11 +95,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::cout << "Mode                          " << mode << std::endl;
         d2d::executeCatalogPruner( config );
     }
-    // else if ( mode.compare( "lambert_transfer" ) == 0 )
-    // {
-    //     std::cout << "Mode                          " << mode << std::endl;
-    //     d2d::executeLambertTransfer( config );
-    // }
+    else if ( mode.compare( "lambert_transfer" ) == 0 )
+    {
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeLambertTransfer( config );
+    }
     else if ( mode.compare( "lambert_scanner" ) == 0 )
     {
         std::cout << "Mode                          " << mode << std::endl;

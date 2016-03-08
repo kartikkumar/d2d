@@ -12,7 +12,7 @@ set(SRC
   "${SRC_PATH}/catalogPruner.cpp"
 #  "${SRC_PATH}/lambertFetch.cpp"
  "${SRC_PATH}/lambertScanner.cpp"
-#  "${SRC_PATH}/lambertTransfer.cpp"
+ "${SRC_PATH}/lambertTransfer.cpp"
 #  "${SRC_PATH}/sgp4Propagator.cpp"
   "${SRC_PATH}/tools.cpp"
 )
