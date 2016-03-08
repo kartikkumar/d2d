@@ -35,7 +35,7 @@ namespace d2d
  */
 void executeLambertScanner( const rapidjson::Document& config );
 
-//! lambert_scanner input.
+//! Input for lambert_scanner application mode.
 /*!
  * Data struct containing all valid lambert_scanner input parameters. This struct is populated by
  * the checkLambertScannerInput() function and can be used to execute the lambert_scanner
