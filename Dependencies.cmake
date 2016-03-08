@@ -74,6 +74,43 @@ link_directories(${PYKEP_LIBRARY_DIR})
 
 # -------------------------------
 
+find_package(Threads)
+
+if(NOT BUILD_DEPENDENCIES)
+  find_package(sqlite3)
+endif(NOT BUILD_DEPENDENCIES)
+
+if(NOT SQLITE3_FOUND)
+  message(STATUS "SQLite3 will be downloaded when ${CMAKE_PROJECT_NAME} is built")
+  ExternalProject_Add(sqlite3-lib
+    PREFIX ${EXTERNAL_PATH}/SQLite3
+    #--Download step--------------
+    URL https://github.com/kartikkumar/sqlite3-cmake/archive/master.zip
+    TIMEOUT 30
+    #--Update/Patch step----------
+    #--Configure step-------------
+    #--Build step-----------------
+    BUILD_IN_SOURCE 1
+    #--Install step---------------
+    INSTALL_COMMAND ""
+    #--Output logging-------------
+    LOG_DOWNLOAD ON
+  )
+  ExternalProject_Get_Property(sqlite3-lib source_dir)
+  set(SQLITE3_INCLUDE_DIR ${source_dir}/src CACHE INTERNAL "Path to include folder for SQLite3")
+  set(SQLITE3_LIBRARY_DIR ${source_dir} CACHE INTERNAL "Path to library folder for SQLite3")
+  set(SQLITE3_LIBRARY "sqlite3-static")
+endif(NOT SQLITE3_FOUND)
+link_directories(${SQLITE3_LIBRARY_DIR})
+
+if(NOT APPLE)
+  include_directories(SYSTEM AFTER "${SQLITE3_INCLUDE_DIR}")
+else(NOT APPLE)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -isystem \"${SQLITE3_INCLUDE_DIR}\"")
+endif(NOT APPLE)
+
+# -------------------------------
+
 if(NOT BUILD_DEPENDENCIES)
   find_package(SQLiteCpp 1003001)
 endif(NOT BUILD_DEPENDENCIES)
