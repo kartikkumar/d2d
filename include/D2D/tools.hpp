@@ -23,20 +23,10 @@
 
 #include <Astro/astro.hpp>
 
+#include "D2D/typedefs.hpp"
+
 namespace d2d
 {
-
-//! 3-Vector.
-typedef boost::array< double, 3 > Vector3;
-
-//! 6-Vector.
-typedef boost::array< double, 6 > Vector6;
-
-//! State history.
-typedef std::map< double, Vector6 > StateHistory;
-
-//! JSON config iterator.
-typedef rapidjson::Value::ConstMemberIterator ConfigIterator;
 
 //! Create custom CATCH Approx object with tolerance for comparing doubles.
 /*!

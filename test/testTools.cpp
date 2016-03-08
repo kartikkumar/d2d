@@ -6,12 +6,9 @@
 
 #include <fstream>
 #include <iterator>
-#include <map>
 #include <sstream>
 #include <string>
-#include <typeinfo>
 
-#include <boost/array.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 
@@ -21,22 +18,13 @@
 #include <libsgp4/Eci.h>
 #include <libsgp4/Vector.h>
 
-#include <rapidjson/document.h>
-
 #include "D2D/tools.hpp"
+#include "D2D/typedefs.hpp"
 
 namespace d2d
 {
 namespace tests
 {
-
-TEST_CASE( "Test typedefs", "[typedef]" )
-{
-    REQUIRE( typeid( Vector3 )          == typeid( boost::array< double, 3 > ) );
-    REQUIRE( typeid( Vector6 )          == typeid( boost::array< double, 6 > ) );
-    REQUIRE( typeid( StateHistory )     == typeid( std::map< double, Vector6 > ) );
-    REQUIRE( typeid( ConfigIterator )   == typeid( rapidjson::Value::ConstMemberIterator ) );
-}
 
 TEST_CASE( "Test root-path function", "[input-output]" )
 {

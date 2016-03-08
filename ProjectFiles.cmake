@@ -22,5 +22,6 @@ set(TEST_SRC
   "${TEST_SRC_PATH}/testD2D.cpp"
   "${TEST_SRC_PATH}/testTools.cpp"
   "${TEST_SRC_PATH}/testCatalogPruner.cpp"
+  "${TEST_SRC_PATH}/testTypedefs.cpp"
 #  "${TEST_SRC_PATH}/testLambertScanner.cpp"
 )
