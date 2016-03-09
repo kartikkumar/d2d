@@ -33,6 +33,7 @@ namespace d2d
 //! Execute lambert_scanner.
 void executeLambertScanner( const rapidjson::Document& config )
 {
+
     // Verify config parameters. Exception is thrown if any of the parameters are missing.
     const LambertScannerInput input = checkLambertScannerInput( config );
 
@@ -40,7 +41,7 @@ void executeLambertScanner( const rapidjson::Document& config )
     const double earthGravitationalParameter = kMU;
     std::cout << "Earth gravitational parameter " << earthGravitationalParameter
               << " kg m^3 s^-2" << std::endl;
-    
+
     std::cout << std::endl;
     std::cout << "******************************************************************" << std::endl;
     std::cout << "                       Simulation & Output                        " << std::endl;
