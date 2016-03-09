@@ -191,12 +191,16 @@ void executeSGP4Scanner( const rapidjson::Document& config )
 
         // get the transfer departure tle for the current departure object id
         Tle transferDepartureTle;
-        for ( int i = 0; i < totalTleObjects; i++ )
+        bool breakFlag = false;
+        int searchCounter = 0;
+        while ( searchCounter < totalTleObjects && breakFlag == false )
         {
-            if ( departureObjectId == tleObjects[ i ].NoradNumber( ) )
+            if ( departureObjectId == tleObjects[ searchCounter ].NoradNumber( ) )
             {
-                transferDepartureTle = tleObjects[ i ];
+                transferDepartureTle = tleObjects[ searchCounter ];
+                breakFlag = true;
             }
+            ++searchCounter;
         }
         if ( transferDepartureTle.NoradNumber( ) != departureObjectId )
             throw std::runtime_error( "ERROR: TLE not found in catalog! in routine SGP4Scanner.cpp" );
