@@ -13,7 +13,6 @@
     // WARNING: if the database file already exists, it will be overwritten!
     "database"                  : "../data/test_lambert_scanner_catalog.db",
 
-
     // Set departure epoch for transfers (common to all transfers computed).
     // Format: [year,month,day,hours,minutes,seconds] (all elements in the array must be integers)/
     // The elements year, month and day are required. The others are optional but must be included
