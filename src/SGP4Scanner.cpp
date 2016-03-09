@@ -54,7 +54,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     //       "lambert_scanner_results".
     SQLite::Database database( input.databasePath.c_str( ), SQLITE_OPEN_READWRITE );
 
-    // Create sgp4_Scanner_results table in SQLite database.
+    // Create sgp4_scanner_results table in SQLite database.
     std::cout << "Creating SQLite database table if needed ... " << std::endl;
     createSGP4ScannerTable( database );
     std::cout << "SQLite database set up successfully!" << std::endl;
@@ -72,15 +72,25 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     std::ostringstream lambertScannerTableSelect;
     lambertScannerTableSelect << "SELECT * FROM lambert_scanner_results;";
 
-    // Setup insert query to insert data into sgp4_Scanner_results table.
+    // Setup insert query to insert data into sgp4_scanner_results table.
     std::ostringstream sgp4ScannerTableInsert;
-    sgp4ScannerTableInsert << "INSERT INTO sgp4_Scanner_results VALUES ("
+    sgp4ScannerTableInsert << "INSERT INTO sgp4_scanner_results VALUES ("
         << "NULL,"
         << ":lambert_transfer_id,"
+        << ":arrival_position_x,"
+        << ":arrival_position_y,"
+        << ":arrival_position_z,"
+        << ":arrival_velocity_x,"
+        << ":arrival_velocity_y,"
+        << ":arrival_velocity_z,"
         << ":arrival_position_x_error,"
         << ":arrival_position_y_error,"
         << ":arrival_position_z_error,"
-        << "arrival_position_error"
+        << "arrival_position_error,"
+        << ":arrival_velocity_x_error,"
+        << ":arrival_velocity_y_error,"
+        << ":arrival_velocity_z_error,"
+        << ":arrival_velocity_error"
         << ");";
 
     SQLite::Statement lambertScannerTableQuery( database, lambertScannerTableSelect.str( ) );
@@ -195,7 +205,7 @@ exit( 0 );
     std::cout << std::endl;
 }
 
-//! Check sgp4_Scanner input parameters.
+//! Check sgp4_scanner input parameters.
 SGP4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
 {
     const std::string catalogPath = find( config, "catalog" )->value.GetString( );
@@ -220,7 +230,7 @@ SGP4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
                                 shortlistPath );
 }
 
-//! Create sgp4_Scanner table.
+//! Create sgp4_scanner table.
 void createSGP4ScannerTable( SQLite::Database& database )
 {
     // Check that lambert_scanner_results table exists.
@@ -231,12 +241,12 @@ void createSGP4ScannerTable( SQLite::Database& database )
     }
 
     // Drop table from database if it exists.
-    database.exec( "DROP TABLE IF EXISTS sgp4_Scanner_results;" );
+    database.exec( "DROP TABLE IF EXISTS sgp4_scanner_results;" );
 
     // Set up SQL command to create table to store SGP4 Scanner results.
     std::ostringstream sgp4ScannerTableCreate;
     sgp4ScannerTableCreate
-        << "CREATE TABLE sgp4_Scanner_results ("
+        << "CREATE TABLE sgp4_scanner_results ("
         << "\"transfer_id\"                 INTEGER PRIMARY KEY AUTOINCREMENT,"
         << "\"lambert_transfer_id\"         INTEGER,"
         << "\"arrival_position_x\"          REAL,"
@@ -252,7 +262,7 @@ void createSGP4ScannerTable( SQLite::Database& database )
         << "\"arrival_velocity_x_error\"    REAL,"
         << "\"arrival_velocity_y_error\"    REAL,"
         << "\"arrival_velocity_z_error\"    REAL,"
-        << "\"arrival_velocity_error\"      REAL,"
+        << "\"arrival_velocity_error\"      REAL"
         <<                                  ");";
 
     // Execute command to create table.
@@ -261,18 +271,18 @@ void createSGP4ScannerTable( SQLite::Database& database )
     // Execute command to create index on transfer arrival_position_error column.
     std::ostringstream arrivalPositionErrorIndexCreate;
     arrivalPositionErrorIndexCreate << "CREATE INDEX IF NOT EXISTS \"arrival_position_error\" on "
-                                    << "sgp4_Scanner_results (arrival_position_error ASC);";
+                                    << "sgp4_scanner_results (arrival_position_error ASC);";
     database.exec( arrivalPositionErrorIndexCreate.str( ).c_str( ) );
 
     // Execute command to create index on transfer arrival_velocity_error column.
     std::ostringstream arrivalVelocityErrorIndexCreate;
     arrivalVelocityErrorIndexCreate << "CREATE INDEX IF NOT EXISTS \"arrival_velocity_error\" on "
-                                    << "sgp4_Scanner_results (arrival_velocity_error ASC);";
+                                    << "sgp4_scanner_results (arrival_velocity_error ASC);";
     database.exec( arrivalVelocityErrorIndexCreate.str( ).c_str( ) );
 
-    if ( !database.tableExists( "sgp4_Scanner_results" ) )
+    if ( !database.tableExists( "sgp4_scanner_results" ) )
     {
-        throw std::runtime_error( "ERROR: Creating table 'sgp4_Scanner_results' failed! in routine SGP4Scanner.cpp" );
+        throw std::runtime_error( "ERROR: Creating table 'sgp4_scanner_results' failed! in routine SGP4Scanner.cpp" );
     }
 }
 

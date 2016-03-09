@@ -16,9 +16,9 @@
 namespace d2d
 {
 
-//! Execute sgp4_Scanner.
+//! Execute sgp4_scanner.
 /*!
- * Executes sgp4_Scanner application mode that propagates a transfer, computed with the Lambert
+ * Executes sgp4_scanner application mode that propagates a transfer, computed with the Lambert
  * targeter (Izzo, 2014), using the SGP4/SDP4 models, to compute the mismatch in position due to
  * perturbations. The Lambert targeter employed is based on Izzo (2014), implemented in PyKEP
  * (Izzo, 2012).
@@ -26,16 +26,16 @@ namespace d2d
  * This requires that the "lambert_scanner" application mode has been executed, which generates a
  * SQLite database containing all transfers computed (stored in "lambert_scanner_results".
  *
- * This function is called when the user specifies the application mode to be "sgp4_Scanner".
+ * This function is called when the user specifies the application mode to be "sgp4_scanner".
  *
  * @sa executeLambertTransfer, executeLambertScanner
  * @param[in] config User-defined configuration options (extracted from JSON input file)
  */
 void executeSGP4Scanner( const rapidjson::Document& config );
 
-//! sgp4_Scanner input.
+//! sgp4_scanner input.
 /*!
- * Data struct containing all valid input parameters for the sgp4_Scanner application mode.
+ * Data struct containing all valid input parameters for the sgp4_scanner application mode.
  * This struct is populated by the checkSGP4ScannerInput() function and can be used to execute
  * the SGP4 Scanner.
  *
@@ -83,11 +83,11 @@ protected:
 private:
 };
 
-//! Check sgp4_Scanner input parameters.
+//! Check sgp4_scanner input parameters.
 /*!
- * Checks that all sgp4_Scanner inputs are valid. If not, an error is thrown with a short
+ * Checks that all sgp4_scanner inputs are valid. If not, an error is thrown with a short
  * description of the problem. If all inputs are valid, a data struct containing all the inputs
- * is returned, which is subsequently used to execute the sgp4_Scanner application mode and
+ * is returned, which is subsequently used to execute the sgp4_scanner application mode and
  * related functions.
  *
  * @sa executeSGP4Scanner, LambertScannerInput
@@ -96,9 +96,9 @@ private:
  */
 SGP4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config );
 
-//! Create sgp4_Scanner table.
+//! Create sgp4_scanner table.
 /*!
- * Creates sgp4_Scanner table in SQLite database used to store results obtaned from running the
+ * Creates sgp4_scanner table in SQLite database used to store results obtaned from running the
  * "sgp4_propagate" application mode.
  *
  * @sa executeSGP4Scanner
@@ -108,4 +108,4 @@ void createSGP4ScannerTable( SQLite::Database& database );
 
 } // namespace d2d
 
-#endif // D2D_SGP4_Scanner_HPP
+#endif // D2D_SGP4_SCANNER_HPP
