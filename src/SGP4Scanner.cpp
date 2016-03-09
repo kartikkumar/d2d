@@ -138,7 +138,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         << ":arrival_velocity_error"
         << ");";
 
-    SQLite::Statement lambertScannerTableQuery( database, lambertScannerTableSelect.str( ) );
+    SQLite::Statement query( database, lambertScannerTableSelect.str( ) );
 
     std::cout << "Propagating Lambert transfers using SGP4 and populating database ... "
               << std::endl;
@@ -195,7 +195,57 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         const Eci tleTransferArrivalState = sgp4.FindPosition( arrivalEpoch );
         const Vector6 transferArrivalState = getStateVector( tleTransferArrivalState );
 
+        //compute the required results
+        double arrival_position_x = transferArrivalState[ astro::xPositionIndex ];
+        double arrival_position_y = transferArrivalState[ astro::yPositionIndex ];
+        double arrival_position_z = transferArrivalState[ astro::zPositionIndex ];
+
+        double arrival_velocity_x = transferArrivalState[ astro::xVelocityIndex ];
+        double arrival_velocity_y = transferArrivalState[ astro::yVelocityIndex ];
+        double arrival_velocity_z = transferArrivalState[ astro::zVelocityIndex ];
+
+        double arrival_position_x_error = arrival_position_x - arrivalPositionX;
+        double arrival_position_y_error = arrival_position_y - arrivalPositionY;
+        double arrival_position_z_error = arrival_position_z - arrivalPositionZ;
+        Vector3 positionErrorVector;
+        positionErrorVector[ 0 ] = arrival_position_x_error;
+        positionErrorVector[ 1 ] = arrival_position_y_error;
+        positionErrorVector[ 2 ] = arrival_position_z_error;
+        double arrival_position_error = sml::norm( positionErrorVector );
+
+        double arrival_velocity_x_error = arrival_velocity_x - ( arrivalVelocityX + arrivalDeltaVX );
+        double arrival_velocity_y_error = arrival_velocity_y - ( arrivalVelocityY + arrivalDeltaVY );
+        double arrival_velocity_z_error = arrival_velocity_z - ( arrivalVelocityZ + arrivalDeltaVZ );
+        Vector3 velocityErrorVector;
+        velocityErrorVector[ 0 ] = arrival_velocity_x_error;
+        velocityErrorVector[ 1 ] = arrival_velocity_y_error;
+        velocityErrorVector[ 2 ] = arrival_velocity_z_error;
+        double arrival_velocity_error = sml::norm( velocityErrorVector );
+
         // Bind values to SQL insert query
+        query.bind( ":lambert_transfer_id",         lambertTransferId );
+        query.bind( ":arrival_position_x",          arrival_position_x );
+        query.bind( ":arrival_position_y",          arrival_position_y );
+        query.bind( ":arrival_position_z",          arrival_position_z );
+        query.bind( ":arrival_velocity_x",          arrival_velocity_x );
+        query.bind( ":arrival_velocity_y",          arrival_velocity_y );
+        query.bind( ":arrival_velocity_z",          arrival_velocity_z );
+        query.bind( ":arrival_position_x_error",    arrival_position_x_error );
+        query.bind( ":arrival_position_y_error",    arrival_position_y_error );
+        query.bind( ":arrival_position_z_error",    arrival_position_z_error );
+        query.bind( ":arrival_position_error",      arrival_position_error );
+        query.bind( ":arrival_velocity_x_error",    arrival_velocity_x_error );
+        query.bind( ":arrival_velocity_y_error",    arrival_velocity_y_error );
+        query.bind( ":arrival_velocity_z_error",    arrival_velocity_z_error );
+        query.bind( ":arrival_velocity_error",      arrival_velocity_error );
+
+        // execute insert query
+        query.executeStep( );
+
+        // Reset SQL insert query
+        query.reset( );
+
+        ++showProgress;
     }
 
     // Commit transaction.
