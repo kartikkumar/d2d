@@ -55,7 +55,7 @@ public:
      * @param[in] aCatalogPath             Path to TLE catalog
      * @param[in] aDatabasePath            Path to SQLite database
      * @param[in] aDepartureEpochInitial   Departure epoch grid initial epoch
-     * @param[in] aDepartureEpochSteps     Number of steps to take in departure epoch grid
+     * @param[in] someDepartureEpochSteps  Number of steps to take in departure epoch grid
      * @param[in] aDepartureEpochStepSize  Departure epoch grid step size (derived parameter) [s]
      * @param[in] aTimeOfFlightMinimum     Minimum time-of-flight [s]
      * @param[in] aTimeOfFlightMaximum     Maximum time-of-flight [s]
@@ -70,7 +70,7 @@ public:
     LambertScannerInput( const std::string& aCatalogPath,
                          const std::string& aDatabasePath,
                          const DateTime&    aDepartureEpochInitial,
-                         const double       aDepartureEpochSteps,
+                         const double       someDepartureEpochSteps,
                          const double       aDepartureEpochStepSize,
                          const double       aTimeOfFlightMinimum,
                          const double       aTimeOfFlightMaximum,
@@ -83,7 +83,7 @@ public:
         : catalogPath( aCatalogPath ),
           databasePath( aDatabasePath ),
           departureEpochInitial( aDepartureEpochInitial ),
-          departureEpochSteps( aDepartureEpochSteps ),
+          departureEpochSteps( someDepartureEpochSteps ),
           departureEpochStepSize( aDepartureEpochStepSize ),
           timeOfFlightMinimum( aTimeOfFlightMinimum ),
           timeOfFlightMaximum( aTimeOfFlightMaximum ),
@@ -101,7 +101,7 @@ public:
     //! Path to SQLite database to store output.
     const std::string databasePath;
 
-    //! Departure epoch.
+    //! Initial departure epoch.
     const DateTime departureEpochInitial;
 
     //! Number of departure epoch steps.
