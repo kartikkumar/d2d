@@ -33,7 +33,6 @@ namespace d2d
 //! Execute lambert_scanner.
 void executeLambertScanner( const rapidjson::Document& config )
 {
-
     // Verify config parameters. Exception is thrown if any of the parameters are missing.
     const LambertScannerInput input = checkLambertScannerInput( config );
 
@@ -41,7 +40,7 @@ void executeLambertScanner( const rapidjson::Document& config )
     const double earthGravitationalParameter = kMU;
     std::cout << "Earth gravitational parameter " << earthGravitationalParameter
               << " kg m^3 s^-2" << std::endl;
-
+    
     std::cout << std::endl;
     std::cout << "******************************************************************" << std::endl;
     std::cout << "                       Simulation & Output                        " << std::endl;
@@ -168,29 +167,12 @@ void executeLambertScanner( const rapidjson::Document& config )
         Tle departureObject = tleObjects[ i ];
         SGP4 sgp4Departure( departureObject );
 
-        DateTime departureEpoch = input.departureEpoch;
-        if ( input.departureEpoch == DateTime( ) )
+        DateTime departureEpoch = input.departureEpochInitial;
+        if ( input.departureEpochInitial == DateTime( ) )
         {
             departureEpoch = departureObject.Epoch( );
         }
 
-        const Eci tleDepartureState = sgp4Departure.FindPosition( departureEpoch );
-        const Vector6 departureState = getStateVector( tleDepartureState );
-
-        Vector3 departurePosition;
-        std::copy( departureState.begin( ),
-                   departureState.begin( ) + 3,
-                   departurePosition.begin( ) );
-
-        Vector3 departureVelocity;
-        std::copy( departureState.begin( ) + 3,
-                   departureState.end( ),
-                   departureVelocity.begin( ) );
-
-        const Vector6 departureStateKepler
-            = astro::convertCartesianToKeplerianElements( departureState,
-                                                          earthGravitationalParameter );
-        const int departureObjectId = static_cast< int >( departureObject.NoradNumber( ) );
 
         // Loop over arrival objects.
         for ( unsigned int j = 0; j < tleObjects.size( ); j++ )
@@ -205,11 +187,29 @@ void executeLambertScanner( const rapidjson::Document& config )
             SGP4 sgp4Arrival( arrivalObject );
             const int arrivalObjectId = static_cast< int >( arrivalObject.NoradNumber( ) );
 
-            // Loop over departure epochs
-            for (int l = 0; l < 5; ++l)
+            // Loop over departure epoch grid.
+            for (int l = 0; l < input.departureEpochSteps; ++l)
             {
-                DateTime departureEpoch = input.departureEpoch;
-                departureEpoch = departureEpoch.AddSeconds( 60*l ); // variing departure time
+                DateTime departureEpoch = input.departureEpochInitial;
+                departureEpoch = departureEpoch.AddSeconds( input.departureEpochStepSize * l );
+                
+                const Eci tleDepartureState = sgp4Departure.FindPosition( departureEpoch );
+                const Vector6 departureState = getStateVector( tleDepartureState );
+
+                Vector3 departurePosition;
+                std::copy( departureState.begin( ),
+                           departureState.begin( ) + 3,
+                           departurePosition.begin( ) );
+
+                Vector3 departureVelocity;
+                std::copy( departureState.begin( ) + 3,
+                           departureState.end( ),
+                           departureVelocity.begin( ) );
+
+                const Vector6 departureStateKepler
+                    = astro::convertCartesianToKeplerianElements( departureState,
+                                                                  earthGravitationalParameter );
+                const int departureObjectId = static_cast< int >( departureObject.NoradNumber( ) );
             
                 // Loop over time-of-flight grid.
                 for ( int k = 0; k < input.timeOfFlightSteps; k++ )
@@ -439,6 +439,13 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
         std::cout << "Departure epoch               " << departureEpoch << std::endl;
     }
 
+    const double departureEpochRange
+        = find( config, "departure_epoch_grid" )->value[ 0 ].GetDouble( );
+    std::cout << "Departure epoch grid range    " << departureEpochRange << std::endl;
+    const double departureGridSteps
+        = find( config, "departure_epoch_grid" )->value[ 1 ].GetDouble( );
+    std::cout << "Departure epoch grid steps    " << departureGridSteps << std::endl;
+
     const double timeOfFlightMinimum
         = find( config, "time_of_flight_grid" )->value[ 0 ].GetDouble( );
     std::cout << "Minimum Time-of-Flight        " << timeOfFlightMinimum << std::endl;
@@ -481,6 +488,8 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
     return LambertScannerInput( catalogPath,
                                 databasePath,
                                 departureEpoch,
+                                departureGridSteps,
+                                departureEpochRange/departureGridSteps,
                                 timeOfFlightMinimum,
                                 timeOfFlightMaximum,
                                 timeOfFlightSteps,
