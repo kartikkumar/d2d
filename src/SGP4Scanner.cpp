@@ -22,6 +22,7 @@
 #include "D2D/SGP4Scanner.hpp"
 #include "D2D/SGP4Tools.hpp"
 #include "D2D/tools.hpp"
+#include "D2D/typedefs.hpp"
 
 #include <keplerian_toolbox.h>
 
@@ -48,6 +49,50 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     std::cout << "                       Simulation & Output                        " << std::endl;
     std::cout << "******************************************************************" << std::endl;
     std::cout << std::endl;
+
+    std::cout << "Parsing TLE catalog ... " << std::endl;
+
+    // Parse catalog and store TLE objects.
+    std::ifstream catalogFile( input.catalogPath.c_str( ) );
+    std::string catalogLine;
+
+    // Check if catalog is 2-line or 3-line version.
+    std::getline( catalogFile, catalogLine );
+    const int tleLines = getTleCatalogType( catalogLine );
+
+    // Reset file stream to start of file.
+    catalogFile.seekg( 0, std::ios::beg );
+
+    typedef std::vector< std::string > TleStrings;
+    typedef std::vector< Tle > TleObjects;
+    TleObjects tleObjects;
+
+    while ( std::getline( catalogFile, catalogLine ) )
+    {
+        TleStrings tleStrings;
+        removeNewline( catalogLine );
+        tleStrings.push_back( catalogLine );
+        std::getline( catalogFile, catalogLine );
+        removeNewline( catalogLine );
+        tleStrings.push_back( catalogLine );
+
+        if ( tleLines == 3 )
+        {
+            std::getline( catalogFile, catalogLine );
+            removeNewline( catalogLine );
+            tleStrings.push_back( catalogLine );
+            tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ], tleStrings[ 2 ] ) );
+        }
+
+        else if ( tleLines == 2 )
+        {
+            tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ] ) );
+        }
+    }
+
+    catalogFile.close( );
+    const double totalTleObjects = tleObjects.size( );
+    std::cout << totalTleObjects << " TLE objects parsed from catalog!" << std::endl;
 
     // Open database in read/write mode.
     // N.B.: Database must already exist and contain a populated table called
@@ -104,6 +149,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     while ( lambertScannerTableQuery.executeStep( ) )
     {
         const int      lambertTransferId    = lambertScannerTableQuery.getColumn( 0 );
+        const int      departureObjectId    = lambertScannerTableQuery.getColumn( 1 );
 
         const double   departureEpochJulian = lambertScannerTableQuery.getColumn( 3 );
         const double   timeOfFlight         = lambertScannerTableQuery.getColumn( 4 );
@@ -128,73 +174,28 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         const double   arrivalDeltaVY       = lambertScannerTableQuery.getColumn( 41 );
         const double   arrivalDeltaVZ       = lambertScannerTableQuery.getColumn( 42 );
 
-        // std::cout << lambertTransferId << ", "
-        //           << departureEpochJulian << ", "
-        //           << timeOfFlight << ", "
-        //           << departurePositionX << ", "
-        //           << departurePositionY << ", "
-        //           << departurePositionZ << ", "
-        //           << departureVelocityX << ", "
-        //           << departureVelocityY << ", "
-        //           << departureVelocityZ << ", "
-        //           << departureDeltaVX << ", "
-        //           << departureDeltaVY << ", "
-        //           << departureDeltaVZ << ", "
-        //           << arrivalPositionX << ", "
-        //           << arrivalPositionY << ", "
-        //           << arrivalPositionZ << ", "
-        //           << arrivalVelocityX << ", "
-        //           << arrivalVelocityY << ", "
-        //           << arrivalVelocityZ << ", "
-        //           << arrivalDeltaVX << ", "
-        //           << arrivalDeltaVY << ", "
-        //           << arrivalDeltaVZ
-        //           << std::endl;
+        // Set up DateTime object for departure epoch using Julian date.
+        // NB: 1721425.5 corresponds to the Gregorian epoch: 0001 Jan 01 00:00:00.0
+        DateTime departureEpoch( ( departureEpochJulian - 1721425.5 ) * TicksPerDay );
 
-        // // Set up DateTime object for departure epoch using Julian date.
-        // // NB: 1721425.5 corresponds to the Gregorian epoch: 0001 Jan 01 00:00:00.0
-        // const DateTime departureEpoch( ( departureEpochJulian - 1721425.5 ) * TicksPerDay );
+        // get the transfer departure tle for the current departure object id
+        Tle transferDepartureTle;
+        for ( int i = 0; i < totalTleObjects; i++ )
+        {
+            if ( departureObjectId == tleObjects[ i ].NoradNumber( ) )
+            {
+                transferDepartureTle = tleObjects[ i ];
+            }
+        }
+        if ( transferDepartureTle.NoradNumber( ) != departureObjectId )
+            throw std::runtime_error( "ERROR: TLE not found in catalog! in routine SGP4Scanner.cpp" );
 
-        // Vector6 transferDepartureState;
-        // transferDepartureState[ 0 ] = departurePositionX;
-        // transferDepartureState[ 1 ] = departurePositionY;
-        // transferDepartureState[ 2 ] = departurePositionZ;
-        // transferDepartureState[ 3 ] = departureVelocityX + departureDeltaVX;
-        // transferDepartureState[ 4 ] = departureVelocityY + departureDeltaVY;
-        // transferDepartureState[ 5 ] = departureVelocityZ + departureDeltaVZ;
+        const SGP4 sgp4( transferDepartureTle );
+        Datetime arrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
+        const Eci tleTransferArrivalState = sgp4.FindPosition( arrivalEpoch );
+        const Vector6 transferArrivalState = getStateVector( tleTransferArrivalState );
 
-        // std::string solverStatusSummary = "";
-        // int numberOfIterations = 0;
-        // const Tle transferDepartureTle
-        //     = atom::convertCartesianStateToTwoLineElements< double, Vector6 >(
-        //         transferDepartureState,
-        //         departureEpoch,
-        //         solverStatusSummary,
-        //         numberOfIterations,
-        //         Tle( ),
-        //         earthGravitationalParameter,
-        //         earthMeanRadius,
-        //         1.0e-1,
-        //         1.0e-1,
-        //         100 );
-
-// std::cout << solverStatusSummary << std::endl;
-    Vector6 cartesianState;
-    cartesianState[ 0 ] = -11448.8;
-    cartesianState[ 1 ] = -40574.5;
-    // cartesianState[ 2 ] = -20546.4;
-    cartesianState[ 2 ] = -9.37564;
-    cartesianState[ 3 ] = 2.95981;
-    cartesianState[ 4 ] = -0.834249;
-    // cartesianState[ 5 ] = -1.4634;
-    cartesianState[ 5 ] = -0.000399845;
-
-atom::convertCartesianStateToTwoLineElements< double, Vector6 >( cartesianState, DateTime( ) );
-exit( 0 );
-
-    //     const SGP4 sgp4( transferDepartureTle );
-    //     const Eci tleTransferArrivalState = sgp4.FindPosition( timeOfFlight );
-    //     const Vector6 transferArrivalState = getStateVector( tleTransferArrivalState );
+        // Bind values to SQL insert query
     }
 
     // Commit transaction.
@@ -225,9 +226,9 @@ SGP4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
     }
 
     return SGP4ScannerInput( catalogPath,
-                                databasePath,
-                                shortlistLength,
-                                shortlistPath );
+                             databasePath,
+                             shortlistLength,
+                             shortlistPath );
 }
 
 //! Create sgp4_scanner table.
