@@ -5,9 +5,15 @@
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
+#include <algorithm>
+#include <cmath>
+#include <fstream>
 #include <iostream>
+#include <iterator>
+#include <map>
 #include <sstream>
 #include <stdexcept>
+#include <vector>
 
 #include <boost/progress.hpp>
 
@@ -20,8 +26,10 @@
 
 #include <Atom/atom.hpp>
 
+#include <Astro/astro.hpp>
+
 #include "D2D/SGP4Scanner.hpp"
-#include "D2D/SGP4Tools.hpp"
+// #include "D2D/SGP4Tools.hpp"
 #include "D2D/tools.hpp"
 #include "D2D/typedefs.hpp"
 
@@ -132,14 +140,16 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         << ":arrival_position_x_error,"
         << ":arrival_position_y_error,"
         << ":arrival_position_z_error,"
-        << "arrival_position_error,"
+        << ":arrival_position_error,"
         << ":arrival_velocity_x_error,"
         << ":arrival_velocity_y_error,"
         << ":arrival_velocity_z_error,"
         << ":arrival_velocity_error"
         << ");";
-
+    
     SQLite::Statement query( database, lambertScannerTableSelect.str( ) );
+
+    SQLite::Statement SGP4Query( database, sgp4ScannerTableInsert.str( ) );
 
     std::cout << "Propagating Lambert transfers using SGP4 and populating database ... "
               << std::endl;
@@ -147,33 +157,33 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     // Loop over rows in lambert_scanner_results table and propagate Lambert transfers using SGP4.
     boost::progress_display showProgress( lambertScannertTableSize );
 
-    while ( lambertScannerTableQuery.executeStep( ) )
+    while ( query.executeStep( ) )
     {
-        const int      lambertTransferId    = lambertScannerTableQuery.getColumn( 0 );
-        const int      departureObjectId    = lambertScannerTableQuery.getColumn( 1 );
+        const int      lambertTransferId    = query.getColumn( 0 );
+        const int      departureObjectId    = query.getColumn( 1 );
 
-        const double   departureEpochJulian = lambertScannerTableQuery.getColumn( 3 );
-        const double   timeOfFlight         = lambertScannerTableQuery.getColumn( 4 );
+        const double   departureEpochJulian = query.getColumn( 3 );
+        const double   timeOfFlight         = query.getColumn( 4 );
 
-        const double   departurePositionX   = lambertScannerTableQuery.getColumn( 7 );
-        const double   departurePositionY   = lambertScannerTableQuery.getColumn( 8 );
-        const double   departurePositionZ   = lambertScannerTableQuery.getColumn( 9 );
-        const double   departureVelocityX   = lambertScannerTableQuery.getColumn( 10 );
-        const double   departureVelocityY   = lambertScannerTableQuery.getColumn( 11 );
-        const double   departureVelocityZ   = lambertScannerTableQuery.getColumn( 12 );
-        const double   departureDeltaVX     = lambertScannerTableQuery.getColumn( 37 );
-        const double   departureDeltaVY     = lambertScannerTableQuery.getColumn( 38 );
-        const double   departureDeltaVZ     = lambertScannerTableQuery.getColumn( 39 );
+        const double   departurePositionX   = query.getColumn( 7 );
+        const double   departurePositionY   = query.getColumn( 8 );
+        const double   departurePositionZ   = query.getColumn( 9 );
+        const double   departureVelocityX   = query.getColumn( 10 );
+        const double   departureVelocityY   = query.getColumn( 11 );
+        const double   departureVelocityZ   = query.getColumn( 12 );
+        const double   departureDeltaVX     = query.getColumn( 37 );
+        const double   departureDeltaVY     = query.getColumn( 38 );
+        const double   departureDeltaVZ     = query.getColumn( 39 );
 
-        const double   arrivalPositionX     = lambertScannerTableQuery.getColumn( 19 );
-        const double   arrivalPositionY     = lambertScannerTableQuery.getColumn( 20 );
-        const double   arrivalPositionZ     = lambertScannerTableQuery.getColumn( 21 );
-        const double   arrivalVelocityX     = lambertScannerTableQuery.getColumn( 22 );
-        const double   arrivalVelocityY     = lambertScannerTableQuery.getColumn( 23 );
-        const double   arrivalVelocityZ     = lambertScannerTableQuery.getColumn( 24 );
-        const double   arrivalDeltaVX       = lambertScannerTableQuery.getColumn( 40 );
-        const double   arrivalDeltaVY       = lambertScannerTableQuery.getColumn( 41 );
-        const double   arrivalDeltaVZ       = lambertScannerTableQuery.getColumn( 42 );
+        const double   arrivalPositionX     = query.getColumn( 19 );
+        const double   arrivalPositionY     = query.getColumn( 20 );
+        const double   arrivalPositionZ     = query.getColumn( 21 );
+        const double   arrivalVelocityX     = query.getColumn( 22 );
+        const double   arrivalVelocityY     = query.getColumn( 23 );
+        const double   arrivalVelocityZ     = query.getColumn( 24 );
+        const double   arrivalDeltaVX       = query.getColumn( 40 );
+        const double   arrivalDeltaVY       = query.getColumn( 41 );
+        const double   arrivalDeltaVZ       = query.getColumn( 42 );
 
         // Set up DateTime object for departure epoch using Julian date.
         // NB: 1721425.5 corresponds to the Gregorian epoch: 0001 Jan 01 00:00:00.0
@@ -192,7 +202,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
             throw std::runtime_error( "ERROR: TLE not found in catalog! in routine SGP4Scanner.cpp" );
 
         const SGP4 sgp4( transferDepartureTle );
-        Datetime arrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
+        DateTime arrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
         const Eci tleTransferArrivalState = sgp4.FindPosition( arrivalEpoch );
         const Vector6 transferArrivalState = getStateVector( tleTransferArrivalState );
 
@@ -208,43 +218,43 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         double arrival_position_x_error = arrival_position_x - arrivalPositionX;
         double arrival_position_y_error = arrival_position_y - arrivalPositionY;
         double arrival_position_z_error = arrival_position_z - arrivalPositionZ;
-        Vector3 positionErrorVector;
+        std::vector< double > positionErrorVector( 3 );
         positionErrorVector[ 0 ] = arrival_position_x_error;
         positionErrorVector[ 1 ] = arrival_position_y_error;
         positionErrorVector[ 2 ] = arrival_position_z_error;
-        double arrival_position_error = sml::norm( positionErrorVector );
+        double arrival_position_error = sml::norm< double >( positionErrorVector );
 
-        double arrival_velocity_x_error = arrival_velocity_x - ( arrivalVelocityX + arrivalDeltaVX );
-        double arrival_velocity_y_error = arrival_velocity_y - ( arrivalVelocityY + arrivalDeltaVY );
-        double arrival_velocity_z_error = arrival_velocity_z - ( arrivalVelocityZ + arrivalDeltaVZ );
-        Vector3 velocityErrorVector;
+        double arrival_velocity_x_error = arrival_velocity_x - ( arrivalVelocityX - arrivalDeltaVX );
+        double arrival_velocity_y_error = arrival_velocity_y - ( arrivalVelocityY - arrivalDeltaVY );
+        double arrival_velocity_z_error = arrival_velocity_z - ( arrivalVelocityZ - arrivalDeltaVZ );
+        std::vector< double > velocityErrorVector( 3 );
         velocityErrorVector[ 0 ] = arrival_velocity_x_error;
         velocityErrorVector[ 1 ] = arrival_velocity_y_error;
         velocityErrorVector[ 2 ] = arrival_velocity_z_error;
-        double arrival_velocity_error = sml::norm( velocityErrorVector );
+        double arrival_velocity_error = sml::norm< double >( velocityErrorVector );
 
-        // Bind values to SQL insert query
-        query.bind( ":lambert_transfer_id",         lambertTransferId );
-        query.bind( ":arrival_position_x",          arrival_position_x );
-        query.bind( ":arrival_position_y",          arrival_position_y );
-        query.bind( ":arrival_position_z",          arrival_position_z );
-        query.bind( ":arrival_velocity_x",          arrival_velocity_x );
-        query.bind( ":arrival_velocity_y",          arrival_velocity_y );
-        query.bind( ":arrival_velocity_z",          arrival_velocity_z );
-        query.bind( ":arrival_position_x_error",    arrival_position_x_error );
-        query.bind( ":arrival_position_y_error",    arrival_position_y_error );
-        query.bind( ":arrival_position_z_error",    arrival_position_z_error );
-        query.bind( ":arrival_position_error",      arrival_position_error );
-        query.bind( ":arrival_velocity_x_error",    arrival_velocity_x_error );
-        query.bind( ":arrival_velocity_y_error",    arrival_velocity_y_error );
-        query.bind( ":arrival_velocity_z_error",    arrival_velocity_z_error );
-        query.bind( ":arrival_velocity_error",      arrival_velocity_error );
+        // Bind values to SQL insert sgp4Query
+        SGP4Query.bind( ":lambert_transfer_id",         lambertTransferId );
+        SGP4Query.bind( ":arrival_position_x",          arrival_position_x );
+        SGP4Query.bind( ":arrival_position_y",          arrival_position_y );
+        SGP4Query.bind( ":arrival_position_z",          arrival_position_z );
+        SGP4Query.bind( ":arrival_velocity_x",          arrival_velocity_x );
+        SGP4Query.bind( ":arrival_velocity_y",          arrival_velocity_y );
+        SGP4Query.bind( ":arrival_velocity_z",          arrival_velocity_z );
+        SGP4Query.bind( ":arrival_position_x_error",    arrival_position_x_error );
+        SGP4Query.bind( ":arrival_position_y_error",    arrival_position_y_error );
+        SGP4Query.bind( ":arrival_position_z_error",    arrival_position_z_error );
+        SGP4Query.bind( ":arrival_position_error",      arrival_position_error );
+        SGP4Query.bind( ":arrival_velocity_x_error",    arrival_velocity_x_error );
+        SGP4Query.bind( ":arrival_velocity_y_error",    arrival_velocity_y_error );
+        SGP4Query.bind( ":arrival_velocity_z_error",    arrival_velocity_z_error );
+        SGP4Query.bind( ":arrival_velocity_error",      arrival_velocity_error );
 
-        // execute insert query
-        query.executeStep( );
+        // execute insert SGP4Query
+        SGP4Query.executeStep( );
 
-        // Reset SQL insert query
-        query.reset( );
+        // Reset SQL insert SGP4Query
+        SGP4Query.reset( );
 
         ++showProgress;
     }
