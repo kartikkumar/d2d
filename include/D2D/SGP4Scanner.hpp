@@ -56,9 +56,9 @@ public:
      * @param[in] aShortlistPath        Path to shortlist file
      */
     SGP4ScannerInput( const std::string& aCatalogPath,
-                         const std::string& aDatabasePath,
-                         const int          aShortlistLength,
-                         const std::string& aShortlistPath )
+                      const std::string& aDatabasePath,
+                      const int          aShortlistLength,
+                      const std::string& aShortlistPath )
         : catalogPath( aCatalogPath ),
           databasePath( aDatabasePath ),
           shortlistLength( aShortlistLength ),
