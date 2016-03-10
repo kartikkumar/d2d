@@ -206,11 +206,12 @@ void fetchLambertTransfer( const rapidjson::Document& config )
     arrivalOrbitFile.close( );
 
     // Sample arrival path.
+    const double timeOfFlightInDays = timeOfFlight / ( 24.0 * 3600.0 );
     const StateHistory arrivalPath = sampleKeplerOrbit( arrivalState,
                                                         -timeOfFlight,
                                                         input.outputSteps,
                                                         earthGravitationalParameter,
-                                                        departureEpoch + timeOfFlight );
+                                                        departureEpoch + timeOfFlightInDays );
 
     // Write sampled arrival path to file.
     std::ostringstream arrivalPathFilePath;
