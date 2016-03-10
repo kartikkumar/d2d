@@ -52,22 +52,26 @@ public:
      * Constructs data struct based on verified input parameters.
      *
      * @sa checkLambertScannerInput, executeLambertScanner
-     * @param[in] aCatalogPath          Path to TLE catalog
-     * @param[in] aDatabasePath         Path to SQLite database
-     * @param[in] aDepartureEpoch       Departure epoch for all transfers
-     * @param[in] aTimeOfFlightMinimum  Minimum time-of-flight [s]
-     * @param[in] aTimeOfFlightMaximum  Maximum time-of-flight [s]
-     * @param[in] someTimeOfFlightSteps Number of steps to take in time-of-flight grid
-     * @param[in] aTimeOfFlightStepSize Time-of-flight step size (derived parameter) [s]
-     * @param[in] progradeFlag          Flag indicating if prograde transfer should be computed
-     *                                  (false = retrograde)
-     * @param[in] aRevolutionsMaximum   Maximum number of revolutions
-     * @param[in] aShortlistLength      Number of transfers to include in shortlist
-     * @param[in] aShortlistPath        Path to shortlist file
+     * @param[in] aCatalogPath             Path to TLE catalog
+     * @param[in] aDatabasePath            Path to SQLite database
+     * @param[in] aDepartureEpochInitial   Departure epoch grid initial epoch
+     * @param[in] someDepartureEpochSteps  Number of steps to take in departure epoch grid
+     * @param[in] aDepartureEpochStepSize  Departure epoch grid step size (derived parameter) [s]
+     * @param[in] aTimeOfFlightMinimum     Minimum time-of-flight [s]
+     * @param[in] aTimeOfFlightMaximum     Maximum time-of-flight [s]
+     * @param[in] someTimeOfFlightSteps    Number of steps to take in time-of-flight grid
+     * @param[in] aTimeOfFlightStepSize    Time-of-flight step size (derived parameter) [s]
+     * @param[in] progradeFlag             Flag indicating if prograde transfer should be computed
+     *                                     (false = retrograde)
+     * @param[in] aRevolutionsMaximum      Maximum number of revolutions
+     * @param[in] aShortlistLength         Number of transfers to include in shortlist
+     * @param[in] aShortlistPath           Path to shortlist file
      */
     LambertScannerInput( const std::string& aCatalogPath,
                          const std::string& aDatabasePath,
-                         const DateTime&    aDepartureEpoch,
+                         const DateTime&    aDepartureEpochInitial,
+                         const double       someDepartureEpochSteps,
+                         const double       aDepartureEpochStepSize,
                          const double       aTimeOfFlightMinimum,
                          const double       aTimeOfFlightMaximum,
                          const double       someTimeOfFlightSteps,
@@ -78,7 +82,9 @@ public:
                          const std::string& aShortlistPath )
         : catalogPath( aCatalogPath ),
           databasePath( aDatabasePath ),
-          departureEpoch( aDepartureEpoch ),
+          departureEpochInitial( aDepartureEpochInitial ),
+          departureEpochSteps( someDepartureEpochSteps ),
+          departureEpochStepSize( aDepartureEpochStepSize ),
           timeOfFlightMinimum( aTimeOfFlightMinimum ),
           timeOfFlightMaximum( aTimeOfFlightMaximum ),
           timeOfFlightSteps( someTimeOfFlightSteps ),
@@ -95,8 +101,14 @@ public:
     //! Path to SQLite database to store output.
     const std::string databasePath;
 
-    //! Departure epoch.
-    const DateTime departureEpoch;
+    //! Initial departure epoch.
+    const DateTime departureEpochInitial;
+
+    //! Number of departure epoch steps.
+    const double departureEpochSteps;
+
+    //! Departure epoch grid step size.
+    const double departureEpochStepSize;
 
     //! Minimum time-of-flight [s].
     const double timeOfFlightMinimum;
