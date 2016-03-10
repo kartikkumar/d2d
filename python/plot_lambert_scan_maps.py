@@ -75,40 +75,47 @@ except sqlite3.Error, e:
     sys.exit(1)
 
 
-departure_epochs = pd.read_sql("SELECT DISTINCT departure_epoch   \
-                            FROM lambert_scanner_results;",                  \
-                        database)
+departure_epochs = pd.read_sql("SELECT DISTINCT departure_epoch                                   \
+                                    FROM lambert_scanner_results;",                               \
+                                database)
 for i in xrange(0,departure_epochs.size):
     c = departure_epochs['departure_epoch'][i]
-    print "Plotting scanmap with departure epoch: ",c,"Julian Date"
+    print "Plotting scan map with departure epoch: ",c,"Julian Date"
                       
     # Fetch scan data.
     map_order = "departure_" + config['map_order']
-    scan_data = pd.read_sql("SELECT departure_object_id, arrival_object_id, min(transfer_delta_v), "+ map_order + "   \
-                                FROM lambert_scanner_results                                        \
-                                WHERE departure_epoch BETWEEN " + str(c-0.00001) +" AND "+str(c+0.00001) +" \
-                                GROUP BY departure_object_id, arrival_object_id;",                  \
+    scan_data = pd.read_sql("SELECT departure_object_id, arrival_object_id,                       \
+                                    min(transfer_delta_v), "+ map_order + "                       \
+                                FROM lambert_scanner_results                                      \
+                                WHERE departure_epoch BETWEEN " + str(c-0.00001) + "              \
+                                                      AND "+str(c+0.00001) +"                     \
+                                GROUP BY departure_object_id, arrival_object_id;",                \
                             database)
-    scan_data.columns = ['departure_object_id','arrival_object_id','transfer_delta_v',str(map_order)]
-    scan_order = scan_data.sort_values(str(map_order)).drop_duplicates('departure_object_id')[['departure_object_id',str(map_order)]]
-    scan_map = scan_data.pivot(index='departure_object_id',                                         \
-                               columns='arrival_object_id',                                         \
+    scan_data.columns = ['departure_object_id','arrival_object_id',                               \
+                         'transfer_delta_v',str(map_order)]
+    scan_order = scan_data.sort_values(str(map_order))                                            \
+                          .drop_duplicates('departure_object_id')[                                \
+                              ['departure_object_id',str(map_order)]]
+
+    scan_map = scan_data.pivot(index='departure_object_id',                                       \
+                               columns='arrival_object_id',                                       
                                values='transfer_delta_v')
-    scan_map = scan_map.reindex(index=scan_order['departure_object_id'], \
+    scan_map = scan_map.reindex(index=scan_order['departure_object_id'],                          \
                                 columns=scan_order['departure_object_id'])
     
     # Set up color map.
-    bins = np.linspace(scan_data['transfer_delta_v'].min(), scan_data['transfer_delta_v'].max(), 10)
-    groups = scan_data['transfer_delta_v'].groupby(np.digitize(scan_data['transfer_delta_v'], bins))
+    bins = np.linspace(scan_data['transfer_delta_v'].min(),                                       \
+                       scan_data['transfer_delta_v'].max(), 10)
+    groups = scan_data['transfer_delta_v'].groupby(                                               \
+                np.digitize(scan_data['transfer_delta_v'], bins))
     levels = groups.mean().values
     cmap_lin = plt.get_cmap(config['colormap'])
     cmap = nlcmap(cmap_lin, levels)
     
-
     # Plot heat map.
     ax1 = plt.subplot2grid((15,15), (2, 0),rowspan=13,colspan=14)
-    heatmap = ax1.pcolormesh(scan_map.values, cmap=cmap,                                            \
-                             vmin=scan_data['transfer_delta_v'].min(),                              \
+    heatmap = ax1.pcolormesh(scan_map.values, cmap=cmap,                                          \
+                             vmin=scan_data['transfer_delta_v'].min(),                            \
                              vmax=scan_data['transfer_delta_v'].max())
     ax1.set_xticks(np.arange(scan_map.shape[1] + 1)+0.5)
     ax1.set_xticklabels(scan_map.columns, rotation=90)
@@ -136,17 +143,18 @@ for i in xrange(0,departure_epochs.size):
     plt.tight_layout()
 
     # Save figure to file.
-    plt.savefig(config["output_directory"] + "/" + config["scan_figure"] + "_"+str(i+1) + ".png", \
-                dpi=config["figure_dpi"])
+    plt.savefig(config["output_directory"] + "/" + config["scan_figure"] + "_"+str(i+1) +         \
+                       ".png", dpi=config["figure_dpi"])
     plt.close()
-    # database.close()
     print "Figure ",i+1," generated successfully...."
 
 print "Figure generated successfully!"
 print ""
+
 # Close SQLite database if it's still open.
 if database:
     database.close()
+
 # Stop timer
 end_time = time.time( )
 

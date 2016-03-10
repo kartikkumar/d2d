@@ -33,7 +33,6 @@ namespace d2d
 //! Execute lambert_scanner.
 void executeLambertScanner( const rapidjson::Document& config )
 {
-
     // Verify config parameters. Exception is thrown if any of the parameters are missing.
     const LambertScannerInput input = checkLambertScannerInput( config );
 
@@ -174,7 +173,6 @@ void executeLambertScanner( const rapidjson::Document& config )
             departureEpoch = departureObject.Epoch( );
         }
 
-
         // Loop over arrival objects.
         for ( unsigned int j = 0; j < tleObjects.size( ); j++ )
         {
@@ -189,10 +187,10 @@ void executeLambertScanner( const rapidjson::Document& config )
             const int arrivalObjectId = static_cast< int >( arrivalObject.NoradNumber( ) );
 
             // Loop over departure epoch grid.
-            for (int l = 0; l < input.departureEpochSteps; ++l)
+            for ( int m = 0; m < input.departureEpochSteps; ++m )
             {
                 DateTime departureEpoch = input.departureEpochInitial;
-                departureEpoch = departureEpoch.AddSeconds( input.departureEpochStepSize * l );
+                departureEpoch = departureEpoch.AddSeconds( input.departureEpochStepSize * m );
                 
                 const Eci tleDepartureState = sgp4Departure.FindPosition( departureEpoch );
                 const Vector6 departureState = getStateVector( tleDepartureState );

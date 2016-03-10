@@ -1,4 +1,4 @@
 commentjson==0.4
 matplotlib==1.4.2
-pandas==0.15.2
+pandas==0.17.1
 scipy==0.14.1
