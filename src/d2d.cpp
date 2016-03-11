@@ -15,7 +15,7 @@
 #include <rapidjson/document.h>
 
 #include "D2D/catalogPruner.hpp"
-// #include "D2D/lambertFetch.hpp"
+#include "D2D/lambertFetch.hpp"
 #include "D2D/lambertScanner.hpp"
 #include "D2D/lambertTransfer.hpp"
 // #include "D2D/sgp4Propagator.hpp"
@@ -105,11 +105,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
         std::cout << "Mode                          " << mode << std::endl;
         d2d::executeLambertScanner( config );
     }
-    // // else if ( mode.compare( "lambert_fetch" ) == 0 )
-    // // {
-    // //     std::cout << "Mode:                         " << mode << std::endl;
-    // //     d2d::fetchLambertTransfer( config );
-    // // }
+    else if ( mode.compare( "lambert_fetch" ) == 0 )
+    {
+        std::cout << "Mode:                         " << mode << std::endl;
+        d2d::fetchLambertTransfer( config );
+    }
     // // else if ( mode.compare( "sgp4_propagator" ) == 0 )
     // // {
     // //     std::cout << "Mode:                         " << mode << std::endl;
