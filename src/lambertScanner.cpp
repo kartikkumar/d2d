@@ -258,8 +258,8 @@ void executeLambertScanner( const rapidjson::Document& config )
 
                         departureDeltaVs[ i ] = sml::add( transferDepartureVelocity,
                                                           sml::multiply( departureVelocity, -1.0 ) );
-                        arrivalDeltaVs[ i ]   = sml::add( transferArrivalVelocity,
-                                                          sml::multiply( arrivalVelocity, -1.0 ) );
+                        arrivalDeltaVs[ i ]   = sml::add( arrivalVelocity,
+                                                          sml::multiply( transferArrivalVelocity, -1.0 ) );
 
                         transferDeltaVs[ i ]
                             = sml::norm< double >( departureDeltaVs[ i ] )
