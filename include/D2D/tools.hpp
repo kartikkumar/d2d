@@ -18,6 +18,7 @@
 #include <catch.hpp>
 
 #include <libsgp4/Eci.h>
+#include <libsgp4/Tle.h>
 
 #include <rapidjson/document.h>
 
@@ -76,6 +77,23 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
                                 const int numberOfSamples,
                                 const double gravitationalParameter,
                                 const double initialEpoch = 0.0 );
+
+//! Sample SGP4 orbit.
+/*!
+ * Samples a SGP4 orbit and generates a state-history stored in a STL map (key=epoch). The
+ * SGP4 orbit is sampled by using FindPosition() provided with libsgp4.
+ *
+ * @param[in]  tle                    Two-line element data of the object to be propagated 
+ * @param[in]  initialEpochJulian     Starting epoch for the SGP4 propagator
+ *                                    (default = 0.0) [Julian date]
+ * @param[in]  propagationTime        Total propagation time [s]
+ * @param[in]  numberOfSamples        Number of samples, distributed evenly over propagation time
+ * @return                            State-history of sampled SGP4 orbit
+ */
+StateHistory sampleSGP4Orbit( const Tle& tle,
+                              const double initialEpochJulian = 0.0,
+                              const double propagationTime,
+                              const int numberOfSamples )
 
 //! Convert SGP4 ECI object to state vector.
 /*!
