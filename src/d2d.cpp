@@ -19,6 +19,8 @@
 #include "D2D/lambertScanner.hpp"
 #include "D2D/lambertTransfer.hpp"
 #include "D2D/SGP4Scanner.hpp"
+#include "D2D/sgp4Fetch.hpp"
+#include "D2D/tools.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {

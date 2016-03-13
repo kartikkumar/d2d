@@ -15,7 +15,14 @@
 
 #include <Astro/astro.hpp>
 
+#include <Atom/convertCartesianStateToTwoLineElements.hpp>
+
+#include <libsgp4/Tle.h>
+#include <libsgp4/SGP4.h>
+#include <libsgp4/DateTime.h>
+
 #include "D2D/sgp4Fetch.hpp"
+#include "D2D/lambertFetch.hpp"
 #include "D2D/tools.hpp"
 
 namespace d2d
@@ -86,7 +93,7 @@ void fetchSGP4Transfer( const rapidjson::Document& config )
     // retrieve the data from the sgp4_scanner_results
     SGP4Query.executeStep( );
 
-    const int lambertTransferId =                   = SGP4Query.getColumn( 1 );
+    const int lambertTransferId                     = SGP4Query.getColumn( 1 );
     const double sgp4ArrivalPositionX               = SGP4Query.getColumn( 2 );
     const double sgp4ArrivalPositionY               = SGP4Query.getColumn( 3 );
     const double sgp4ArrivalPositionZ               = SGP4Query.getColumn( 4 );
@@ -121,8 +128,20 @@ void fetchSGP4Transfer( const rapidjson::Document& config )
                                                          earthGravitationalParameter,
                                                          departureEpoch );
 
+    // compute and store transfer state history by sgp4 propagation
+    std::vector< double > transferDepartureStateVector( 6 );
+    for ( int i = 0; i < 6; i++ )
+        transferDepartureStateVector[ i ] = transferDepartureState[ i ];
     
-    const StateHistory sgp4TransferPath = sampleSGP4Orbit( );
+    DateTime transferDepartureEpoch( ( departureEpoch - 1721425.5 ) * TicksPerDay );
+    // Tle transferOrbitTle = atom::convertCartesianStateToTwoLineElements< double, std::vector< double > >( transferDepartureStateVector,
+    //                                                                                                       transferDepartureEpoch );
+    // std::cout << "transfer Orbit Tle computed successfully!" << std::endl;
+
+    // const StateHistory sgp4TransferPath = sampleSGP4Orbit( transferOrbitTle,
+    //                                                        departureEpoch,
+    //                                                        timeOfFlight,
+    //                                                        input.outputSteps );
 
     std::cout << "Transfer propagated successfully!" << std::endl;
 
