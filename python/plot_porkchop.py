@@ -75,18 +75,21 @@ except sqlite3.Error, e:
 
     print "Error %s:" % e.args[0]
     sys.exit(1)
+print config['objects']
+if config['objects']==[]:
+	best = pd.read_sql("SELECT DISTINCT(departure_object_id), arrival_object_id, time_of_flight,  \
+										departure_epoch, transfer_delta_v  						  \
+	                    FROM lambert_scanner_results 											  \
+	 					ORDER BY transfer_delta_v ASC 											  \
+	 					LIMIT 10 ",
+	                    database )
 
-# database = sqlite3.connect('../data/porkchop/porkchoptest.sqlite')
+	a = (best['departure_object_id'][0])
+	b = (best['arrival_object_id'][0])
+else:
+	a = config['objects'][0]
+	b = config['objects'][1]
 
-best = pd.read_sql("SELECT DISTINCT(departure_object_id), arrival_object_id, time_of_flight, 	  \
-									departure_epoch, transfer_delta_v  							  \
-                    FROM lambert_scanner_results 												  \
- 					ORDER BY transfer_delta_v ASC 												  \
- 					LIMIT 10 ",
-                    database )
-
-a = (best['departure_object_id'][0])
-b = (best['arrival_object_id'][0])
 print "Porkchop plot figure being generated for transfer between TLE objects",a,"and",b,"..."
 
 times_of_flight = pd.read_sql_query("	SELECT DISTINCT time_of_flight 							  \
@@ -97,8 +100,8 @@ departure_epochs = pd.read_sql_query("	SELECT DISTINCT departure_epoch 						  \
 										database)-2400000.5 # change to Modified Julian Date
 transfer_delta_vs = pd.read_sql_query("	SELECT transfer_delta_v 								  \
 										FROM lambert_scanner_results 							  \
-										WHERE departure_object_id =" + a + " 					  \
-										and arrival_object_id =" + b,
+										WHERE departure_object_id =" + str(a) + "				  \
+										and arrival_object_id =" + str(b),
 										database)
 
 z = np.array(transfer_delta_vs).reshape(len(departure_epochs), len(times_of_flight)) 
@@ -106,7 +109,7 @@ x1, y1 = np.meshgrid(times_of_flight,departure_epochs)
 datapoints = np.size(z)
 failures = np.count_nonzero(np.isnan(z))
 
-# Add cutoff dV on top of minimal dV if user input asks for it
+# Add cutoff dV if user input requires to do so
 if config['cutoff'] != 0:
 	cutoff = config['cutoff']
 	for i in xrange(0,len(departure_epochs)):
@@ -118,7 +121,7 @@ if config['cutoff'] != 0:
 				z[i][j] =  cutoff
 
 # Plot porkchop plot
-cmap = plt.get_cmap('jet')
+cmap = plt.get_cmap(config['colormap'])
 fig=plt.figure()
 ax1 = fig.add_subplot(111)
 data = ax1.contourf(y1,x1,z,cmap=cmap)
@@ -132,16 +135,16 @@ ax1.set_xlabel('Departure Epoch [mjd]', fontsize=13)
 ax1.set_ylabel('T$_{ToF}$ [s]', fontsize=13)
 cbar.ax.set_ylabel('Total transfer $\Delta V$ [km/s]', rotation=270, fontsize=13, labelpad=20)
 if config['cutoff'] == 0:
- 	plt.title("Porkchop plot of TLE elements " +str(a)+ " to " +str(b) + 						  \
- 			  "\n Number of datapoints: "+str(datapoints) +" (" + str(len(departure_epochs)) + 	  \
- 			  "x"+ str(len(times_of_flight)) + ")" +" Total failures: " + str(failures),		  \
+ 	plt.title("Porkchop plot of TLE elements " + str(a) + " to " + str(b) + 					  \
+ 			  ".\n Number of datapoints: " + str(datapoints) +" (" + str(len(departure_epochs)) + \
+ 			  "x" + str(len(times_of_flight)) + "). Total failures: " + str(failures),		  	  \
  			  fontsize=10, y=1.02)
 else:
 	plt.title("Porkchop plot of TLE elements " + str(a) + " to " + str(b) +						  \
-			  "\n with a cutoff $\Delta V$ of " + str(config['cutoff']) + " km/s added to the     \
-			  lowest $\Delta V$ in the plot" + "\n Number of datapoints: " + str(datapoints) + 	  \
-			  " (" + str(len(departure_epochs)) + "x" + str(len(times_of_flight)) + ") " +		  \
-			  "Total failures: " + str(failures), fontsize=10, y=1.02)
+			  "\n with a cutoff $\Delta V$ of " + str(config['cutoff']) + "\n Number of 		  \
+			  datapoints: " + str(datapoints) + " (" + str(len(departure_epochs)) + "x" + 	      \
+			  str(len(times_of_flight)) + ") " + "Total failures: " + str(failures), 			  \
+			  fontsize=10, y=1.02)
 
 plt.tight_layout()
 
