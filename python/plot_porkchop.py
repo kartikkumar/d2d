@@ -65,7 +65,7 @@ print "                            Operations                            "
 print "******************************************************************"
 print ""
 
-print "Fetching scan data from database ..."
+print "Fetching porkchop plot data from database ..."
 
 # Connect to SQLite database.
 try:
@@ -75,13 +75,13 @@ except sqlite3.Error, e:
 
     print "Error %s:" % e.args[0]
     sys.exit(1)
-print config['objects']
+
 if config['objects']==[]:
 	best = pd.read_sql("SELECT DISTINCT(departure_object_id), arrival_object_id, time_of_flight,  \
 										departure_epoch, transfer_delta_v  						  \
 	                    FROM lambert_scanner_results 											  \
 	 					ORDER BY transfer_delta_v ASC 											  \
-	 					LIMIT 10 ",
+	 					LIMIT 10 ",																  \
 	                    database )
 
 	a = (best['departure_object_id'][0])
@@ -90,18 +90,18 @@ else:
 	a = config['objects'][0]
 	b = config['objects'][1]
 
-print "Porkchop plot figure being generated for transfer between TLE objects",a,"and",b,"..."
+print "Porkchop plot figure being generated for transfer between TLE objects", a, "and", b, "..."
 
 times_of_flight = pd.read_sql_query("	SELECT DISTINCT time_of_flight 							  \
-										FROM lambert_scanner_results",
+										FROM lambert_scanner_results",							  \
 										database)
 departure_epochs = pd.read_sql_query("	SELECT DISTINCT departure_epoch 						  \
-										FROM lambert_scanner_results",
+										FROM lambert_scanner_results",							  \
 										database)-2400000.5 # change to Modified Julian Date
 transfer_delta_vs = pd.read_sql_query("	SELECT transfer_delta_v 								  \
 										FROM lambert_scanner_results 							  \
 										WHERE departure_object_id =" + str(a) + "				  \
-										and arrival_object_id =" + str(b),
+										and arrival_object_id =" + str(b),						  \
 										database)
 
 z = np.array(transfer_delta_vs).reshape(len(departure_epochs), len(times_of_flight)) 
