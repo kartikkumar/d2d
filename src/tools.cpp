@@ -58,9 +58,9 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
 
 //! Sample SGP4 orbit
 StateHistory sampleSGP4Orbit( const Tle& tle,
-                              const double initialEpochJulian,
                               const double propagationTime,
-                              const int numberOfSamples )
+                              const int numberOfSamples,
+                              const double initialEpochJulian )
 {
     SGP4 sgp4( tle );
     Vector6 state;

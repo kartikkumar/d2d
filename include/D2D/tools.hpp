@@ -91,9 +91,9 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
  * @return                            State-history of sampled SGP4 orbit
  */
 StateHistory sampleSGP4Orbit( const Tle& tle,
-                              const double initialEpochJulian = 0.0,
                               const double propagationTime,
-                              const int numberOfSamples )
+                              const int numberOfSamples,
+                              const double initialEpochJulian = 0.0 );
 
 //! Convert SGP4 ECI object to state vector.
 /*!
