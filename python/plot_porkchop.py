@@ -7,7 +7,7 @@ All rights reserved.
 # Set up modules and packages
 # Plotting
 import matplotlib
-matplotlib.use('TkAgg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from mpl_toolkits.mplot3d import Axes3D
