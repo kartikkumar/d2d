@@ -78,9 +78,6 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
                                 const double gravitationalParameter,
                                 const double initialEpoch = 0.0 );
 
-//! Constant variable defining julian day for the start of Gregorian epoch (01 January 0001 00:00:00)
-const double startOfGregorianJD = 1721425.5;
-
 //! Sample SGP4 orbit.
 /*!
  * Samples a SGP4 orbit and generates a state-history stored in a STL map (key=epoch). The

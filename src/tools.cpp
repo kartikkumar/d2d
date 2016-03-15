@@ -9,8 +9,6 @@
 #include <sstream>
 #include <stdexcept>
 
-#include <keplerian_toolbox.h>
-
 #include <libsgp4/DateTime.h>
 #include <libsgp4/Eci.h>
 #include <libsgp4/Globals.h>
@@ -19,6 +17,10 @@
 #include <libsgp4/Tle.h>
 
 #include "D2D/tools.hpp"
+
+#include <Astro/constants.hpp>
+
+#include <keplerian_toolbox.h>
 
 namespace d2d
 {
@@ -64,7 +66,7 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
 {
     SGP4 sgp4( tle );
     Vector6 state;
-    DateTime initialEpoch( ( initialEpochJulian - startOfGregorianJD ) * TicksPerDay );
+    DateTime initialEpoch( ( initialEpochJulian - astro::ASTRO_GREGORIAN_EPOCH_IN_JULIAN_DAYS ) * TicksPerDay );
     Eci initialStateECI = sgp4.FindPosition( initialEpoch );
     Vector6 initialState = getStateVector( initialStateECI );
     state = initialState;
