@@ -64,7 +64,7 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
 {
     SGP4 sgp4( tle );
     Vector6 state;
-    DateTime initialEpoch( ( initialEpochJulian - 1721425.5 ) * TicksPerDay );
+    DateTime initialEpoch( ( initialEpochJulian - startOfGregorianJD ) * TicksPerDay );
     Eci initialStateECI = sgp4.FindPosition( initialEpoch );
     Vector6 initialState = getStateVector( initialStateECI );
     state = initialState;
