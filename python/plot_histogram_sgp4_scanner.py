@@ -20,6 +20,9 @@ import commentjson
 import json
 from pprint import pprint
 
+# SQL database
+import sqlite3
+
 # Numerical
 import numpy as np
 import pandas as pd
@@ -73,86 +76,33 @@ try:
     database = sqlite3.connect(config['database'])
 
 except sqlite3.Error, e:
-
     print "Error %s:" % e.args[0]
     sys.exit(1)
-
-
-departure_epochs = pd.read_sql("SELECT DISTINCT departure_epoch                                                                         \
-                                    FROM sgp4_scanner_results;",                                                                        \
-                                database)
-
-for i in xrange(0,departure_epochs.size):
-# for i in xrange(0,1):
-    c = departure_epochs['departure_epoch'][i]
-    print "Plotting histogram with departure epoch: ",c,"Julian Date"
                       
-    # Fetch scan data.
-    scan_data = pd.read_sql("SELECT transfer_id, lambert_transfer_id, departure_object_id,                                              \
-                                    arrival_object_id,                                                                                  \
-                                    " + config['minmax'] + " (" + config['error'] + ")                                                  \
+# Fetch scan data.
+scan_data = pd.read_sql( "SELECT                                                                                                   \
+                              " + config['error'] + "                                                                                    \
                               FROM sgp4_scanner_results                                                                                 \
-                              WHERE departure_epoch BETWEEN " + str(c - 0.00001) + "                                                    \
-                                                        AND " + str(c + 0.00001) + "                                                    \
-                              GROUP BY departure_object_id, arrival_object_id;",                                                        \
-                            database)
-    scan_data.columns = ['transfer_id', 'lambert_transfer_id', 'departure_object_id','arrival_object_id',                               \
-                         config['error']]
-    # scan_order = scan_data.sort_values(str(map_order))                                                                                  \
-    #                       .drop_duplicates('departure_object_id')[                                                                      \
-    #                           ['departure_object_id',str(map_order)]]
+                              WHERE success = 1;",                                                                                      \
+                              database )
+scan_data.columns = [ config['error'] ]
 
-    scan_map = scan_data.pivot(index='arrival_object_id',                                                                               \
-                               columns='departure_object_id',                                       
-                               values=config['error'])
-    scan_map = scan_map.reindex(index=scan_order['departure_object_id'],                                                                \
-                                columns=scan_order['departure_object_id'])
-    print scan_map
-    print scan_data
-    # Set up color map.
-    bins = np.linspace(scan_data[config['error']].min(),                                                                                \
-                       scan_data[config['error']].max(), 10)
-    groups = scan_data[config['error']].groupby(                                                                                        \
-                np.digitize(scan_data[config['error']], bins))
-    levels = groups.mean().values
-    cmap_lin = plt.get_cmap(config['colormap'])
-    cmap = nlcmap(cmap_lin, levels)
-    # cmap.set_bad(color='white', alpha=1.)    
-    # Plot heat map.
-    ax1 = plt.subplot2grid((15,15), (2, 0),rowspan=13,colspan=14)
-    heatmap = ax1.pcolormesh(scan_map.values, cmap=cmap,                                                                                \
-                             vmin=scan_data[config['error']].min(),                                                                     \
-                             vmax=scan_data[config['error']].max())
-    ax1.set_xticks(np.arange(scan_map.shape[1] + 1)+0.5)
-    ax1.set_xticklabels(scan_map.columns, rotation=90)
-    ax1.set_yticks([])
-    ax1.tick_params(axis='both', which='major', labelsize=config['tick_label_size'])
-    ax1.set_xlim(0, scan_map.shape[1])
-    ax1.set_ylim(0, scan_map.shape[0])
-    ax1.set_xlabel('Departure object',fontsize=config['axis_label_size'])
-    ax1.set_ylabel('Arrival object',fontsize=config['axis_label_size'])
+# The histogram of the data
+x = scan_data[ config['error'] ]
+# print x    
+n, bins, patches = plt.hist( x, bins=50, normed=1, facecolor='green', alpha=0.75 )
 
-    # Plot axis ordering.
-    ax2 = plt.subplot2grid((15,15), (0, 0),rowspan=2,colspan=14,sharex=ax1)
-    ax2.step(np.arange(0.5,scan_map.shape[1]+.5),scan_order[str(map_order)],'k',linewidth=2.0)
-    ax2.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%.2e'))
-    ax2.tick_params(axis='both', which='major', labelsize=config['tick_label_size'])
-    plt.setp(ax2.get_xticklabels(), visible=False)
-    ax2.set_ylabel(config['map_order_axis_label'],fontsize=config['axis_label_size'])
-
-    # Plot color bar.
-    ax3 = plt.subplot2grid((15,15), (0, 14), rowspan=15)
-    color_bar = plt.colorbar(heatmap,cax=ax3)
-    color_bar.ax.get_yaxis().labelpad = 20
-    color_bar.ax.set_ylabel(r'Error [m] or [m/s]', rotation=270)
-
-    plt.tight_layout()
-
-    # Save figure to file.
-    plt.savefig(config["output_directory"] + "/" + config["scan_figure"] + "_"+str(i+1) +                                               \
+# Figure properties
+plt.xlabel('arrival position error magnitude [km]')
+# plt.ylabel('Probability')
+# plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
+# plt.axis([40, 160, 0, 0.03])
+plt.grid(True)
+    
+# Save figure to file.
+plt.savefig(config["output_directory"] + "/" + config["histogram_figure"] + "_" +                                               \
                        ".png", dpi=config["figure_dpi"])
-    plt.close()
-    print "Figure ",i+1," generated successfully...."
+plt.close()
 
 print "Figure generated successfully!"
 print ""
