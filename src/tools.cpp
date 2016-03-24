@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
+#include <cmath>
 
 #include <libsgp4/DateTime.h>
 #include <libsgp4/Eci.h>
@@ -89,6 +90,80 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
         stateHistory[ epochJulian ] = state;
     }
     return stateHistory;
+}
+
+//! Convergence test for a virtual TLE generated from the cartesian to TLE converter in atom
+bool virtualTleConvergenceTest( const std::vector< double > propagatedCartesianState,
+                                const std::vector< double > trueCartesianState,
+                                const double relativeTolerance,
+                                const double absoluteTolerance )
+{
+    bool testPassed = false;
+    
+    // check for NAN
+    std::vector< double > absoluteDifference( 6 );
+    for ( int i = 0; i < 6; i++ )
+    {
+        absoluteDifference[ i ] = std::fabs( propagatedCartesianState[ i ] - trueCartesianState[ i ] );
+        bool differenceIsNan = std::isnan( absoluteDifference[ i ] );
+        if ( differenceIsNan == true )
+        {
+            testPassed = false;
+            return testPassed;
+        }
+    }
+
+    // Relative Difference Check
+    bool relativeCheckPassed = false;
+    std::vector< double > relativeDifference( 6 );
+    for ( int i = 0; i < 6; i++ )
+    {
+        relativeDifference[ i ] = absoluteDifference[ i ] / std::fabs( trueCartesianState[ i ] );
+        if ( relativeDifference[ i ] > relativeTolerance )
+        {
+            relativeCheckPassed = false;
+            break;
+        }
+        else
+        {
+            relativeCheckPassed = true;
+            continue;
+        }
+    }
+
+    // Absolute Difference Check
+    bool absoluteCheckPassed = false;
+    if ( relativeCheckPassed == false )
+    {
+        for ( int i = 0; i < 6; i++ )
+        {
+            if ( absoluteDifference[ i ] > absoluteTolerance )
+            {
+                absoluteCheckPassed = false;
+                break;
+            }
+            else
+            {
+                absoluteCheckPassed = true;
+                continue;
+            }
+        }
+        if ( absoluteCheckPassed == false )
+        {
+            testPassed = false;
+            return testPassed;
+        }
+        else
+        {
+            testPassed = true;
+            return testPassed;
+        }
+    }
+    else
+    {
+        testPassed = true;
+        return testPassed;
+    }
 }
 
 //! Convert SGP4 ECI object to state vector.

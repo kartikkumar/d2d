@@ -96,6 +96,24 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
                               const int numberOfSamples,
                               const double initialEpochJulian = 0.0 );
 
+//! Convergence test for a virtual TLE
+/*!
+ * A test of convergence for a virtual TLE generated from the cartesian to TLE converter in atom
+ *
+ * @param[in]   propagatedCartesianState    The state obtained after propagating virtual TLE 
+ *                                          using sgp4 for time of flight = 0.0
+ * @param[in]   trueCartesianState          The true cartesian state corresponding to zero time of flight
+ * @param[in]   relativeTolerance           Relative difference between the propagated and true cartesian state 
+ *                                          is checked against the relative tolerance
+ * @param[in]   absoluteTolerance           absolute difference between the propagated and true cartesian state 
+ *                                          is checked against the absolute tolerance
+ * @return                                  Returns boolean 'true' if the test passed, 'false' otherwise
+ */
+bool virtualTleConvergenceTest( const std::vector< double > propagatedCartesianState,
+                                const std::vector< double > trueCartesianState,
+                                const double relativeTolerance,
+                                const double absoluteTolerance );
+
 //! Convert SGP4 ECI object to state vector.
 /*!
  * Converts a Cartesian state stored in an object of the Eci class in the SGP4 library () into a
