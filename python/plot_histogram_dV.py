@@ -82,27 +82,25 @@ except sqlite3.Error, e:
     sys.exit(1)
                       
 # Fetch scan data.
-scan_data = pd.read_sql( "SELECT                                                                                                   \
-                              " + config['error'] + "                                                                                    \
-                              FROM sgp4_scanner_results                                                                                 \
-                              WHERE success = 1;",                                                                                      \
+scan_data = pd.read_sql( "SELECT transfer_delta_v FROM lambert_scanner_results WHERE transfer_delta_v < 30;",
                               database )
-scan_data.columns = [ config['error'] ]
+scan_data.columns = [ 'transfer_delta_v' ]
 
 # The histogram of the data
 x = scan_data[ 'transfer_delta_v']
 # print x    
-n, bins, patches = plt.hist( x, bins=50, normed=1, facecolor='green', alpha=0.75 )
+plt.hist( x, bins=50, facecolor='green', alpha=0.75 )
 
 # Figure properties
-plt.xlabel('arrival position error magnitude [km]')
-# plt.ylabel('Probability')
+plt.xlabel('Total dV magnitude [km/s]')
+plt.ylabel('Frequency')
+plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 # plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
 # plt.axis([40, 160, 0, 0.03])
 plt.grid(True)
     
 # Save figure to file.
-plt.savefig(config["output_directory"] + "/" + config["histogram_figure"] + "_" +                                               \
+plt.savefig(config["output_directory"] + "/" + config["scan_figure"] +                 \
                        ".png", dpi=config["figure_dpi"])
 plt.close()
 
