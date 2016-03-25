@@ -6,10 +6,10 @@
  */
 
 #include <algorithm>
+#include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
-#include <cmath>
 
 #include <libsgp4/DateTime.h>
 #include <libsgp4/Eci.h>
@@ -92,15 +92,15 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
     return stateHistory;
 }
 
-//! Convergence test for a virtual TLE generated from the cartesian to TLE converter in atom
-bool virtualTleConvergenceTest( const std::vector< double > propagatedCartesianState,
-                                const std::vector< double > trueCartesianState,
-                                const double relativeTolerance,
-                                const double absoluteTolerance )
+//! A test of convergence for a virtual TLE generated from the convertCartesianStateToTwoLineElements function in atom
+bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
+                                       const Vector6& trueCartesianState,
+                                       const double& relativeTolerance,
+                                       const double& absoluteTolerance )
 {
     bool testPassed = false;
     
-    // check for NAN
+    // check for NAN values
     std::vector< double > absoluteDifference( 6 );
     for ( int i = 0; i < 6; i++ )
     {
@@ -113,7 +113,7 @@ bool virtualTleConvergenceTest( const std::vector< double > propagatedCartesianS
         }
     }
 
-    // Relative Difference Check
+    // Check if relative error between target and propagated Cartesian states is within specified tolerance.
     bool relativeCheckPassed = false;
     std::vector< double > relativeDifference( 6 );
     for ( int i = 0; i < 6; i++ )
@@ -131,7 +131,7 @@ bool virtualTleConvergenceTest( const std::vector< double > propagatedCartesianS
         }
     }
 
-    // Absolute Difference Check
+    // Check if absolute error between target and propagated Cartesian states is within specified tolerance.
     bool absoluteCheckPassed = false;
     if ( relativeCheckPassed == false )
     {
