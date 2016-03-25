@@ -96,23 +96,29 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
                               const int numberOfSamples,
                               const double initialEpochJulian = 0.0 );
 
-//! Execute convergence test for a virtual TLE
+//! Execute convergence test for a virtual TLE.
 /*!
- * A test of convergence for a virtual TLE generated from the convertCartesianStateToTwoLineElements function in atom
+ * A test of convergence for a virtual TLE generated from the
+ * convertCartesianStateToTwoLineElements function in the Atom library.
  *
+ * @sa atom::convertCartesianStateToTwoLineElements
  * @param[in]   propagatedCartesianState    The state obtained after propagating virtual TLE 
- *                                          using sgp4 for time-of-flight = 0.0
- * @param[in]   trueCartesianState          The true cartesian state corresponding to zero time of flight
- * @param[in]   relativeTolerance           Relative difference between the propagated and true cartesian state 
- *                                          is checked against the relative tolerance
- * @param[in]   absoluteTolerance           absolute difference between the propagated and true cartesian state 
- *                                          is checked against the absolute tolerance
- * @return                                  Returns boolean 'true' if the test passed, 'false' otherwise
+ *                                          using SGP4 with time-of-flight = 0.0
+ * @param[in]   trueCartesianState          The true cartesian state corresponding to zero 
+ *                                          time-of-flight
+ * @param[in]   relativeTolerance           Relative difference between the propagated and true 
+ *                                          Cartesian state is checked against the relative 
+ *                                          tolerance
+ * @param[in]   absoluteTolerance           Absolute difference between the propagated and true 
+ *                                          Cartesian state is checked against the absolute 
+ *                                          tolerance
+ * @return                                  Returns boolean 'true' if the test passed, 
+ *                                          'false' otherwise
  */
 bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
                                        const Vector6& trueCartesianState,
-                                       const double& relativeTolerance,
-                                       const double& absoluteTolerance );
+                                       const double relativeTolerance,
+                                       const double absoluteTolerance );
 
 //! Convert SGP4 ECI object to state vector.
 /*!

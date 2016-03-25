@@ -92,78 +92,46 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
     return stateHistory;
 }
 
-//! A test of convergence for a virtual TLE generated from the convertCartesianStateToTwoLineElements function in atom
+//! Execute convergence test for a virtual TLE.
 bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
                                        const Vector6& trueCartesianState,
-                                       const double& relativeTolerance,
-                                       const double& absoluteTolerance )
-{
-    bool testPassed = false;
-    
-    // check for NAN values
-    Vector6 absoluteDifference;
+                                       const double relativeTolerance,
+                                       const double absoluteTolerance )
+{    
+    // Check for NAN values.
     for ( int i = 0; i < 6; i++ )
     {
-        absoluteDifference[ i ] = std::fabs( propagatedCartesianState[ i ] - trueCartesianState[ i ] );
-        bool differenceIsNan = std::isnan( absoluteDifference[ i ] );
-        if ( differenceIsNan == true )
+        bool elementIsNan = std::isnan( propagatedCartesianState[ i ] );
+        if ( elementIsNan == true )
         {
-            testPassed = false;
-            return testPassed;
+            // If a NaN value is detected, the convergence test has failed.
+            return false;
         }
     }
 
-    // Check if relative error between target and propagated Cartesian states is within specified tolerance.
-    bool relativeCheckPassed = false;
-    Vector6 relativeDifference;
+    // Check if error between target and propagated Cartesian states is within specified 
+    // tolerances.
+    Vector6 absoluteDifference = propagatedCartesianState;
+    Vector6 relativeDifference = propagatedCartesianState;
     for ( int i = 0; i < 6; i++ )
     {
+        absoluteDifference[ i ] 
+            = std::fabs( propagatedCartesianState[ i ] - trueCartesianState[ i ] );        
         relativeDifference[ i ] = absoluteDifference[ i ] / std::fabs( trueCartesianState[ i ] );
         if ( relativeDifference[ i ] > relativeTolerance )
         {
-            relativeCheckPassed = false;
-            break;
-        }
-        else
-        {
-            relativeCheckPassed = true;
-            continue;
+            if ( absoluteDifference[ i ] > absoluteTolerance )
+            {
+                // If the relative and absolute difference for the ith element exceeds the 
+                // specified tolerances, the convergence test has failed.
+                return false;
+            }
         }
     }
 
-    // Check if absolute error between target and propagated Cartesian states is within specified tolerance.
-    bool absoluteCheckPassed = false;
-    if ( relativeCheckPassed == false )
-    {
-        for ( int i = 0; i < 6; i++ )
-        {
-            if ( absoluteDifference[ i ] > absoluteTolerance )
-            {
-                absoluteCheckPassed = false;
-                break;
-            }
-            else
-            {
-                absoluteCheckPassed = true;
-                continue;
-            }
-        }
-        if ( absoluteCheckPassed == false )
-        {
-            testPassed = false;
-            return testPassed;
-        }
-        else
-        {
-            testPassed = true;
-            return testPassed;
-        }
-    }
-    else
-    {
-        testPassed = true;
-        return testPassed;
-    }
+    // Reaching this point means that there are no NaN values and either the relative or absolute
+    // difference for each element is within specified tolerance.
+    return true;
 }
 
 //! Convert SGP4 ECI object to state vector.
