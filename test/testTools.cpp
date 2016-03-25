@@ -1,14 +1,17 @@
 /*
  * Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+ * Copyright (c) 2014-2016 Abhishek Agrawal, Delft University of Technology (abhishek.agrawal@protonmail.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
+#include <cmath>
 #include <fstream>
 #include <iterator>
 #include <sstream>
 #include <string>
 
+#include <boost/array.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/tokenizer.hpp>
 
@@ -19,12 +22,20 @@
 #include <libsgp4/Vector.h>
 
 #include "D2D/tools.hpp"
-#include "D2D/typedefs.hpp"
 
 namespace d2d
 {
 namespace tests
 {
+
+//! 3-Vector.
+typedef boost::array< double, 3 > Vector3;
+
+//! 6-Vector.
+typedef boost::array< double, 6 > Vector6;
+
+//! State history.
+typedef std::map< double, Vector6 > StateHistory;
 
 TEST_CASE( "Test root-path function", "[input-output]" )
 {
@@ -96,6 +107,95 @@ TEST_CASE( "Test sampling of Kepler orbit", "[kepler]" )
         }
 
         std::advance( iteratorExpectedStateHistory, 1 );
+    }
+}
+
+TEST_CASE( "Test execution of virtual TLE convergence test", "[virtual-tle],[convergence]" )
+{
+    Vector6 trueState;
+    trueState[ 0 ] = 7806.3;
+    trueState[ 1 ] = 8214.5;
+    trueState[ 2 ] = -445.8;
+    trueState[ 3 ] = -7.9;
+    trueState[ 4 ] = 7.7;
+    trueState[ 5 ] = 0.4;
+
+    const double relativeTolerance = 1.0e-8;
+    const double absoluteTolerance = 1.0e-10;
+
+    SECTION( "Check for NAN values" )
+    {
+        Vector6 propagatedState;
+        propagatedState[ 0 ] = trueState[ 0 ];
+        propagatedState[ 1 ] = nan( "1" );
+        propagatedState[ 2 ] = trueState[ 2 ];
+        propagatedState[ 3 ] = trueState[ 3 ];
+        propagatedState[ 4 ] = trueState[ 4 ];
+        propagatedState[ 5 ] = nan( "5" );
+
+        bool checkFlag = executeVirtualTleConvergenceTest( propagatedState,
+                                                           trueState,
+                                                           relativeTolerance,
+                                                           absoluteTolerance );
+
+        REQUIRE( checkFlag == false );
+    }
+
+    SECTION( "Check if relative error is within specified tolerance" )
+    {
+        Vector6 propagatedState;
+        propagatedState[ 0 ] = trueState[ 0 ] + ( 1.0e-9 * std::fabs( trueState[ 0 ] ) );
+        propagatedState[ 1 ] = trueState[ 1 ] + ( 1.0e-9 * std::fabs( trueState[ 1 ] ) );
+        propagatedState[ 2 ] = trueState[ 2 ] + ( 1.0e-9 * std::fabs( trueState[ 2 ] ) );
+        propagatedState[ 3 ] = trueState[ 3 ] + ( 1.0e-9 * std::fabs( trueState[ 3 ] ) );
+        propagatedState[ 4 ] = trueState[ 4 ] + ( 1.0e-9 * std::fabs( trueState[ 4 ] ) );
+        propagatedState[ 5 ] = trueState[ 5 ] + ( 1.0e-9 * std::fabs( trueState[ 5 ] ) );
+
+        bool checkFlag = executeVirtualTleConvergenceTest( propagatedState,
+                                                           trueState,
+                                                           relativeTolerance,
+                                                           absoluteTolerance );
+
+        REQUIRE( checkFlag == true );
+    }
+
+    SECTION( "Check if absolute error is within specified tolerance" )
+    {
+        SECTION( "Test that comparison passes" )
+        {
+            Vector6 propagatedState;
+            propagatedState[ 0 ] = trueState[ 0 ] + ( 1.0e-9 * std::fabs( trueState[ 0 ] ) );
+            propagatedState[ 1 ] = trueState[ 1 ] + ( 1.0e-11 );
+            propagatedState[ 2 ] = trueState[ 2 ] + ( 1.0e-11 );
+            propagatedState[ 3 ] = trueState[ 3 ] + ( 1.0e-11 );
+            propagatedState[ 4 ] = trueState[ 4 ] + ( 1.0e-11 );
+            propagatedState[ 5 ] = trueState[ 5 ] + ( 1.0e-11 );
+
+            bool checkFlag = executeVirtualTleConvergenceTest( propagatedState,
+                                                               trueState,
+                                                               relativeTolerance,
+                                                               absoluteTolerance );
+
+            REQUIRE( checkFlag == true );
+        }
+
+        SECTION( "Test that comparison fails" )
+        {
+            Vector6 propagatedState;
+            propagatedState[ 0 ] = 10.0 * trueState[ 0 ];
+            propagatedState[ 1 ] = 10.0 * trueState[ 1 ];
+            propagatedState[ 2 ] = 10.0 * trueState[ 2 ];
+            propagatedState[ 3 ] = 10.0 * trueState[ 3 ];
+            propagatedState[ 4 ] = 10.0 * trueState[ 4 ];
+            propagatedState[ 5 ] = 10.0 * trueState[ 5 ];
+
+            bool checkFlag = executeVirtualTleConvergenceTest( propagatedState,
+                                                               trueState,
+                                                               relativeTolerance,
+                                                               absoluteTolerance );
+
+            REQUIRE( checkFlag == false );            
+        }
     }
 }
 
