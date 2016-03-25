@@ -101,7 +101,7 @@ bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
     bool testPassed = false;
     
     // check for NAN values
-    std::vector< double > absoluteDifference( 6 );
+    Vector6 absoluteDifference;
     for ( int i = 0; i < 6; i++ )
     {
         absoluteDifference[ i ] = std::fabs( propagatedCartesianState[ i ] - trueCartesianState[ i ] );
@@ -115,7 +115,7 @@ bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
 
     // Check if relative error between target and propagated Cartesian states is within specified tolerance.
     bool relativeCheckPassed = false;
-    std::vector< double > relativeDifference( 6 );
+    Vector6 relativeDifference;
     for ( int i = 0; i < 6; i++ )
     {
         relativeDifference[ i ] = absoluteDifference[ i ] / std::fabs( trueCartesianState[ i ] );
