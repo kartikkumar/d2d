@@ -1,0 +1,26 @@
+// Copyright (c) 2014-2016 Kartik Kumar (me@kartikkumar.com)
+// Copyright (c) 2014-2016 Abhishek Agrawal (abhishek.agrawal@protonmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "sgp4_Scanner" application mode.
+{
+    "mode"                      : "sgp4_scanner",
+
+    // Set path to TLE catalog file.
+    "catalog"                   : "../data/catalog/",
+
+    // Set Velocity cut-off in km/s.
+    "velocityCutOff"            : ,
+
+    // Set path to output database (SQLite).
+    // WARNING: The database file must already exist and be populated with data using the
+    //          "lambert_scanner" mode (data will be store in a table called
+    //          "sgp4_scanner_results")!
+    "database"                  : "../data/",
+
+    // Set number of transfers to include in shortlist and absolute path to output file [N, file].
+    // The shortlist is based on the N transfers specified with the lowest [tbd] parameter.
+    // If N is set to 0 no output will be written to file.
+    "shortlist"                 : [0,""]
+}
