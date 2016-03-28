@@ -34,7 +34,7 @@ namespace d2d
  */
 void executeSGP4Scanner( const rapidjson::Document& config );
 
-//! sgp4_scanner input.
+//! Input for sgp4_scanner application mode.
 /*!
  * Data struct containing all valid input parameters for the sgp4_scanner application mode.
  * This struct is populated by the checkSGP4ScannerInput() function and can be used to execute
@@ -51,19 +51,28 @@ public:
      * Constructs data struct based on verified input parameters.
      *
      * @sa checkSGP4ScannerInput, executeSGP4Scanner
-     * @param[in] aCatalogPath          Path to TLE catalog
-     * @param[in] aVelocityCutOff       Velocity cut-off used by sgp4 scanner
-     * @param[in] aDatabasePath         Path to SQLite database
-     * @param[in] aShortlistLength      Number of transfers to include in shortlist
-     * @param[in] aShortlistPath        Path to shortlist file
+     * @param[in] aCatalogPath            Path to TLE catalog
+     * @param[in] aTransferDeltaVCutoff   Velocity cut-off used by sgp4 scanner
+     * @param[in] aRelativeTolerance      Relative tolerance for the Cartesian-To-TLE cnoversion
+     *                                    function
+     * @param[in] aAbsoluteTolerance      Absolute tolerance for the Cartesian-To-TLE cnoversion
+     *                                    function
+     * @param[in] aTransferDeltaVCutoff   Transfer deltaV cut-off used by sgp4 scanner
+     * @param[in] aDatabasePath           Path to SQLite database
+     * @param[in] aShortlistLength        Number of transfers to include in shortlist
+     * @param[in] aShortlistPath          Path to shortlist file
      */
     sgp4ScannerInput( const std::string& aCatalogPath,
-                      const double       aVelocityCutOff,
+                      const double       aTransferDeltaVCutoff,
+                      const double       aRelativeTolerance,
+                      const double       aAbsoluteTolerance,
                       const std::string& aDatabasePath,
                       const int          aShortlistLength,
                       const std::string& aShortlistPath )
         : catalogPath( aCatalogPath ),
-          velocityCutOff( aVelocityCutOff ),
+          transferDeltaVCutoff( aTransferDeltaVCutoff ),
+          relativeTolerance( aRelativeTolerance ),
+          absoluteTolerance( aAbsoluteTolerance ),
           databasePath( aDatabasePath ),
           shortlistLength( aShortlistLength ),
           shortlistPath( aShortlistPath )
@@ -72,14 +81,19 @@ public:
     //! Path to TLE catalog.
     const std::string catalogPath;
 
-    //! Velocity cut-off used by sgp4_scanner
-    const double velocityCutOff;
+    //! Transfer deltaV cut-off used by sgp4_scanner.
+    const double transferDeltaVCutoff;
+
+    //! Relative tolerance for the Cartesian-To-TLE conversion function.
+    const double relativeTolerance;
+
+    //! Absolute tolerance for the Cartesian-To-TLE conversion function.
+    const double absoluteTolerance;
 
     //! Path to SQLite database to store output.
     const std::string databasePath;
 
-    //! Number of entries (small arrival position error \f$\Delta\bar{r}_{arrival}\f$) to
-    //! include in shortlist.
+    //! Number of entries (lowest Lambert transfer \f$\Delta V\f$) to include in shortlist.
     const int shortlistLength;
 
     //! Path to shortlist file.
@@ -105,13 +119,45 @@ sgp4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config );
 
 //! Create sgp4_scanner_results table.
 /*!
- * Creates sgp4_scanner_results table in SQLite database used to store results obtaned from running the
- * "sgp4_scanner" application mode.
+ * Creates sgp4_scanner_results table in SQLite database used to store results obtaned from running
+ * the "sgp4_scanner" application mode.
  *
  * @sa executeSGP4Scanner
  * @param[in] database SQLite database handle
  */
 void createSGP4ScannerTable( SQLite::Database& database );
+
+//! Bind zeroes into sgp4_scanner_results table.
+/*!
+ * Bind zeroes into sgp4_scanner_results table in SQLite database when the
+ * Lambert total transfer deltaV is above a user specified cut-off, the convergence test for the
+ * virtual TLE fails, or the SGP4 propagation of the virtual TLE to the arrival epoch fails.
+ *
+ * @sa executeSGP4Scanner
+ * @param[in] lambertTransferId                 Value from the column transfer_id in the
+ *                                              lambert_scanner_results table
+ * @param[in] departureObjectId                 NORAD ID for the departure object
+ * @param[in] arrivalObjectId                   NORAD ID for the arrival object
+ * @param[in] departureEpochJulian              Departure epoch in Julian day
+ * @param[in] departureSemiMajorAxis            Semi-major axis of the departure object's orbit
+ * @param[in] departureEccentricity             Eccentricity of the departure object's orbit
+ * @param[in] departureInclination              Inclination of the departure object's orbit
+ * @param[in] departureArgumentOfPeriapsis      Argument of periapsis of the
+ *                                              departure object's orbit
+ * @param[in] departureLongitudeAscendingNode   Longitude of ascending node of the
+ *                                              departure object's orbit
+ * @param[in] departureTrueAnomaly              True anomaly of the departure object
+ */
+std::string bindZeroesSGP4ScannerTable( const int lambertTransferId,
+                                        const int departureObjectId,
+                                        const int arrivalObjectId,
+                                        const double departureEpochJulian,
+                                        const double departureSemiMajorAxis,
+                                        const double departureEccentricity,
+                                        const double departureInclination,
+                                        const double departureArgumentOfPeriapsis,
+                                        const double departureLongitudeAscendingNode,
+                                        const double departureTrueAnomaly );
 
 } // namespace d2d
 

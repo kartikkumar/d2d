@@ -112,7 +112,7 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     }
     else if ( mode.compare( "sgp4_scanner" ) == 0 )
     {
-        std::cout << "Mode:                         " << mode << std::endl;
+        std::cout << "Mode:                           " << mode << std::endl;
         d2d::executeSGP4Scanner( config );
     }
     else

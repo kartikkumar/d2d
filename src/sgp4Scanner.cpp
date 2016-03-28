@@ -26,10 +26,8 @@
 #include <libsgp4/Vector.h>
 
 #include <Atom/atom.hpp>
-#include <Atom/convertCartesianStateToTwoLineElements.hpp>
 
 #include <Astro/astro.hpp>
-#include <Astro/constants.hpp>
 
 #include "D2D/sgp4Scanner.hpp"
 #include "D2D/tools.hpp"
@@ -42,17 +40,18 @@ namespace d2d
 void executeSGP4Scanner( const rapidjson::Document& config )
 {
     std::cout.precision( 15 );
+
     // Verify config parameters. Exception is thrown if any of the parameters are missing.
     const sgp4ScannerInput input = checkSGP4ScannerInput( config );
 
     // Set gravitational parameter used [km^3 s^-2].
     const double earthGravitationalParameter = kMU;
-    std::cout << "Earth gravitational parameter " << earthGravitationalParameter
+    std::cout << "Earth gravitational parameter   " << earthGravitationalParameter
               << " km^3 s^-2" << std::endl;
 
     // Set mean radius used [km].
     const double earthMeanRadius = kXKMPER;
-    std::cout << "Earth mean radius             " << earthMeanRadius << " km" << std::endl;
+    std::cout << "Earth mean radius               " << earthMeanRadius << " km" << std::endl;
 
     std::cout << std::endl;
     std::cout << "******************************************************************" << std::endl;
@@ -88,15 +87,15 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     sgp4ScannerTableInsert << "INSERT INTO sgp4_scanner_results VALUES ("
         << "NULL,"
         << ":lambert_transfer_id,"
-        << ":departure_object_id,"         
-        << ":arrival_object_id,"           
-        << ":departure_epoch,"             
-        << ":departure_semi_major_axis,"               
-        << ":departure_eccentricity,"                  
-        << ":departure_inclination,"                   
-        << ":departure_argument_of_periapsis,"         
-        << ":departure_longitude_of_ascending_node,"   
-        << ":departure_true_anomaly,"                  
+        << ":departure_object_id,"
+        << ":arrival_object_id,"
+        << ":departure_epoch,"
+        << ":departure_semi_major_axis,"
+        << ":departure_eccentricity,"
+        << ":departure_inclination,"
+        << ":departure_argument_of_periapsis,"
+        << ":departure_longitude_of_ascending_node,"
+        << ":departure_true_anomaly,"
         << ":arrival_position_x,"
         << ":arrival_position_y,"
         << ":arrival_position_z,"
@@ -113,10 +112,10 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         << ":arrival_velocity_error,"
         << ":success"
         << ");";
-    
+
     SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
 
-    SQLite::Statement SGP4Query( database, sgp4ScannerTableInsert.str( ) );
+    SQLite::Statement sgp4Query( database, sgp4ScannerTableInsert.str( ) );
 
     std::cout << "Propagating Lambert transfers using SGP4 and populating database ... "
               << std::endl;
@@ -124,190 +123,166 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     // Loop over rows in lambert_scanner_results table and propagate Lambert transfers using SGP4.
     boost::progress_display showProgress( lambertScannertTableSize );
 
-    // Counters for different fail cases
+    // Declare counters for different fail cases.
     int virtualTleFailCounter = 0;
     int arrivalEpochPropagationFailCounter = 0;
 
     while ( lambertQuery.executeStep( ) )
     {
-        const int      lambertTransferId           = lambertQuery.getColumn( 0 );
-        const int      departureObjectId           = lambertQuery.getColumn( 1 );
-        const int      arrivalObjectId             = lambertQuery.getColumn( 2 );
+        const int      lambertTransferId                    = lambertQuery.getColumn( 0 );
+        const int      departureObjectId                    = lambertQuery.getColumn( 1 );
+        const int      arrivalObjectId                      = lambertQuery.getColumn( 2 );
 
-        const double   departureEpochJulian        = lambertQuery.getColumn( 3 );
-        const double   timeOfFlight                = lambertQuery.getColumn( 4 );
+        const double   departureEpochJulian                 = lambertQuery.getColumn( 3 );
+        const double   timeOfFlight                         = lambertQuery.getColumn( 4 );
 
-        const double   departureSMA                = lambertQuery.getColumn( 13 );
-        const double   departureEccentricity       = lambertQuery.getColumn( 14 );
-        const double   departureInclination        = lambertQuery.getColumn( 15 );
-        const double   departureAOP                = lambertQuery.getColumn( 16 );
-        const double   departureRAAN               = lambertQuery.getColumn( 17 );
-        const double   departureTA                 = lambertQuery.getColumn( 18 );
+        const double   departureSemiMajorAxis               = lambertQuery.getColumn( 13 );
+        const double   departureEccentricity                = lambertQuery.getColumn( 14 );
+        const double   departureInclination                 = lambertQuery.getColumn( 15 );
+        const double   departureArgumentOfPeriapsis         = lambertQuery.getColumn( 16 );
+        const double   departureLongitudeAscendingNode      = lambertQuery.getColumn( 17 );
+        const double   departureTrueAnomaly                 = lambertQuery.getColumn( 18 );
 
-        const double   departurePositionX          = lambertQuery.getColumn( 7 );
-        const double   departurePositionY          = lambertQuery.getColumn( 8 );
-        const double   departurePositionZ          = lambertQuery.getColumn( 9 );
-        const double   departureVelocityX          = lambertQuery.getColumn( 10 );
-        const double   departureVelocityY          = lambertQuery.getColumn( 11 );
-        const double   departureVelocityZ          = lambertQuery.getColumn( 12 );
-        const double   departureDeltaVX            = lambertQuery.getColumn( 37 );
-        const double   departureDeltaVY            = lambertQuery.getColumn( 38 );
-        const double   departureDeltaVZ            = lambertQuery.getColumn( 39 );
+        const double   departurePositionX                   = lambertQuery.getColumn( 7 );
+        const double   departurePositionY                   = lambertQuery.getColumn( 8 );
+        const double   departurePositionZ                   = lambertQuery.getColumn( 9 );
+        const double   departureVelocityX                   = lambertQuery.getColumn( 10 );
+        const double   departureVelocityY                   = lambertQuery.getColumn( 11 );
+        const double   departureVelocityZ                   = lambertQuery.getColumn( 12 );
+        const double   departureDeltaVX                     = lambertQuery.getColumn( 37 );
+        const double   departureDeltaVY                     = lambertQuery.getColumn( 38 );
+        const double   departureDeltaVZ                     = lambertQuery.getColumn( 39 );
 
-        const double   lambertArrivalPositionX     = lambertQuery.getColumn( 19 );
-        const double   lambertArrivalPositionY     = lambertQuery.getColumn( 20 );
-        const double   lambertArrivalPositionZ     = lambertQuery.getColumn( 21 );
-        const double   lambertArrivalVelocityX     = lambertQuery.getColumn( 22 );
-        const double   lambertArrivalVelocityY     = lambertQuery.getColumn( 23 );
-        const double   lambertArrivalVelocityZ     = lambertQuery.getColumn( 24 );
-        const double   lambertArrivalDeltaVX       = lambertQuery.getColumn( 40 );
-        const double   lambertArrivalDeltaVY       = lambertQuery.getColumn( 41 );
-        const double   lambertArrivalDeltaVZ       = lambertQuery.getColumn( 42 );
+        const double   lambertArrivalPositionX              = lambertQuery.getColumn( 19 );
+        const double   lambertArrivalPositionY              = lambertQuery.getColumn( 20 );
+        const double   lambertArrivalPositionZ              = lambertQuery.getColumn( 21 );
+        const double   lambertArrivalVelocityX              = lambertQuery.getColumn( 22 );
+        const double   lambertArrivalVelocityY              = lambertQuery.getColumn( 23 );
+        const double   lambertArrivalVelocityZ              = lambertQuery.getColumn( 24 );
+        const double   lambertArrivalDeltaVX                = lambertQuery.getColumn( 40 );
+        const double   lambertArrivalDeltaVY                = lambertQuery.getColumn( 41 );
+        const double   lambertArrivalDeltaVZ                = lambertQuery.getColumn( 42 );
 
-        const double   lambertTotalDeltaV          = lambertQuery.getColumn( 43 );
+        const double   lambertTotalDeltaV                   = lambertQuery.getColumn( 43 );
 
         // Set up DateTime object for departure epoch using Julian date.
-        // NB: 1721425.5 corresponds to the Gregorian epoch: 0001 Jan 01 00:00:00.0
-        DateTime departureEpoch( ( departureEpochJulian - astro::ASTRO_GREGORIAN_EPOCH_IN_JULIAN_DAYS ) * TicksPerDay );
+        DateTime departureEpoch( ( departureEpochJulian
+                                   - astro::ASTRO_GREGORIAN_EPOCH_IN_JULIAN_DAYS ) * TicksPerDay );
 
-        // Get departure State for the transfer object
-        Tle transferObjectTle;
-        std::vector< double > transferObjectDepartureState( 6 );
-        transferObjectDepartureState[ 0 ] = departurePositionX;
-        transferObjectDepartureState[ 1 ] = departurePositionY;
-        transferObjectDepartureState[ 2 ] = departurePositionZ;
-        transferObjectDepartureState[ 3 ] = departureVelocityX + departureDeltaVX;
-        transferObjectDepartureState[ 4 ] = departureVelocityY + departureDeltaVY;
-        transferObjectDepartureState[ 5 ] = departureVelocityZ + departureDeltaVZ;
+        // Get departure state for the transfer object.
+        Vector6 transferDepartureState;
+        transferDepartureState[ astro::xPositionIndex ] = departurePositionX;
+        transferDepartureState[ astro::yPositionIndex ] = departurePositionY;
+        transferDepartureState[ astro::zPositionIndex ] = departurePositionZ;
+        transferDepartureState[ astro::xVelocityIndex ] = departureVelocityX + departureDeltaVX;
+        transferDepartureState[ astro::yVelocityIndex ] = departureVelocityY + departureDeltaVY;
+        transferDepartureState[ astro::zVelocityIndex ] = departureVelocityZ + departureDeltaVZ;
 
-        // Calculate transfer object's velocity magnitude at the departure point
-        std::vector< double > transferObjectDepartureVelocityVector( 3 );
+        // Calculate transfer object's velocity norm at the departure point.
+        Vector3 transferDepartureVelocity;
         for ( int i = 0; i < 3; i++ )
         {
-            transferObjectDepartureVelocityVector[ i ] = transferObjectDepartureState[ i + 3 ];
+            transferDepartureVelocity[ i ] = transferDepartureState[ i + 3 ];
         }
-        double transferObjectDepartureVelocityMagnitude = sml::norm< double >( transferObjectDepartureVelocityVector );
+        double transferDepartureVelocityNorm = sml::norm< double >( transferDepartureVelocity );
 
-        // Filter out cases using velocity cut off given through input file
-        if ( lambertTotalDeltaV > input.velocityCutOff )
+        // Filter out cases using transfer deltaV cut off given through input file.
+        if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
         {
-            // Bind zeroes to SQL insert sgp4Query
-            SGP4Query.bind( ":lambert_transfer_id",                             lambertTransferId );
-            SGP4Query.bind( ":departure_object_id",                             departureObjectId );
-            SGP4Query.bind( ":arrival_object_id",                               arrivalObjectId );
-            SGP4Query.bind( ":departure_epoch",                                 departureEpochJulian );
+            // Bind zeroes to SQL insert sgp4Query.
+            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId,
+                                                                 departureObjectId,
+                                                                 arrivalObjectId,
+                                                                 departureEpochJulian,
+                                                                 departureSemiMajorAxis,
+                                                                 departureEccentricity,
+                                                                 departureInclination,
+                                                                 departureArgumentOfPeriapsis,
+                                                                 departureLongitudeAscendingNode,
+                                                                 departureTrueAnomaly );
+            SQLite::Statement zeroQuery( database, bindZeroes );
+            zeroQuery.executeStep( );
+            zeroQuery.reset( );
 
-            SGP4Query.bind( ":departure_semi_major_axis",                       departureSMA );             
-            SGP4Query.bind( ":departure_eccentricity",                          departureEccentricity );
-            SGP4Query.bind( ":departure_inclination",                           departureInclination );
-            SGP4Query.bind( ":departure_argument_of_periapsis",                 departureAOP );
-            SGP4Query.bind( ":departure_longitude_of_ascending_node",           departureRAAN );              
-            SGP4Query.bind( ":departure_true_anomaly",                          departureTA );
-            
-            SGP4Query.bind( ":arrival_position_x",                              0 );
-            SGP4Query.bind( ":arrival_position_y",                              0 );
-            SGP4Query.bind( ":arrival_position_z",                              0 );
-            SGP4Query.bind( ":arrival_velocity_x",                              0 );
-            SGP4Query.bind( ":arrival_velocity_y",                              0 );
-            SGP4Query.bind( ":arrival_velocity_z",                              0 );
-            SGP4Query.bind( ":arrival_position_x_error",                        0 );
-            SGP4Query.bind( ":arrival_position_y_error",                        0 );
-            SGP4Query.bind( ":arrival_position_z_error",                        0 );
-            SGP4Query.bind( ":arrival_position_error",                          0 );
-            SGP4Query.bind( ":arrival_velocity_x_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_y_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_z_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_error",                          0 );
-            SGP4Query.bind( ":success",                                         0 );
-
-            // execute insert SGP4Query
-            SGP4Query.executeStep( );
-
-            // Reset SQL insert SGP4Query
-            SGP4Query.reset( );
-
+            ++showProgress;
             continue;
         }
 
-        // Create virtual TLE for the transfer object's orbit from its departure state. 
-        // This TLE will be propagated using the SGP4 Transfer.
+        // Create virtual TLE for the transfer object's orbit from its departure state.
+        // This TLE will be propagated using the SGP4 transfer.
+        Tle transferTle;
+        std::string solverStatusSummary;
+        int numberOfIterations;
+        const Tle referenceTle = Tle( );
+        const int maximumIterations = 100;
+
         try
         {
-            transferObjectTle = atom::convertCartesianStateToTwoLineElements< double, std::vector< double > >( transferObjectDepartureState, 
-                                                                                                               departureEpoch );
+            transferTle = atom::convertCartesianStateToTwoLineElements< double, Vector6 >(
+                transferDepartureState,
+                departureEpoch,
+                solverStatusSummary,
+                numberOfIterations,
+                referenceTle,
+                earthGravitationalParameter,
+                earthMeanRadius,
+                input.absoluteTolerance,
+                input.relativeTolerance,
+                maximumIterations );
         }
         catch( std::exception& virtualTleError )
         {
-            // do nothing
+            // At the moment we just catch the exceptions that are thrown internally and proceed.
+            // @todo: Figure out how to handle and register these exceptions.
         }
 
-        // Check if transferObjectTle is correct or not
-        const SGP4 sgp4Check( transferObjectTle );
-        double absoluteTolerance = 1.0e-10;
-        double relativeTolerance = 1.0e-8;
+        // Check if transferTle is correct.
+        const SGP4 sgp4Check( transferTle );
         bool testPassed = false;
 
-        Eci propagatedDepartureStateEci = sgp4Check.FindPosition( 0.0 );
-        Vector6 propagatedDepartureState;
-        propagatedDepartureState[ 0 ] = propagatedDepartureStateEci.Position( ).x;
-        propagatedDepartureState[ 1 ] = propagatedDepartureStateEci.Position( ).y;
-        propagatedDepartureState[ 2 ] = propagatedDepartureStateEci.Position( ).z;
-        propagatedDepartureState[ 3 ] = propagatedDepartureStateEci.Velocity( ).x;
-        propagatedDepartureState[ 4 ] = propagatedDepartureStateEci.Velocity( ).y;
-        propagatedDepartureState[ 5 ] = propagatedDepartureStateEci.Velocity( ).z;
-        
+        Eci propagatedStateEci = sgp4Check.FindPosition( 0.0 );
+        Vector6 propagatedState;
+        propagatedState[ astro::xPositionIndex ] = propagatedStateEci.Position( ).x;
+        propagatedState[ astro::yPositionIndex ] = propagatedStateEci.Position( ).y;
+        propagatedState[ astro::zPositionIndex ] = propagatedStateEci.Position( ).z;
+        propagatedState[ astro::xVelocityIndex ] = propagatedStateEci.Velocity( ).x;
+        propagatedState[ astro::yVelocityIndex ] = propagatedStateEci.Velocity( ).y;
+        propagatedState[ astro::zVelocityIndex ] = propagatedStateEci.Velocity( ).z;
+
         Vector6 trueDepartureState;
         for ( int i = 0; i < 6; i++ )
-            trueDepartureState[ i ] = transferObjectDepartureState[ i ];
+        {
+            trueDepartureState[ i ] = transferDepartureState[ i ];
+        }
 
-        testPassed = executeVirtualTleConvergenceTest( propagatedDepartureState,
+        testPassed = executeVirtualTleConvergenceTest( propagatedState,
                                                        trueDepartureState,
-                                                       relativeTolerance,
-                                                       absoluteTolerance );
+                                                       input.relativeTolerance,
+                                                       input.absoluteTolerance );
 
         if ( testPassed == false )
         {
-            // Bind values to SQL insert sgp4Query
-            SGP4Query.bind( ":lambert_transfer_id",                             lambertTransferId );
-            SGP4Query.bind( ":departure_object_id",                             departureObjectId );
-            SGP4Query.bind( ":arrival_object_id",                               arrivalObjectId );
-            SGP4Query.bind( ":departure_epoch",                                 departureEpochJulian );
-
-            SGP4Query.bind( ":departure_semi_major_axis",                       departureSMA );             
-            SGP4Query.bind( ":departure_eccentricity",                          departureEccentricity );
-            SGP4Query.bind( ":departure_inclination",                           departureInclination );
-            SGP4Query.bind( ":departure_argument_of_periapsis",                 departureAOP );
-            SGP4Query.bind( ":departure_longitude_of_ascending_node",           departureRAAN );              
-            SGP4Query.bind( ":departure_true_anomaly",                          departureTA );
-            
-            SGP4Query.bind( ":arrival_position_x",                              0 );
-            SGP4Query.bind( ":arrival_position_y",                              0 );
-            SGP4Query.bind( ":arrival_position_z",                              0 );
-            SGP4Query.bind( ":arrival_velocity_x",                              0 );
-            SGP4Query.bind( ":arrival_velocity_y",                              0 );
-            SGP4Query.bind( ":arrival_velocity_z",                              0 );
-            SGP4Query.bind( ":arrival_position_x_error",                        0 );
-            SGP4Query.bind( ":arrival_position_y_error",                        0 );
-            SGP4Query.bind( ":arrival_position_z_error",                        0 );
-            SGP4Query.bind( ":arrival_position_error",                          0 );
-            SGP4Query.bind( ":arrival_velocity_x_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_y_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_z_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_error",                          0 );
-            SGP4Query.bind( ":success",                                         0 );
-
-            // execute insert SGP4Query
-            SGP4Query.executeStep( );
-
-            // Reset SQL insert SGP4Query
-            SGP4Query.reset( );
-            
+            // Bind zeroes to SQL insert sgp4Query.
+            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId,
+                                                                 departureObjectId,
+                                                                 arrivalObjectId,
+                                                                 departureEpochJulian,
+                                                                 departureSemiMajorAxis,
+                                                                 departureEccentricity,
+                                                                 departureInclination,
+                                                                 departureArgumentOfPeriapsis,
+                                                                 departureLongitudeAscendingNode,
+                                                                 departureTrueAnomaly );
+            SQLite::Statement zeroQuery( database, bindZeroes );
+            zeroQuery.executeStep( );
+            zeroQuery.reset( );
             ++virtualTleFailCounter;
+            ++showProgress;
             continue;
         }
-            
-        // Propagate transfer object using the SGP4 propagator
-        const SGP4 sgp4( transferObjectTle );
+
+        // Propagate transfer object using the SGP4 propagator.
+        const SGP4 sgp4( transferTle );
         DateTime sgp4ArrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
         Vector eciPosition = Vector( );
         Vector eciVelocity = Vector( );
@@ -318,110 +293,90 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         }
         catch( std::exception& sgp4PropagationError )
         {
-            // Bind values to SQL insert sgp4Query
-            SGP4Query.bind( ":lambert_transfer_id",                             lambertTransferId );
-            SGP4Query.bind( ":departure_object_id",                             departureObjectId );
-            SGP4Query.bind( ":arrival_object_id",                               arrivalObjectId );
-            SGP4Query.bind( ":departure_epoch",                                 departureEpochJulian );
-
-            SGP4Query.bind( ":departure_semi_major_axis",                       departureSMA );             
-            SGP4Query.bind( ":departure_eccentricity",                          departureEccentricity );
-            SGP4Query.bind( ":departure_inclination",                           departureInclination );
-            SGP4Query.bind( ":departure_argument_of_periapsis",                 departureAOP );
-            SGP4Query.bind( ":departure_longitude_of_ascending_node",           departureRAAN );              
-            SGP4Query.bind( ":departure_true_anomaly",                          departureTA );
-            
-            SGP4Query.bind( ":arrival_position_x",                              0 );
-            SGP4Query.bind( ":arrival_position_y",                              0 );
-            SGP4Query.bind( ":arrival_position_z",                              0 );
-            SGP4Query.bind( ":arrival_velocity_x",                              0 );
-            SGP4Query.bind( ":arrival_velocity_y",                              0 );
-            SGP4Query.bind( ":arrival_velocity_z",                              0 );
-            SGP4Query.bind( ":arrival_position_x_error",                        0 );
-            SGP4Query.bind( ":arrival_position_y_error",                        0 );
-            SGP4Query.bind( ":arrival_position_z_error",                        0 );
-            SGP4Query.bind( ":arrival_position_error",                          0 );
-            SGP4Query.bind( ":arrival_velocity_x_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_y_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_z_error",                        0 );
-            SGP4Query.bind( ":arrival_velocity_error",                          0 );
-            SGP4Query.bind( ":success",                                         0 );
-
-            // execute insert SGP4Query
-            SGP4Query.executeStep( );
-
-            // Reset SQL insert SGP4Query
-            SGP4Query.reset( );
-            
+            // Bind zeroes to SQL insert sgp4Query.
+            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId,
+                                                                 departureObjectId,
+                                                                 arrivalObjectId,
+                                                                 departureEpochJulian,
+                                                                 departureSemiMajorAxis,
+                                                                 departureEccentricity,
+                                                                 departureInclination,
+                                                                 departureArgumentOfPeriapsis,
+                                                                 departureLongitudeAscendingNode,
+                                                                 departureTrueAnomaly );
+            SQLite::Statement zeroQuery( database, bindZeroes );
+            zeroQuery.executeStep( );
+            zeroQuery.reset( );
             ++arrivalEpochPropagationFailCounter;
+            ++showProgress;
             continue;
         }
-                
+
         const Vector6 sgp4ArrivalState = getStateVector( sgp4ArrivalStateEci );
 
-        //compute the required results
-        double sgp4ArrivalPositionX = sgp4ArrivalState[ astro::xPositionIndex ];
-        double sgp4ArrivalPositionY = sgp4ArrivalState[ astro::yPositionIndex ];
-        double sgp4ArrivalPositionZ = sgp4ArrivalState[ astro::zPositionIndex ];
+        // Compute the required results.
+        const double sgp4ArrivalPositionX = sgp4ArrivalState[ astro::xPositionIndex ];
+        const double sgp4ArrivalPositionY = sgp4ArrivalState[ astro::yPositionIndex ];
+        const double sgp4ArrivalPositionZ = sgp4ArrivalState[ astro::zPositionIndex ];
 
-        double sgp4ArrivalVelocityX = sgp4ArrivalState[ astro::xVelocityIndex ];
-        double sgp4ArrivalVelocityY = sgp4ArrivalState[ astro::yVelocityIndex ];
-        double sgp4ArrivalVelocityZ = sgp4ArrivalState[ astro::zVelocityIndex ];
+        const double sgp4ArrivalVelocityX = sgp4ArrivalState[ astro::xVelocityIndex ];
+        const double sgp4ArrivalVelocityY = sgp4ArrivalState[ astro::yVelocityIndex ];
+        const double sgp4ArrivalVelocityZ = sgp4ArrivalState[ astro::zVelocityIndex ];
 
-        double arrivalPositionErrorX = sgp4ArrivalPositionX - lambertArrivalPositionX;
-        double arrivalPositionErrorY = sgp4ArrivalPositionY - lambertArrivalPositionY;
-        double arrivalPositionErrorZ = sgp4ArrivalPositionZ - lambertArrivalPositionZ;
-            
-        std::vector< double > positionErrorVector( 3 );
-        positionErrorVector[ 0 ] = arrivalPositionErrorX;
-        positionErrorVector[ 1 ] = arrivalPositionErrorY;
-        positionErrorVector[ 2 ] = arrivalPositionErrorZ;
-        double arrivalPositionErrorMagnitude = sml::norm< double >( positionErrorVector );
+        const double arrivalPositionErrorX = sgp4ArrivalPositionX - lambertArrivalPositionX;
+        const double arrivalPositionErrorY = sgp4ArrivalPositionY - lambertArrivalPositionY;
+        const double arrivalPositionErrorZ = sgp4ArrivalPositionZ - lambertArrivalPositionZ;
 
-        double arrivalVelocityErrorX = sgp4ArrivalVelocityX - ( lambertArrivalVelocityX - lambertArrivalDeltaVX );
-        double arrivalVelocityErrorY = sgp4ArrivalVelocityY - ( lambertArrivalVelocityY - lambertArrivalDeltaVY );
-        double arrivalVelocityErrorZ = sgp4ArrivalVelocityZ - ( lambertArrivalVelocityZ - lambertArrivalDeltaVZ );
-            
-        std::vector< double > velocityErrorVector( 3 );
-        velocityErrorVector[ 0 ] = arrivalVelocityErrorX;
-        velocityErrorVector[ 1 ] = arrivalVelocityErrorY;
-        velocityErrorVector[ 2 ] = arrivalVelocityErrorZ;
-        double arrivalVelocityErrorMagnitude = sml::norm< double >( velocityErrorVector );
+        Vector3 positionError;
+        positionError[ astro::xPositionIndex ] = arrivalPositionErrorX;
+        positionError[ astro::yPositionIndex ] = arrivalPositionErrorY;
+        positionError[ astro::zPositionIndex ] = arrivalPositionErrorZ;
+        const double arrivalPositionErrorNorm = sml::norm< double >( positionError );
+
+        const double arrivalVelocityErrorX = sgp4ArrivalVelocityX -
+                                            ( lambertArrivalVelocityX - lambertArrivalDeltaVX );
+        const double arrivalVelocityErrorY = sgp4ArrivalVelocityY -
+                                            ( lambertArrivalVelocityY - lambertArrivalDeltaVY );
+        const double arrivalVelocityErrorZ = sgp4ArrivalVelocityZ -
+                                            ( lambertArrivalVelocityZ - lambertArrivalDeltaVZ );
+
+        Vector3 velocityError;
+        velocityError[ 0 ] = arrivalVelocityErrorX;
+        velocityError[ 1 ] = arrivalVelocityErrorY;
+        velocityError[ 2 ] = arrivalVelocityErrorZ;
+        double arrivalVelocityErrorNorm = sml::norm< double >( velocityError );
 
         // Bind values to SQL insert sgp4Query
-        SGP4Query.bind( ":lambert_transfer_id",                             lambertTransferId );
-        SGP4Query.bind( ":departure_object_id",                             departureObjectId );
-        SGP4Query.bind( ":arrival_object_id",                               arrivalObjectId );
-        SGP4Query.bind( ":departure_epoch",                                 departureEpochJulian );
+        sgp4Query.bind( ":lambert_transfer_id",                   lambertTransferId );
+        sgp4Query.bind( ":departure_object_id",                   departureObjectId );
+        sgp4Query.bind( ":arrival_object_id",                     arrivalObjectId );
+        sgp4Query.bind( ":departure_epoch",                       departureEpochJulian );
 
-        SGP4Query.bind( ":departure_semi_major_axis",                       departureSMA );             
-        SGP4Query.bind( ":departure_eccentricity",                          departureEccentricity );
-        SGP4Query.bind( ":departure_inclination",                           departureInclination );
-        SGP4Query.bind( ":departure_argument_of_periapsis",                 departureAOP );
-        SGP4Query.bind( ":departure_longitude_of_ascending_node",           departureRAAN );              
-        SGP4Query.bind( ":departure_true_anomaly",                          departureTA );
-        
-        SGP4Query.bind( ":arrival_position_x",                              sgp4ArrivalPositionX );
-        SGP4Query.bind( ":arrival_position_y",                              sgp4ArrivalPositionY );
-        SGP4Query.bind( ":arrival_position_z",                              sgp4ArrivalPositionZ );
-        SGP4Query.bind( ":arrival_velocity_x",                              sgp4ArrivalVelocityX );
-        SGP4Query.bind( ":arrival_velocity_y",                              sgp4ArrivalVelocityY );
-        SGP4Query.bind( ":arrival_velocity_z",                              sgp4ArrivalVelocityZ );
-        SGP4Query.bind( ":arrival_position_x_error",                        arrivalPositionErrorX );
-        SGP4Query.bind( ":arrival_position_y_error",                        arrivalPositionErrorY );
-        SGP4Query.bind( ":arrival_position_z_error",                        arrivalPositionErrorZ );
-        SGP4Query.bind( ":arrival_position_error",                          arrivalPositionErrorMagnitude );
-        SGP4Query.bind( ":arrival_velocity_x_error",                        arrivalVelocityErrorX );
-        SGP4Query.bind( ":arrival_velocity_y_error",                        arrivalVelocityErrorY );
-        SGP4Query.bind( ":arrival_velocity_z_error",                        arrivalVelocityErrorZ );
-        SGP4Query.bind( ":arrival_velocity_error",                          arrivalVelocityErrorMagnitude );
-        SGP4Query.bind( ":success",                                         1 );
+        sgp4Query.bind( ":departure_semi_major_axis",             departureSemiMajorAxis );
+        sgp4Query.bind( ":departure_eccentricity",                departureEccentricity );
+        sgp4Query.bind( ":departure_inclination",                 departureInclination );
+        sgp4Query.bind( ":departure_argument_of_periapsis",       departureArgumentOfPeriapsis );
+        sgp4Query.bind( ":departure_longitude_of_ascending_node", departureLongitudeAscendingNode );
+        sgp4Query.bind( ":departure_true_anomaly",                departureTrueAnomaly );
 
-        // execute insert SGP4Query
-        SGP4Query.executeStep( );
+        sgp4Query.bind( ":arrival_position_x",                    sgp4ArrivalPositionX );
+        sgp4Query.bind( ":arrival_position_y",                    sgp4ArrivalPositionY );
+        sgp4Query.bind( ":arrival_position_z",                    sgp4ArrivalPositionZ );
+        sgp4Query.bind( ":arrival_velocity_x",                    sgp4ArrivalVelocityX );
+        sgp4Query.bind( ":arrival_velocity_y",                    sgp4ArrivalVelocityY );
+        sgp4Query.bind( ":arrival_velocity_z",                    sgp4ArrivalVelocityZ );
+        sgp4Query.bind( ":arrival_position_x_error",              arrivalPositionErrorX );
+        sgp4Query.bind( ":arrival_position_y_error",              arrivalPositionErrorY );
+        sgp4Query.bind( ":arrival_position_z_error",              arrivalPositionErrorZ );
+        sgp4Query.bind( ":arrival_position_error",                arrivalPositionErrorNorm );
+        sgp4Query.bind( ":arrival_velocity_x_error",              arrivalVelocityErrorX );
+        sgp4Query.bind( ":arrival_velocity_y_error",              arrivalVelocityErrorY );
+        sgp4Query.bind( ":arrival_velocity_z_error",              arrivalVelocityErrorZ );
+        sgp4Query.bind( ":arrival_velocity_error",                arrivalVelocityErrorNorm );
+        sgp4Query.bind( ":success",                               1 );
 
-        // Reset SQL insert SGP4Query
-        SGP4Query.reset( );
+        sgp4Query.executeStep( );
+        sgp4Query.reset( );
 
         ++showProgress;
     }
@@ -433,16 +388,22 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
 
     std::ostringstream totalLambertCasesConsideredSelect;
-    totalLambertCasesConsideredSelect << "SELECT COUNT(*) FROM lambert_scanner_results WHERE transfer_delta_v <= " << input.velocityCutOff << ";";
-    const int totalLambertCasesConsidered = database.execAndGet( totalLambertCasesConsideredSelect.str( ) );
+    totalLambertCasesConsideredSelect
+        << "SELECT COUNT(*) FROM lambert_scanner_results WHERE transfer_delta_v <= "
+        << input.transferDeltaVCutoff << ";";
+    const int totalLambertCasesConsidered
+        = database.execAndGet( totalLambertCasesConsideredSelect.str( ) );
 
     std::cout << std::endl;
-    std::cout << "Total lambert cases = " << lambertScannertTableSize << std::endl;
-    std::cout << "Total sgp4 cases = " << sgp4ScannertTableSize << std::endl;
+    std::cout << "Total Lambert cases = " << lambertScannertTableSize << std::endl;
+    std::cout << "Total SGP4 cases = " << sgp4ScannertTableSize << std::endl;
     std::cout << std::endl;
-    std::cout << "Number of lambert cases considered with the velocity cut off = " << totalLambertCasesConsidered << std::endl;
-    std::cout << "Number of virtual TLE convergence fail cases = " << virtualTleFailCounter << std::endl;
-    std::cout << "Number of arrival epoch propagation fail cases = " << arrivalEpochPropagationFailCounter << std::endl;
+    std::cout << "Number of Lambert cases considered with the transfer deltaV cut-off = "
+              << totalLambertCasesConsidered << std::endl;
+    std::cout << "Number of virtual TLE convergence fail cases = "
+              << virtualTleFailCounter << std::endl;
+    std::cout << "Number of arrival epoch propagation fail cases = "
+              << arrivalEpochPropagationFailCounter << std::endl;
 
     // Commit transaction.
     transaction.commit( );
@@ -456,26 +417,35 @@ void executeSGP4Scanner( const rapidjson::Document& config )
 sgp4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
 {
     const std::string catalogPath = find( config, "catalog" )->value.GetString( );
-    std::cout << "Catalog                       " << catalogPath << std::endl;
+    std::cout << "Catalog                         " << catalogPath << std::endl;
 
-    const double velocityCutOff = find( config, "velocityCutOff" )->value.GetDouble( );
-    std::cout << "Velocity Cut-Off              " << velocityCutOff << std::endl;
+    const double transferDeltaVCutoff
+        = find( config, "transfer_deltav_cutoff" )->value.GetDouble( );
+    std::cout << "Transfer deltaV cut-off         " << transferDeltaVCutoff << std::endl;
+
+    const double relativeTolerance = find( config, "relative_tolerance" )->value.GetDouble( );
+    std::cout << "Relative tolerance              " << relativeTolerance << std::endl;
+
+    const double absoluteTolerance = find( config, "absolute_tolerance" )->value.GetDouble( );
+    std::cout << "Absolute tolerance              " << absoluteTolerance << std::endl;
 
     const std::string databasePath = find( config, "database" )->value.GetString( );
-    std::cout << "Database                      " << databasePath << std::endl;
+    std::cout << "Database                        " << databasePath << std::endl;
 
     const int shortlistLength = find( config, "shortlist" )->value[ 0 ].GetInt( );
-    std::cout << "# of shortlist transfers      " << shortlistLength << std::endl;
+    std::cout << "# of shortlist transfers        " << shortlistLength << std::endl;
 
     std::string shortlistPath = "";
     if ( shortlistLength > 0 )
     {
         shortlistPath = find( config, "shortlist" )->value[ 1 ].GetString( );
-        std::cout << "Shortlist                 " << shortlistPath << std::endl;
+        std::cout << "Shortlist                       " << shortlistPath << std::endl;
     }
 
     return sgp4ScannerInput( catalogPath,
-                             velocityCutOff,
+                             transferDeltaVCutoff,
+                             relativeTolerance,
+                             absoluteTolerance,
                              databasePath,
                              shortlistLength,
                              shortlistPath );
@@ -543,8 +513,54 @@ void createSGP4ScannerTable( SQLite::Database& database )
 
     if ( !database.tableExists( "sgp4_scanner_results" ) )
     {
-        throw std::runtime_error( "ERROR: Creating table 'sgp4_scanner_results' failed! in routine SGP4Scanner.cpp" );
+        std::ostringstream errorMessage;
+        errorMessage << "ERROR: Creating table 'sgp4_scanner_results' failed in sgp4Scanner.cpp!";
+        throw std::runtime_error( errorMessage.str( ) );
     }
+}
+
+std::string bindZeroesSGP4ScannerTable( const int lambertTransferId,
+                                        const int departureObjectId,
+                                        const int arrivalObjectId,
+                                        const double departureEpochJulian,
+                                        const double departureSemiMajorAxis,
+                                        const double departureEccentricity,
+                                        const double departureInclination,
+                                        const double departureArgumentOfPeriapsis,
+                                        const double departureLongitudeAscendingNode,
+                                        const double departureTrueAnomaly )
+{
+    std::ostringstream zeroEntry;
+    zeroEntry << "INSERT INTO sgp4_scanner_results VALUES ("
+              << "NULL"                          << ","
+              << lambertTransferId               << ","
+              << departureObjectId               << ","
+              << arrivalObjectId                 << ","
+              << departureEpochJulian            << ","
+              << departureSemiMajorAxis          << ","
+              << departureEccentricity           << ","
+              << departureInclination            << ","
+              << departureArgumentOfPeriapsis    << ","
+              << departureLongitudeAscendingNode << ","
+              << departureTrueAnomaly            << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0
+              << ");";
+
+    return zeroEntry.str( );
 }
 
 } // namespace d2d
