@@ -3,21 +3,23 @@
 // Distributed under the MIT License.
 // See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
-// Configuration file for D2D "sgp4_Scanner" application mode.
+// Configuration file for D2D "sgp4_scanner" application mode.
 {
     "mode"                      : "sgp4_scanner",
 
     // Set path to TLE catalog file.
-    "catalog"                   : "../data/catalog/",
+    "catalog"                   : "",
 
-    // Set Velocity cut-off in km/s.
-    "velocityCutOff"            : ,
+    // Set velocity cut-off in km/s.
+    // The sgp4_scanner would only consider the cases from the lambert_scanner_results table where
+    // the total transfer deltaV is less than or equal to the velocity cut-off mentioned here. 
+    "velocity_cutoff"            : ,
 
     // Set path to output database (SQLite).
     // WARNING: The database file must already exist and be populated with data using the
     //          "lambert_scanner" mode (data will be store in a table called
     //          "sgp4_scanner_results")!
-    "database"                  : "../data/",
+    "database"                  : "",
 
     // Set number of transfers to include in shortlist and absolute path to output file [N, file].
     // The shortlist is based on the N transfers specified with the lowest [tbd] parameter.
