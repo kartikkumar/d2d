@@ -8,12 +8,15 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <iterator>
+#include <limits>
 #include <map>
 #include <sstream>
 #include <stdexcept>
 #include <vector>
+
 
 #include <boost/progress.hpp>
 
@@ -411,6 +414,14 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     std::cout << std::endl;
     std::cout << "Database populated successfully!" << std::endl;
     std::cout << std::endl;
+
+    // Check if shortlist file should be created; call function to write output.
+    if ( input.shortlistLength > 0 )
+    {
+        std::cout << "Writing shortlist to file ... " << std::endl;
+        writeSGP4TransferShortlist( database, input.shortlistLength, input.shortlistPath );
+        std::cout << "Shortlist file created successfully!" << std::endl;
+    }
 }
 
 //! Check sgp4_scanner input parameters.
@@ -519,6 +530,7 @@ void createSGP4ScannerTable( SQLite::Database& database )
     }
 }
 
+//! Bind zeroes into sgp4_scanner_results table.
 std::string bindZeroesSGP4ScannerTable( const int lambertTransferId,
                                         const int departureObjectId,
                                         const int arrivalObjectId,
@@ -561,6 +573,151 @@ std::string bindZeroesSGP4ScannerTable( const int lambertTransferId,
               << ");";
 
     return zeroEntry.str( );
+}
+
+//! Write transfer shortlist to file.
+void writeSGP4TransferShortlist( SQLite::Database& database,
+                                 const int shortlistNumber,
+                                 const std::string& shortlistPath )
+{
+    // Fetch transfers to include in shortlist.
+    // The sgp4_scanner_results table is sorted by transfer_delta_v from the lambert_scanner_results
+    // table in ascending order.
+    std::ostringstream shortlistSelect;
+    shortlistSelect << "SELECT sgp4_scanner_results.transfer_id, "
+                    << "sgp4_scanner_results.lambert_transfer_id, "
+                    << "lambert_scanner_results.transfer_delta_v, "
+                    << "sgp4_scanner_results.departure_object_id, "
+                    << "sgp4_scanner_results.arrival_object_id, "
+                    << "sgp4_scanner_results.departure_epoch, "
+                    << "sgp4_scanner_results.departure_semi_major_axis, "
+                    << "sgp4_scanner_results.departure_eccentricity, "
+                    << "sgp4_scanner_results.departure_inclination, "
+                    << "sgp4_scanner_results.departure_argument_of_periapsis, "
+                    << "sgp4_scanner_results.departure_longitude_of_ascending_node, "
+                    << "sgp4_scanner_results.departure_true_anomaly, "
+                    << "sgp4_scanner_results.arrival_position_x, "
+                    << "sgp4_scanner_results.arrival_position_y, "
+                    << "sgp4_scanner_results.arrival_position_z, "
+                    << "sgp4_scanner_results.arrival_velocity_x, "
+                    << "sgp4_scanner_results.arrival_velocity_y, "
+                    << "sgp4_scanner_results.arrival_velocity_z, "
+                    << "sgp4_scanner_results.arrival_position_x_error, "
+                    << "sgp4_scanner_results.arrival_position_y_error, "
+                    << "sgp4_scanner_results.arrival_position_z_error, "
+                    << "sgp4_scanner_results.arrival_position_error, "
+                    << "sgp4_scanner_results.arrival_velocity_x_error, "
+                    << "sgp4_scanner_results.arrival_velocity_y_error, "
+                    << "sgp4_scanner_results.arrival_velocity_z_error, "
+                    << "sgp4_scanner_results.arrival_velocity_error "
+                    << "FROM sgp4_scanner_results INNER JOIN lambert_scanner_results "
+                    << "ON lambert_scanner_results.transfer_id = "
+                    << "sgp4_scanner_results.lambert_transfer_id "
+                    << "ORDER BY lambert_scanner_results.transfer_delta_v ASC LIMIT "
+                    << shortlistNumber << ";";
+
+    SQLite::Statement query( database, shortlistSelect.str( ) );
+
+    // Write fetch data to file.
+    std::ofstream shortlistFile( shortlistPath.c_str( ) );
+
+    // Print file header.
+    shortlistFile << "transfer_id,"
+                  << "lambert_transfer_id,"
+                  << "transfer_delta_v,"
+                  << "departure_object_id,"
+                  << "arrival_object_id,"
+                  << "departure_epoch,"
+                  << "departure_semi_major_axis,"
+                  << "departure_eccentricity,"
+                  << "departure_inclination,"
+                  << "departure_argument_of_periapsis,"
+                  << "departure_longitude_of_ascending_node,"
+                  << "departure_true_anomaly,"
+                  << "arrival_position_x,"
+                  << "arrival_position_y,"
+                  << "arrival_position_z,"
+                  << "arrival_velocity_x,"
+                  << "arrival_velocity_y,"
+                  << "arrival_velocity_z,"
+                  << "arrival_position_x_error,"
+                  << "arrival_position_y_error,"
+                  << "arrival_position_z_error,"
+                  << "arrival_position_error,"
+                  << "arrival_velocity_x_error,"
+                  << "arrival_velocity_y_error,"
+                  << "arrival_velocity_z_error,"
+                  << "arrival_velocity_error"
+                  << std::endl;
+
+    // Loop through data retrieved from database and write to file.
+    while( query.executeStep( ) )
+    {
+        const int    transferId                         = query.getColumn( 0 );
+        const int    lambertTransferId                  = query.getColumn( 1 );
+        const double lambertTransferDeltaV              = query.getColumn( 2 );
+        const int    departureObjectId                  = query.getColumn( 3 );
+        const int    arrivalObjectId                    = query.getColumn( 4 );
+
+        const double departureEpoch                     = query.getColumn( 5 );
+        const double departureSemiMajorAxis             = query.getColumn( 6 );
+        const double departureEccentricity              = query.getColumn( 7 );
+        const double departureInclination               = query.getColumn( 8 );
+        const double departureArgumentOfPeriapsis       = query.getColumn( 9 );
+        const double departureLongitudeOfAscendingNode  = query.getColumn( 10 );
+        const double departureTrueAnomaly               = query.getColumn( 11 );
+
+        const double arrivalPositionX                   = query.getColumn( 12 );
+        const double arrivalPositionY                   = query.getColumn( 13 );
+        const double arrivalPositionZ                   = query.getColumn( 14 );
+        const double arrivalVelocityX                   = query.getColumn( 15 );
+        const double arrivalVelocityY                   = query.getColumn( 16 );
+        const double arrivalVelocityZ                   = query.getColumn( 17 );
+
+        const double arrivalPositionErrorX              = query.getColumn( 18 );
+        const double arrivalPositionErrorY              = query.getColumn( 19 );
+        const double arrivalPositionErrorZ              = query.getColumn( 20 );
+        const double arrivalPositionError               = query.getColumn( 21 );
+        const double arrivalVelocityErrorX              = query.getColumn( 22 );
+        const double arrivalVelocityErrorY              = query.getColumn( 23 );
+        const double arrivalVelocityErrorZ              = query.getColumn( 24 );
+        const double arrivalVelocityError               = query.getColumn( 25 );
+
+        shortlistFile << transferId                         << ","
+                      << lambertTransferId                  << ",";
+
+        shortlistFile << std::setprecision( std::numeric_limits< double >::digits10 )
+                      << lambertTransferDeltaV              << ",";
+
+        shortlistFile << departureObjectId                  << ",";
+
+        shortlistFile << std::setprecision( std::numeric_limits< double >::digits10 )
+                      << arrivalObjectId                    << ","
+                      << departureEpoch                     << ","
+                      << departureSemiMajorAxis             << ","
+                      << departureEccentricity              << ","
+                      << departureInclination               << ","
+                      << departureArgumentOfPeriapsis       << ","
+                      << departureLongitudeOfAscendingNode  << ","
+                      << departureTrueAnomaly               << ","
+                      << arrivalPositionX                   << ","
+                      << arrivalPositionY                   << ","
+                      << arrivalPositionZ                   << ","
+                      << arrivalVelocityX                   << ","
+                      << arrivalVelocityY                   << ","
+                      << arrivalVelocityZ                   << ","
+                      << arrivalPositionErrorX              << ","
+                      << arrivalPositionErrorY              << ","
+                      << arrivalPositionErrorZ              << ","
+                      << arrivalPositionError               << ","
+                      << arrivalVelocityErrorX              << ","
+                      << arrivalVelocityErrorY              << ","
+                      << arrivalVelocityErrorZ              << ","
+                      << arrivalVelocityError               << ","
+                      << std::endl;
+    }
+
+    shortlistFile.close( );
 }
 
 } // namespace d2d

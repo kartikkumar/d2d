@@ -159,6 +159,22 @@ std::string bindZeroesSGP4ScannerTable( const int lambertTransferId,
                                         const double departureLongitudeAscendingNode,
                                         const double departureTrueAnomaly );
 
+//! Write transfer shortlist to file.
+/*!
+ * Writes shortlist of debris-to-debris transfers from the SGP4 scanner to file. The shortlist is
+ * based on the requested number of transfers with the lowest Lambert transfer \f$\Delta V\f$,
+ * retrieved by sorting the transfers in the SQLite database.
+ *
+ * @sa executeSGP4Scanner, createSGP4ScannerTable
+ * @param[in] database        SQLite database handle
+ * @param[in] shortlistNumber Number of entries to include in shortlist (if it exceeds number of
+ *                            entries in database table, the whole table is written to file)
+ * @param[in] shortlistPath   Path to shortlist file
+ */
+void writeSGP4TransferShortlist( SQLite::Database& database,
+                                 const int shortlistNumber,
+                                 const std::string& shortlistPath );
+
 } // namespace d2d
 
 #endif // D2D_SGP4_SCANNER_HPP
