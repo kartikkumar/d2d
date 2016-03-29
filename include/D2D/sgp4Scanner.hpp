@@ -136,28 +136,8 @@ void createSGP4ScannerTable( SQLite::Database& database );
  * @sa executeSGP4Scanner
  * @param[in] lambertTransferId                 Value from the column transfer_id in the
  *                                              lambert_scanner_results table
- * @param[in] departureObjectId                 NORAD ID for the departure object
- * @param[in] arrivalObjectId                   NORAD ID for the arrival object
- * @param[in] departureEpochJulian              Departure epoch in Julian day
- * @param[in] departureSemiMajorAxis            Semi-major axis of the departure object's orbit
- * @param[in] departureEccentricity             Eccentricity of the departure object's orbit
- * @param[in] departureInclination              Inclination of the departure object's orbit
- * @param[in] departureArgumentOfPeriapsis      Argument of periapsis of the
- *                                              departure object's orbit
- * @param[in] departureLongitudeAscendingNode   Longitude of ascending node of the
- *                                              departure object's orbit
- * @param[in] departureTrueAnomaly              True anomaly of the departure object
  */
-std::string bindZeroesSGP4ScannerTable( const int lambertTransferId,
-                                        const int departureObjectId,
-                                        const int arrivalObjectId,
-                                        const double departureEpochJulian,
-                                        const double departureSemiMajorAxis,
-                                        const double departureEccentricity,
-                                        const double departureInclination,
-                                        const double departureArgumentOfPeriapsis,
-                                        const double departureLongitudeAscendingNode,
-                                        const double departureTrueAnomaly );
+std::string bindZeroesSGP4ScannerTable( const int lambertTransferId );
 
 //! Write transfer shortlist to file.
 /*!

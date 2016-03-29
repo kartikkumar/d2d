@@ -17,7 +17,6 @@
 #include <stdexcept>
 #include <vector>
 
-
 #include <boost/progress.hpp>
 
 #include <libsgp4/DateTime.h>
@@ -81,24 +80,15 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     const int lambertScannertTableSize
         = database.execAndGet( lambertScannerTableSizeSelect.str( ) );
 
-    // Setup select query to fetch data from lambert_scanner_results table.
+    // Set up select query to fetch data from lambert_scanner_results table.
     std::ostringstream lambertScannerTableSelect;
     lambertScannerTableSelect << "SELECT * FROM lambert_scanner_results;";
 
-    // Setup insert query to insert data into sgp4_scanner_results table.
+    // Set up insert query to insert data into sgp4_scanner_results table.
     std::ostringstream sgp4ScannerTableInsert;
     sgp4ScannerTableInsert << "INSERT INTO sgp4_scanner_results VALUES ("
         << "NULL,"
         << ":lambert_transfer_id,"
-        << ":departure_object_id,"
-        << ":arrival_object_id,"
-        << ":departure_epoch,"
-        << ":departure_semi_major_axis,"
-        << ":departure_eccentricity,"
-        << ":departure_inclination,"
-        << ":departure_argument_of_periapsis,"
-        << ":departure_longitude_of_ascending_node,"
-        << ":departure_true_anomaly,"
         << ":arrival_position_x,"
         << ":arrival_position_y,"
         << ":arrival_position_z,"
@@ -139,13 +129,6 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         const double   departureEpochJulian                 = lambertQuery.getColumn( 3 );
         const double   timeOfFlight                         = lambertQuery.getColumn( 4 );
 
-        const double   departureSemiMajorAxis               = lambertQuery.getColumn( 13 );
-        const double   departureEccentricity                = lambertQuery.getColumn( 14 );
-        const double   departureInclination                 = lambertQuery.getColumn( 15 );
-        const double   departureArgumentOfPeriapsis         = lambertQuery.getColumn( 16 );
-        const double   departureLongitudeAscendingNode      = lambertQuery.getColumn( 17 );
-        const double   departureTrueAnomaly                 = lambertQuery.getColumn( 18 );
-
         const double   departurePositionX                   = lambertQuery.getColumn( 7 );
         const double   departurePositionY                   = lambertQuery.getColumn( 8 );
         const double   departurePositionZ                   = lambertQuery.getColumn( 9 );
@@ -169,6 +152,8 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         const double   lambertTotalDeltaV                   = lambertQuery.getColumn( 43 );
 
         // Set up DateTime object for departure epoch using Julian date.
+        // Note: The transformation given in the following statement is based on how the DateTime
+        //       class internally handles date transformations.
         DateTime departureEpoch( ( departureEpochJulian
                                    - astro::ASTRO_GREGORIAN_EPOCH_IN_JULIAN_DAYS ) * TicksPerDay );
 
@@ -193,16 +178,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
         {
             // Bind zeroes to SQL insert sgp4Query.
-            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId,
-                                                                 departureObjectId,
-                                                                 arrivalObjectId,
-                                                                 departureEpochJulian,
-                                                                 departureSemiMajorAxis,
-                                                                 departureEccentricity,
-                                                                 departureInclination,
-                                                                 departureArgumentOfPeriapsis,
-                                                                 departureLongitudeAscendingNode,
-                                                                 departureTrueAnomaly );
+            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
             SQLite::Statement zeroQuery( database, bindZeroes );
             zeroQuery.executeStep( );
             zeroQuery.reset( );
@@ -266,19 +242,11 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         if ( testPassed == false )
         {
             // Bind zeroes to SQL insert sgp4Query.
-            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId,
-                                                                 departureObjectId,
-                                                                 arrivalObjectId,
-                                                                 departureEpochJulian,
-                                                                 departureSemiMajorAxis,
-                                                                 departureEccentricity,
-                                                                 departureInclination,
-                                                                 departureArgumentOfPeriapsis,
-                                                                 departureLongitudeAscendingNode,
-                                                                 departureTrueAnomaly );
+            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
             SQLite::Statement zeroQuery( database, bindZeroes );
             zeroQuery.executeStep( );
             zeroQuery.reset( );
+
             ++virtualTleFailCounter;
             ++showProgress;
             continue;
@@ -297,19 +265,11 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         catch( std::exception& sgp4PropagationError )
         {
             // Bind zeroes to SQL insert sgp4Query.
-            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId,
-                                                                 departureObjectId,
-                                                                 arrivalObjectId,
-                                                                 departureEpochJulian,
-                                                                 departureSemiMajorAxis,
-                                                                 departureEccentricity,
-                                                                 departureInclination,
-                                                                 departureArgumentOfPeriapsis,
-                                                                 departureLongitudeAscendingNode,
-                                                                 departureTrueAnomaly );
+            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
             SQLite::Statement zeroQuery( database, bindZeroes );
             zeroQuery.executeStep( );
             zeroQuery.reset( );
+
             ++arrivalEpochPropagationFailCounter;
             ++showProgress;
             continue;
@@ -351,17 +311,6 @@ void executeSGP4Scanner( const rapidjson::Document& config )
 
         // Bind values to SQL insert sgp4Query
         sgp4Query.bind( ":lambert_transfer_id",                   lambertTransferId );
-        sgp4Query.bind( ":departure_object_id",                   departureObjectId );
-        sgp4Query.bind( ":arrival_object_id",                     arrivalObjectId );
-        sgp4Query.bind( ":departure_epoch",                       departureEpochJulian );
-
-        sgp4Query.bind( ":departure_semi_major_axis",             departureSemiMajorAxis );
-        sgp4Query.bind( ":departure_eccentricity",                departureEccentricity );
-        sgp4Query.bind( ":departure_inclination",                 departureInclination );
-        sgp4Query.bind( ":departure_argument_of_periapsis",       departureArgumentOfPeriapsis );
-        sgp4Query.bind( ":departure_longitude_of_ascending_node", departureLongitudeAscendingNode );
-        sgp4Query.bind( ":departure_true_anomaly",                departureTrueAnomaly );
-
         sgp4Query.bind( ":arrival_position_x",                    sgp4ArrivalPositionX );
         sgp4Query.bind( ":arrival_position_y",                    sgp4ArrivalPositionY );
         sgp4Query.bind( ":arrival_position_z",                    sgp4ArrivalPositionZ );
@@ -481,15 +430,6 @@ void createSGP4ScannerTable( SQLite::Database& database )
         << "CREATE TABLE sgp4_scanner_results ("
         << "\"transfer_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,"
         << "\"lambert_transfer_id\"                     INTEGER,"
-        << "\"departure_object_id\"                     INTEGER,"
-        << "\"arrival_object_id\"                       INTEGER,"
-        << "\"departure_epoch\"                         REAL,"
-        << "\"departure_semi_major_axis\"               REAL,"
-        << "\"departure_eccentricity\"                  REAL,"
-        << "\"departure_inclination\"                   REAL,"
-        << "\"departure_argument_of_periapsis\"         REAL,"
-        << "\"departure_longitude_of_ascending_node\"   REAL,"
-        << "\"departure_true_anomaly\"                  REAL,"
         << "\"arrival_position_x\"                      REAL,"
         << "\"arrival_position_y\"                      REAL,"
         << "\"arrival_position_z\"                      REAL,"
@@ -531,30 +471,12 @@ void createSGP4ScannerTable( SQLite::Database& database )
 }
 
 //! Bind zeroes into sgp4_scanner_results table.
-std::string bindZeroesSGP4ScannerTable( const int lambertTransferId,
-                                        const int departureObjectId,
-                                        const int arrivalObjectId,
-                                        const double departureEpochJulian,
-                                        const double departureSemiMajorAxis,
-                                        const double departureEccentricity,
-                                        const double departureInclination,
-                                        const double departureArgumentOfPeriapsis,
-                                        const double departureLongitudeAscendingNode,
-                                        const double departureTrueAnomaly )
+std::string bindZeroesSGP4ScannerTable( const int lambertTransferId )
 {
     std::ostringstream zeroEntry;
     zeroEntry << "INSERT INTO sgp4_scanner_results VALUES ("
               << "NULL"                          << ","
               << lambertTransferId               << ","
-              << departureObjectId               << ","
-              << arrivalObjectId                 << ","
-              << departureEpochJulian            << ","
-              << departureSemiMajorAxis          << ","
-              << departureEccentricity           << ","
-              << departureInclination            << ","
-              << departureArgumentOfPeriapsis    << ","
-              << departureLongitudeAscendingNode << ","
-              << departureTrueAnomaly            << ","
               << 0                               << ","
               << 0                               << ","
               << 0                               << ","
@@ -584,36 +506,30 @@ void writeSGP4TransferShortlist( SQLite::Database& database,
     // The sgp4_scanner_results table is sorted by transfer_delta_v from the lambert_scanner_results
     // table in ascending order.
     std::ostringstream shortlistSelect;
-    shortlistSelect << "SELECT sgp4_scanner_results.transfer_id, "
-                    << "sgp4_scanner_results.lambert_transfer_id, "
-                    << "lambert_scanner_results.transfer_delta_v, "
-                    << "sgp4_scanner_results.departure_object_id, "
-                    << "sgp4_scanner_results.arrival_object_id, "
-                    << "sgp4_scanner_results.departure_epoch, "
-                    << "sgp4_scanner_results.departure_semi_major_axis, "
-                    << "sgp4_scanner_results.departure_eccentricity, "
-                    << "sgp4_scanner_results.departure_inclination, "
-                    << "sgp4_scanner_results.departure_argument_of_periapsis, "
-                    << "sgp4_scanner_results.departure_longitude_of_ascending_node, "
-                    << "sgp4_scanner_results.departure_true_anomaly, "
-                    << "sgp4_scanner_results.arrival_position_x, "
-                    << "sgp4_scanner_results.arrival_position_y, "
-                    << "sgp4_scanner_results.arrival_position_z, "
-                    << "sgp4_scanner_results.arrival_velocity_x, "
-                    << "sgp4_scanner_results.arrival_velocity_y, "
-                    << "sgp4_scanner_results.arrival_velocity_z, "
-                    << "sgp4_scanner_results.arrival_position_x_error, "
-                    << "sgp4_scanner_results.arrival_position_y_error, "
-                    << "sgp4_scanner_results.arrival_position_z_error, "
-                    << "sgp4_scanner_results.arrival_position_error, "
-                    << "sgp4_scanner_results.arrival_velocity_x_error, "
-                    << "sgp4_scanner_results.arrival_velocity_y_error, "
-                    << "sgp4_scanner_results.arrival_velocity_z_error, "
-                    << "sgp4_scanner_results.arrival_velocity_error "
-                    << "FROM sgp4_scanner_results INNER JOIN lambert_scanner_results "
-                    << "ON lambert_scanner_results.transfer_id = "
-                    << "sgp4_scanner_results.lambert_transfer_id "
-                    << "ORDER BY lambert_scanner_results.transfer_delta_v ASC LIMIT "
+    shortlistSelect << "SELECT      sgp4_scanner_results.transfer_id, "
+                    << "            sgp4_scanner_results.lambert_transfer_id, "
+                    << "            lambert_scanner_results.transfer_delta_v, "
+                    << "            lambert_scanner_results.departure_object_id, "
+                    << "            lambert_scanner_results.arrival_object_id, "
+                    << "            sgp4_scanner_results.arrival_position_x, "
+                    << "            sgp4_scanner_results.arrival_position_y, "
+                    << "            sgp4_scanner_results.arrival_position_z, "
+                    << "            sgp4_scanner_results.arrival_velocity_x, "
+                    << "            sgp4_scanner_results.arrival_velocity_y, "
+                    << "            sgp4_scanner_results.arrival_velocity_z, "
+                    << "            sgp4_scanner_results.arrival_position_x_error, "
+                    << "            sgp4_scanner_results.arrival_position_y_error, "
+                    << "            sgp4_scanner_results.arrival_position_z_error, "
+                    << "            sgp4_scanner_results.arrival_position_error, "
+                    << "            sgp4_scanner_results.arrival_velocity_x_error, "
+                    << "            sgp4_scanner_results.arrival_velocity_y_error, "
+                    << "            sgp4_scanner_results.arrival_velocity_z_error, "
+                    << "            sgp4_scanner_results.arrival_velocity_error "
+                    << "FROM        sgp4_scanner_results "
+                    << "INNER JOIN  lambert_scanner_results "
+                    << "ON          lambert_scanner_results.transfer_id = "
+                    << "            sgp4_scanner_results.lambert_transfer_id "
+                    << "ORDER BY    lambert_scanner_results.transfer_delta_v ASC LIMIT "
                     << shortlistNumber << ";";
 
     SQLite::Statement query( database, shortlistSelect.str( ) );
@@ -627,13 +543,6 @@ void writeSGP4TransferShortlist( SQLite::Database& database,
                   << "transfer_delta_v,"
                   << "departure_object_id,"
                   << "arrival_object_id,"
-                  << "departure_epoch,"
-                  << "departure_semi_major_axis,"
-                  << "departure_eccentricity,"
-                  << "departure_inclination,"
-                  << "departure_argument_of_periapsis,"
-                  << "departure_longitude_of_ascending_node,"
-                  << "departure_true_anomaly,"
                   << "arrival_position_x,"
                   << "arrival_position_y,"
                   << "arrival_position_z,"
@@ -659,29 +568,21 @@ void writeSGP4TransferShortlist( SQLite::Database& database,
         const int    departureObjectId                  = query.getColumn( 3 );
         const int    arrivalObjectId                    = query.getColumn( 4 );
 
-        const double departureEpoch                     = query.getColumn( 5 );
-        const double departureSemiMajorAxis             = query.getColumn( 6 );
-        const double departureEccentricity              = query.getColumn( 7 );
-        const double departureInclination               = query.getColumn( 8 );
-        const double departureArgumentOfPeriapsis       = query.getColumn( 9 );
-        const double departureLongitudeOfAscendingNode  = query.getColumn( 10 );
-        const double departureTrueAnomaly               = query.getColumn( 11 );
+        const double arrivalPositionX                   = query.getColumn( 5 );
+        const double arrivalPositionY                   = query.getColumn( 6 );
+        const double arrivalPositionZ                   = query.getColumn( 7 );
+        const double arrivalVelocityX                   = query.getColumn( 8 );
+        const double arrivalVelocityY                   = query.getColumn( 9 );
+        const double arrivalVelocityZ                   = query.getColumn( 10 );
 
-        const double arrivalPositionX                   = query.getColumn( 12 );
-        const double arrivalPositionY                   = query.getColumn( 13 );
-        const double arrivalPositionZ                   = query.getColumn( 14 );
-        const double arrivalVelocityX                   = query.getColumn( 15 );
-        const double arrivalVelocityY                   = query.getColumn( 16 );
-        const double arrivalVelocityZ                   = query.getColumn( 17 );
-
-        const double arrivalPositionErrorX              = query.getColumn( 18 );
-        const double arrivalPositionErrorY              = query.getColumn( 19 );
-        const double arrivalPositionErrorZ              = query.getColumn( 20 );
-        const double arrivalPositionError               = query.getColumn( 21 );
-        const double arrivalVelocityErrorX              = query.getColumn( 22 );
-        const double arrivalVelocityErrorY              = query.getColumn( 23 );
-        const double arrivalVelocityErrorZ              = query.getColumn( 24 );
-        const double arrivalVelocityError               = query.getColumn( 25 );
+        const double arrivalPositionErrorX              = query.getColumn( 11 );
+        const double arrivalPositionErrorY              = query.getColumn( 12 );
+        const double arrivalPositionErrorZ              = query.getColumn( 13 );
+        const double arrivalPositionError               = query.getColumn( 14 );
+        const double arrivalVelocityErrorX              = query.getColumn( 15 );
+        const double arrivalVelocityErrorY              = query.getColumn( 16 );
+        const double arrivalVelocityErrorZ              = query.getColumn( 17 );
+        const double arrivalVelocityError               = query.getColumn( 18 );
 
         shortlistFile << transferId                         << ","
                       << lambertTransferId                  << ",";
@@ -689,17 +590,10 @@ void writeSGP4TransferShortlist( SQLite::Database& database,
         shortlistFile << std::setprecision( std::numeric_limits< double >::digits10 )
                       << lambertTransferDeltaV              << ",";
 
-        shortlistFile << departureObjectId                  << ",";
+        shortlistFile << departureObjectId                  << ","
+                      << arrivalObjectId                    << ",";
 
         shortlistFile << std::setprecision( std::numeric_limits< double >::digits10 )
-                      << arrivalObjectId                    << ","
-                      << departureEpoch                     << ","
-                      << departureSemiMajorAxis             << ","
-                      << departureEccentricity              << ","
-                      << departureInclination               << ","
-                      << departureArgumentOfPeriapsis       << ","
-                      << departureLongitudeOfAscendingNode  << ","
-                      << departureTrueAnomaly               << ","
                       << arrivalPositionX                   << ","
                       << arrivalPositionY                   << ","
                       << arrivalPositionZ                   << ","
