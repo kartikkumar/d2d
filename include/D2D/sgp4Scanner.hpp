@@ -20,9 +20,9 @@ namespace d2d
 //! Execute sgp4_scanner.
 /*!
  * Executes sgp4_scanner application mode that propagates a transfer, computed with the Lambert
- * targeter (Izzo, 2014), using the SGP4/SDP4 models, to compute the mismatch in position due to
- * perturbations. The Lambert targeter employed is based on Izzo (2014), implemented in PyKEP
- * (Izzo, 2012).
+ * targeter (Izzo, 2014), using the SGP4/SDP4 models, to compute the mismatch in arrival position
+ * and velocity due to perturbations. The Lambert targeter employed is based on Izzo (2014),
+ * implemented in PyKEP (Izzo, 2012).
  *
  * This requires that the "lambert_scanner" application mode has been executed, which generates a
  * SQLite database containing all transfers computed (stored in "lambert_scanner_results").
@@ -51,26 +51,20 @@ public:
      * Constructs data struct based on verified input parameters.
      *
      * @sa checkSGP4ScannerInput, executeSGP4Scanner
-     * @param[in] aCatalogPath            Path to TLE catalog
-     * @param[in] aTransferDeltaVCutoff   Velocity cut-off used by sgp4 scanner
-     * @param[in] aRelativeTolerance      Relative tolerance for the Cartesian-To-TLE cnoversion
-     *                                    function
-     * @param[in] aAbsoluteTolerance      Absolute tolerance for the Cartesian-To-TLE cnoversion
-     *                                    function
-     * @param[in] aTransferDeltaVCutoff   Transfer deltaV cut-off used by sgp4 scanner
+     * @param[in] aTransferDeltaVCutoff   Transfer \f$\Delta V\f$ cut-off used by sgp4 scanner
+     * @param[in] aRelativeTolerance      Relative tolerance for Cartesian-to-TLE conversion
+     * @param[in] aAbsoluteTolerance      Absolute tolerance for the Cartesian-to-TLE conversion
      * @param[in] aDatabasePath           Path to SQLite database
      * @param[in] aShortlistLength        Number of transfers to include in shortlist
      * @param[in] aShortlistPath          Path to shortlist file
      */
-    sgp4ScannerInput( const std::string& aCatalogPath,
-                      const double       aTransferDeltaVCutoff,
+    sgp4ScannerInput( const double       aTransferDeltaVCutoff,
                       const double       aRelativeTolerance,
                       const double       aAbsoluteTolerance,
                       const std::string& aDatabasePath,
                       const int          aShortlistLength,
                       const std::string& aShortlistPath )
-        : catalogPath( aCatalogPath ),
-          transferDeltaVCutoff( aTransferDeltaVCutoff ),
+        : transferDeltaVCutoff( aTransferDeltaVCutoff ),
           relativeTolerance( aRelativeTolerance ),
           absoluteTolerance( aAbsoluteTolerance ),
           databasePath( aDatabasePath ),
@@ -78,16 +72,13 @@ public:
           shortlistPath( aShortlistPath )
     { }
 
-    //! Path to TLE catalog.
-    const std::string catalogPath;
-
-    //! Transfer deltaV cut-off used by sgp4_scanner.
+    //! Transfer \f$\Delta V\f$ cut-off used by sgp4_scanner.
     const double transferDeltaVCutoff;
 
-    //! Relative tolerance for the Cartesian-To-TLE conversion function.
+    //! Relative tolerance for Cartesian-to-TLE conversion function.
     const double relativeTolerance;
 
-    //! Absolute tolerance for the Cartesian-To-TLE conversion function.
+    //! Absolute tolerance for Cartesian-to-TLE conversion function.
     const double absoluteTolerance;
 
     //! Path to SQLite database to store output.
@@ -119,7 +110,7 @@ sgp4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config );
 
 //! Create sgp4_scanner_results table.
 /*!
- * Creates sgp4_scanner_results table in SQLite database used to store results obtaned from running
+ * Creates sgp4_scanner_results table in SQLite database used to store results obtained from running
  * the "sgp4_scanner" application mode.
  *
  * @sa executeSGP4Scanner
@@ -129,13 +120,12 @@ void createSGP4ScannerTable( SQLite::Database& database );
 
 //! Bind zeroes into sgp4_scanner_results table.
 /*!
- * Bind zeroes into sgp4_scanner_results table in SQLite database when the
- * Lambert total transfer deltaV is above a user specified cut-off, the convergence test for the
+ * Bind zeroes into sgp4_scanner_results table in SQLite database when the total Lambert transfer
+ * \f$\Delta V\f$ is above a user specified cut-off, the convergence test for the
  * virtual TLE fails, or the SGP4 propagation of the virtual TLE to the arrival epoch fails.
  *
  * @sa executeSGP4Scanner
- * @param[in] lambertTransferId                 Value from the column transfer_id in the
- *                                              lambert_scanner_results table
+ * @param[in] lambertTransferId transfer_id in the lambert_scanner_results table
  */
 std::string bindZeroesSGP4ScannerTable( const int lambertTransferId );
 

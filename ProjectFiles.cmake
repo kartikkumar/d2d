@@ -15,7 +15,6 @@ set(SRC
  "${SRC_PATH}/lambertTransfer.cpp"
  "${SRC_PATH}/sgp4Scanner.cpp"
  "${SRC_PATH}/tools.cpp"
-# "${SRC_PATH}/SGP4Tools.cpp"
 )
 
 # Set project test source files.
@@ -24,5 +23,4 @@ set(TEST_SRC
   "${TEST_SRC_PATH}/testTools.cpp"
   "${TEST_SRC_PATH}/testCatalogPruner.cpp"
   "${TEST_SRC_PATH}/testTypedefs.cpp"
-#  "${TEST_SRC_PATH}/testLambertScanner.cpp"
 )
