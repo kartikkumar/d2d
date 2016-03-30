@@ -1,0 +1,30 @@
+// Copyright (c) 2014-2016 Kartik Kumar (me@kartikkumar.com)
+// Copyright (c) 2014-2016 Abhishek Agrawal (abhishek.agrawal@protonmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "sgp4_scanner" application mode.
+{
+    "mode"                      : "sgp4_scanner",
+
+    // Set transfer deltaV cut-off in km/s.
+    // The sgp4_scanner would only consider the cases from the lambert_scanner_results table where
+    // the total transfer deltaV is less than or equal to the transfer deltaV cut-off given here.
+    "transfer_deltav_cutoff"    : ,
+
+    // Set relative and absolute tolerances for the Cartesian-to-TLE conversion function.
+    // Default: relative tolerance = 1e-8, absolute tolerance = 1e-10
+    "relative_tolerance"        : 1e-8,
+    "absolute_tolerance"        : 1e-10,
+
+    // Set path to output database (SQLite).
+    // WARNING: The database file must already exist and be populated with data using the
+    //          "lambert_scanner" mode (data will be store in a table called
+    //          "sgp4_scanner_results")!
+    "database"                  : "",
+
+    // Set number of transfers to include in shortlist and absolute path to output file [N, file].
+    // The shortlist is based on the N transfers specified with the lowest Lambert transfer deltaV.
+    // If N is set to 0, no output will be written to file.
+    "shortlist"                 : [0,""]
+}

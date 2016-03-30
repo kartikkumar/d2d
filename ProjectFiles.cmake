@@ -9,12 +9,12 @@ set(MAIN_SRC
 
 # Set project source files.
 set(SRC
-  "${SRC_PATH}/catalogPruner.cpp"
-  "${SRC_PATH}/lambertFetch.cpp"
-  "${SRC_PATH}/lambertScanner.cpp"
-  "${SRC_PATH}/lambertTransfer.cpp"
-#  "${SRC_PATH}/sgp4Propagator.cpp"
-  "${SRC_PATH}/tools.cpp"
+ "${SRC_PATH}/catalogPruner.cpp"
+ "${SRC_PATH}/lambertFetch.cpp"
+ "${SRC_PATH}/lambertScanner.cpp"
+ "${SRC_PATH}/lambertTransfer.cpp"
+ "${SRC_PATH}/sgp4Scanner.cpp"
+ "${SRC_PATH}/tools.cpp"
 )
 
 # Set project test source files.
@@ -23,5 +23,4 @@ set(TEST_SRC
   "${TEST_SRC_PATH}/testTools.cpp"
   "${TEST_SRC_PATH}/testCatalogPruner.cpp"
   "${TEST_SRC_PATH}/testTypedefs.cpp"
-#  "${TEST_SRC_PATH}/testLambertScanner.cpp"
 )
