@@ -7,13 +7,9 @@
 {
     "mode"                      : "sgp4_scanner",
 
-    // Set path to TLE catalog file.
-    "catalog"                   : "",
-
     // Set transfer deltaV cut-off in km/s.
     // The sgp4_scanner would only consider the cases from the lambert_scanner_results table where
-    // the total transfer deltaV is less than or equal to the transfer deltaV cut-off
-    // mentioned here.
+    // the total transfer deltaV is less than or equal to the transfer deltaV cut-off given here.
     "transfer_deltav_cutoff"    : ,
 
     // Set relative and absolute tolerances for the Cartesian-to-TLE conversion function.
@@ -29,6 +25,6 @@
 
     // Set number of transfers to include in shortlist and absolute path to output file [N, file].
     // The shortlist is based on the N transfers specified with the lowest Lambert transfer deltaV.
-    // If N is set to 0 no output will be written to file.
+    // If N is set to 0, no output will be written to file.
     "shortlist"                 : [0,""]
 }

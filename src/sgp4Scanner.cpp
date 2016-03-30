@@ -84,6 +84,8 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     std::ostringstream lambertScannerTableSelect;
     lambertScannerTableSelect << "SELECT * FROM lambert_scanner_results;";
 
+    SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
+
     // Set up insert query to insert data into sgp4_scanner_results table.
     std::ostringstream sgp4ScannerTableInsert;
     sgp4ScannerTableInsert << "INSERT INTO sgp4_scanner_results VALUES ("
@@ -106,8 +108,6 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         << ":success"
         << ");";
 
-    SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
-
     SQLite::Statement sgp4Query( database, sgp4ScannerTableInsert.str( ) );
 
     std::cout << "Propagating Lambert transfers using SGP4 and populating database ... "
@@ -120,6 +120,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
     int virtualTleFailCounter = 0;
     int arrivalEpochPropagationFailCounter = 0;
 
+    // Step through select query to fetch data from lambert_scanner_results.
     while ( lambertQuery.executeStep( ) )
     {
         const int      lambertTransferId                    = lambertQuery.getColumn( 0 );
@@ -177,7 +178,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         // Filter out cases using transfer deltaV cut off given through input file.
         if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
         {
-            // Bind zeroes to SQL insert sgp4Query.
+            // Bind zeroes to sgp4Query.
             std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
             SQLite::Statement zeroQuery( database, bindZeroes );
             zeroQuery.executeStep( );
@@ -241,7 +242,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
 
         if ( testPassed == false )
         {
-            // Bind zeroes to SQL insert sgp4Query.
+            // Bind zeroes to sgp4Query.
             std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
             SQLite::Statement zeroQuery( database, bindZeroes );
             zeroQuery.executeStep( );
@@ -264,7 +265,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         }
         catch( std::exception& sgp4PropagationError )
         {
-            // Bind zeroes to SQL insert sgp4Query.
+            // Bind zeroes to sgp4Query.
             std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
             SQLite::Statement zeroQuery( database, bindZeroes );
             zeroQuery.executeStep( );
@@ -309,7 +310,7 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         velocityError[ 2 ] = arrivalVelocityErrorZ;
         double arrivalVelocityErrorNorm = sml::norm< double >( velocityError );
 
-        // Bind values to SQL insert sgp4Query
+        // Bind computed values to sgp4Query.
         sgp4Query.bind( ":lambert_transfer_id",                   lambertTransferId );
         sgp4Query.bind( ":arrival_position_x",                    sgp4ArrivalPositionX );
         sgp4Query.bind( ":arrival_position_y",                    sgp4ArrivalPositionY );
@@ -376,9 +377,6 @@ void executeSGP4Scanner( const rapidjson::Document& config )
 //! Check sgp4_scanner input parameters.
 sgp4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
 {
-    const std::string catalogPath = find( config, "catalog" )->value.GetString( );
-    std::cout << "Catalog                         " << catalogPath << std::endl;
-
     const double transferDeltaVCutoff
         = find( config, "transfer_deltav_cutoff" )->value.GetDouble( );
     std::cout << "Transfer deltaV cut-off         " << transferDeltaVCutoff << std::endl;
@@ -402,8 +400,7 @@ sgp4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
         std::cout << "Shortlist                       " << shortlistPath << std::endl;
     }
 
-    return sgp4ScannerInput( catalogPath,
-                             transferDeltaVCutoff,
+    return sgp4ScannerInput( transferDeltaVCutoff,
                              relativeTolerance,
                              absoluteTolerance,
                              databasePath,
