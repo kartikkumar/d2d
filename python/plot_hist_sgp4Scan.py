@@ -11,6 +11,7 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 import matplotlib
 matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
 from matplotlib import rcParams
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
@@ -97,9 +98,24 @@ yerror = scan_data[ 'yerror' ]
 zerror = scan_data[ 'zerror' ]
 magnitudeError = scan_data[ 'magnitudeError' ]
 
+# Calculate mean, variance and standard deviation
+mu = sum( magnitudeError ) / len( magnitudeError )
+print 'Mean = ' + repr( mu )
+
+sumOfSquareDeviations = sum( ( x - mu )**2 for x in magnitudeError )
+variance = sumOfSquareDeviations / len( magnitudeError )
+print 'Variance = ' + repr( variance )
+
+sigma = variance**0.5
+print 'Standard Deviation = ' + repr( sigma )
+
 # Plot the magnitude of the error
-n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor='green', alpha=1.0,
+n, bins, patches = plt.hist( magnitudeError, bins=100, normed=True, facecolor='green', alpha=0.5,
                              label='Magnitude' )
+
+# Add a line of expected distribution
+# y = mlab.normpdf( bins, mu, sigma )
+# l = plt.plot( bins, y, 'r--', linewidth=1.5, label='Best fit line' )
 
 # Select appropriate unit and title for the error type
 if config['error'] == 'arrival_position':
@@ -111,7 +127,7 @@ else:
 
 # Figure properties
 plt.xlabel( 'Error' + " " + errorUnit )
-plt.ylabel( 'Frequency' )
+plt.ylabel( 'Normed Frequency' )
 plt.title( plotTitle + " " + 'Magnitude' )
 # plt.axis([40, 160, 0, 0.03])
 plt.legend( )
