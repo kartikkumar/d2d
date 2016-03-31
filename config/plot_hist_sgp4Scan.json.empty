@@ -1,0 +1,26 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Copyright (c) 2014-2016 Abhishek Agrawal, Delft University of Technology (abhishek.agrawal@protonmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+{
+    // Path to SQLite database containing scan data.
+    "database"                  : "",
+
+    // Directory where the histogram is stored.
+    "output_directory"          : "",
+
+    // Set error to be plotted.
+    // This value can be set to any of the following:
+    // - arrival_position
+    // - arrival_velocity
+    "error"                     : "",
+
+    // Filename for histogram (without extension and error type)
+    "histogram_figure"          : "",
+
+    // Characteristics for figures.
+    "figure_dpi"                : 300,
+    "tick_label_size"           : 4,
+    "axis_label_size"           : 10,
+    "colormap"                  : "jet"
+}
