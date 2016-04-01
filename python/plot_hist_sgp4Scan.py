@@ -7,16 +7,6 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 '''
 
 # Set up modules and packages
-# Plotting
-import matplotlib
-import matplotlib.colors
-import matplotlib.pyplot as plt
-import matplotlib.mlab as mlab
-from matplotlib import rcParams
-from matplotlib import cm
-from mpl_toolkits.mplot3d import Axes3D
-from mpl_toolkits.mplot3d import axes3d
-
 # I/O
 import commentjson
 import json
@@ -61,9 +51,24 @@ config = commentjson.load(json_data)
 json_data.close()
 pprint(config)
 
+# Get plotting packages
+import matplotlib
+
 # If user's computer does not have a GUI/display then the TKAgg will not be used
 if config['display'] == 'True':
     matplotlib.use('TkAgg')
+else:
+    matplotlib.use('Agg')
+
+import matplotlib.colors
+import matplotlib.axes
+import matplotlib.lines as mlines
+import matplotlib.pyplot as plt
+import matplotlib.mlab as mlab
+from matplotlib import rcParams
+from matplotlib import cm
+from mpl_toolkits.mplot3d import Axes3D
+from mpl_toolkits.mplot3d import axes3d
 
 print ""
 print "******************************************************************"
@@ -161,11 +166,11 @@ else:
     zcolor = '0.60'
 
 n, bins, patches = plt.hist( xerror, bins=200, histtype='step', normed=False, color=xcolor,       \
-                             alpha=1, label='X Axis' )
+                             alpha=1, label='X Axis', log=False )
 n, bins, patches = plt.hist( yerror, bins=200, histtype='step', normed=False, color=ycolor,       \
-                             alpha=1, label='Y Axis' )
+                             alpha=1, label='Y Axis', log=False )
 n, bins, patches = plt.hist( zerror, bins=200, histtype='step', normed=False, color=zcolor,       \
-                             alpha=1, label='Z Axis' )
+                             alpha=1, label='Z Axis', log=False )
 # Figure properties
 plt.xlabel( 'Error' + " " + errorUnit )
 plt.ylabel( 'Frequency' )
@@ -174,7 +179,12 @@ if config[ 'add_title' ] == 'True':
     plt.title( plotTitle + " " + 'Components' )
 
 # plt.axis([40, 160, 0, 0.03])
-plt.legend( )
+
+xlegend = mlines.Line2D( [], [], color=xcolor, label='X Axis' )
+ylegend = mlines.Line2D( [], [], color=ycolor, label='Y Axis' )
+zlegend = mlines.Line2D( [], [], color=zcolor, label='Z Axis' )
+plt.legend( handles=[xlegend, ylegend, zlegend] )
+
 plt.grid( True )
 
 # Save figure to file.
