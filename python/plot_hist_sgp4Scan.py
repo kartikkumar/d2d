@@ -9,7 +9,7 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 # Set up modules and packages
 # Plotting
 import matplotlib
-matplotlib.use('TkAgg')
+import matplotlib.colors
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 from matplotlib import rcParams
@@ -61,6 +61,10 @@ config = commentjson.load(json_data)
 json_data.close()
 pprint(config)
 
+# If user's computer does not have a GUI/display then the TKAgg will not be used
+if config['display'] == 'True':
+    matplotlib.use('TkAgg')
+
 print ""
 print "******************************************************************"
 print "                            Operations                            "
@@ -82,12 +86,12 @@ except sqlite3.Error, e:
     sys.exit(1)
 
 # Fetch scan data.
-scan_data = pd.read_sql( "SELECT    " + config['error'] + "_x_error, \
-                                    " + config['error'] + "_y_error, \
-                                    " + config['error'] + "_z_error, \
-                                    " + config['error'] + "_error    \
-                          FROM      sgp4_scanner_results             \
-                          WHERE     success = 1;",
+scan_data = pd.read_sql( "SELECT    " + config['error'] + "_x_error,                              \
+                                    " + config['error'] + "_y_error,                              \
+                                    " + config['error'] + "_z_error,                              \
+                                    " + config['error'] + "_error                                 \
+                          FROM      sgp4_scanner_results                                          \
+                          WHERE     success = 1;",                                                \
                           database )
 
 scan_data.columns = [ 'xerror', 'yerror', 'zerror', 'magnitudeError' ]
@@ -110,8 +114,13 @@ sigma = variance**0.5
 print 'Standard Deviation = ' + repr( sigma )
 
 # Plot the magnitude of the error
-n, bins, patches = plt.hist( magnitudeError, bins=100, normed=True, facecolor='green', alpha=0.5,
-                             label='Magnitude' )
+if config['grayscale'] == 'False':
+    figureColor = 'green'
+else:
+    figureColor = '0.40'
+
+n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,        \
+                             alpha=1, label='Magnitude' )
 
 # Add a line of expected distribution
 # y = mlab.normpdf( bins, mu, sigma )
@@ -127,35 +136,50 @@ else:
 
 # Figure properties
 plt.xlabel( 'Error' + " " + errorUnit )
-plt.ylabel( 'Normed Frequency' )
-plt.title( plotTitle + " " + 'Magnitude' )
+plt.ylabel( 'Frequency' )
+
+if config[ 'add_title' ] == 'True':
+    plt.title( plotTitle + " " + 'Magnitude' )
+
 # plt.axis([40, 160, 0, 0.03])
 plt.legend( )
 plt.grid( True )
 
 # Save figure to file.
 plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + config['error'] + "_error"
-             + "_magnitude" + ".png", dpi=config["figure_dpi"] )
+             + "_magnitude" + config["figure_format"], dpi=config["figure_dpi"] )
 plt.close( )
 
 # Plot the components of the error in a separate figure.
-n, bins, patches = plt.hist( xerror, bins=200, histtype='step', normed=False, facecolor='red',
+if config['grayscale'] == 'False':
+    xcolor = 'black'
+    ycolor = 'green'
+    zcolor = 'red'
+else:
+    xcolor = '0'
+    ycolor = '0.30'
+    zcolor = '0.60'
+
+n, bins, patches = plt.hist( xerror, bins=200, histtype='step', normed=False, color=xcolor,       \
                              alpha=1, label='X Axis' )
-n, bins, patches = plt.hist( yerror, bins=200, histtype='step', normed=False, facecolor='blue',
+n, bins, patches = plt.hist( yerror, bins=200, histtype='step', normed=False, color=ycolor,       \
                              alpha=1, label='Y Axis' )
-n, bins, patches = plt.hist( zerror, bins=200, histtype='step', normed=False, facecolor='orange',
+n, bins, patches = plt.hist( zerror, bins=200, histtype='step', normed=False, color=zcolor,       \
                              alpha=1, label='Z Axis' )
 # Figure properties
 plt.xlabel( 'Error' + " " + errorUnit )
 plt.ylabel( 'Frequency' )
-plt.title( plotTitle + " " + 'Components' )
+
+if config[ 'add_title' ] == 'True':
+    plt.title( plotTitle + " " + 'Components' )
+
 # plt.axis([40, 160, 0, 0.03])
 plt.legend( )
 plt.grid( True )
 
 # Save figure to file.
 plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + config['error'] + "_error"
-             + "_components" + ".png", dpi=config["figure_dpi"] )
+             + "_components" + config["figure_format"], dpi=config["figure_dpi"] )
 plt.close( )
 
 print "Figures generated successfully!"
