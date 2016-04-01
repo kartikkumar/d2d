@@ -16,6 +16,7 @@ set(SRC
  "${SRC_PATH}/sgp4Scanner.cpp"
  "${SRC_PATH}/j2Analysis.cpp"
  "${SRC_PATH}/tools.cpp"
+ "${SRC_PATH}/atomScanner.cpp"
 )
 
 # Set project test source files.

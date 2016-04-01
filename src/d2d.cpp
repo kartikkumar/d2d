@@ -22,6 +22,7 @@
 #include "D2D/lambertScanner.hpp"
 #include "D2D/lambertTransfer.hpp"
 #include "D2D/sgp4Scanner.hpp"
+#include "D2D/atomScanner.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -123,6 +124,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         std::cout << "Mode:                           " << mode << std::endl;
         d2d::executeJ2Analysis( config );
+    }
+    else if ( mode.compare( "atom_scanner" ) == 0 )
+    {
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeAtomScanner( config );
     }
     else
     {
