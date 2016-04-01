@@ -183,7 +183,9 @@ if config[ 'add_title' ] == 'True':
 xlegend = mlines.Line2D( [], [], color=xcolor, label='X Axis' )
 ylegend = mlines.Line2D( [], [], color=ycolor, label='Y Axis' )
 zlegend = mlines.Line2D( [], [], color=zcolor, label='Z Axis' )
-plt.legend( handles=[xlegend, ylegend, zlegend] )
+lines = [xlegend, ylegend, zlegend]
+labels = [line.get_label( ) for line in lines]
+plt.legend(lines, labels)
 
 plt.grid( True )
 
