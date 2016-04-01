@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+ * Copyright (c) 2014-2016 Kartik Kumar (me@kartikkumar.com)
+ * Copyright (c) 2016 Enne Hekma (ennehekma@gmail.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -22,10 +23,14 @@
 #include <libsgp4/Tle.h>
 
 #include <SML/sml.hpp>
+
+#include <Atom/atom.hpp>
+
 #include <Astro/astro.hpp>
 
 #include "D2D/atomScanner.hpp"
 #include "D2D/tools.hpp"
+#include "D2D/typedefs.hpp"
 
 namespace d2d
 {
@@ -33,6 +38,7 @@ namespace d2d
 //! Execute atom_scanner.
 void executeAtomScanner( const rapidjson::Document& config )
 {
+    std::cout.precision( 15 );
 
     // Verify config parameters. Exception is thrown if any of the parameters are missing.
     const AtomScannerInput input = checkAtomScannerInput( config );
@@ -48,60 +54,30 @@ void executeAtomScanner( const rapidjson::Document& config )
     std::cout << "******************************************************************" << std::endl;
     std::cout << std::endl;
 
-    std::cout << "Parsing TLE catalog ... " << std::endl;
-
-    // Parse catalog and store TLE objects.
-    std::ifstream catalogFile( input.catalogPath.c_str( ) );
-    std::string catalogLine;
-
-    // Check if catalog is 2-line or 3-line version.
-    std::getline( catalogFile, catalogLine );
-    const int tleLines = getTleCatalogType( catalogLine );
-
-    // Reset file stream to start of file.
-    catalogFile.seekg( 0, std::ios::beg );
-
-    typedef std::vector< std::string > TleStrings;
-    typedef std::vector< Tle > TleObjects;
-    TleObjects tleObjects;
-
-    while ( std::getline( catalogFile, catalogLine ) )
-    {
-        TleStrings tleStrings;
-        removeNewline( catalogLine );
-        tleStrings.push_back( catalogLine );
-        std::getline( catalogFile, catalogLine );
-        removeNewline( catalogLine );
-        tleStrings.push_back( catalogLine );
-
-        if ( tleLines == 3 )
-        {
-            std::getline( catalogFile, catalogLine );
-            removeNewline( catalogLine );
-            tleStrings.push_back( catalogLine );
-            tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ], tleStrings[ 2 ] ) );
-        }
-
-        else if ( tleLines == 2 )
-        {
-            tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ] ) );
-        }
-    }
-
-    catalogFile.close( );
-    std::cout << tleObjects.size( ) << " TLE objects parsed from catalog!" << std::endl;
-
     // Open database in read/write mode.
-    SQLite::Database database( input.databasePath.c_str( ),
-                               SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE );
+    // N.B.: Database must already exist and contain a populated table called
+    //       "lambert_scanner_results".
+    SQLite::Database database( input.databasePath.c_str( ), SQLITE_OPEN_READWRITE );
 
-    // Create table for Atom scanner results in SQLite database.
+    // Create table for atom_scanner_results in SQLite database.
     std::cout << "Creating SQLite database table if needed ... " << std::endl;
     createAtomScannerTable( database );
     std::cout << "SQLite database set up successfully!" << std::endl;
 
     // Start SQL transaction.
     SQLite::Transaction transaction( database );
+
+    // Fetch number of rows in lambert_scanner_results table.
+    std::ostringstream lambertScannerTableSizeSelect;
+    lambertScannerTableSizeSelect << "SELECT COUNT(*) FROM lambert_scanner_results;";
+    const int lambertScannertTableSize
+        = database.execAndGet( lambertScannerTableSizeSelect.str( ) );
+
+    // Set up select query to fetch data from lambert_scanner_results table.
+    std::ostringstream lambertScannerTableSelect;
+    lambertScannerTableSelect << "SELECT * FROM lambert_scanner_results;";
+
+    SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
 
     // Setup insert query.
     std::ostringstream atomScannerTableInsert;
@@ -153,206 +129,252 @@ void executeAtomScanner( const rapidjson::Document& config )
         << ":transfer_delta_v"
         << ");";
 
-    SQLite::Statement query( database, atomScannerTableInsert.str( ) );
+    SQLite::Statement atomQuery( database, atomScannerTableInsert.str( ) );
 
     std::cout << "Computing Atom transfers and populating database ... " << std::endl;
 
-    // Loop over TLE objects and compute transfers based on Atom targeter across time-of-flight
-    // grid.
-    boost::progress_display showProgress( tleObjects.size( ) );
+    boost::progress_display showProgress( lambertScannertTableSize );
 
-    // Loop over all departure objects.
-    for ( unsigned int i = 0; i < tleObjects.size( ); i++ )
+
+    while ( lambertQuery.executeStep( ) )
     {
-        // Compute departure state.
-        Tle departureObject = tleObjects[ i ];
-        SGP4 sgp4Departure( departureObject );
+        const int      lambertTransferId                    = lambertQuery.getColumn( 0 );
+        const int      departureObjectId                    = lambertQuery.getColumn( 1 );
+        const int      arrivalObjectId                      = lambertQuery.getColumn( 2 );
 
-        DateTime departureEpoch = input.departureEpoch;
-        if ( input.departureEpoch == DateTime( ) )
+        const double   departureEpochJulian                 = lambertQuery.getColumn( 3 );
+        const double   timeOfFlight                         = lambertQuery.getColumn( 4 );
+
+        const double   departurePositionX                   = lambertQuery.getColumn( 7 );
+        const double   departurePositionY                   = lambertQuery.getColumn( 8 );
+        const double   departurePositionZ                   = lambertQuery.getColumn( 9 );
+        // const double   departureVelocityX                   = lambertQuery.getColumn( 10 );
+        // const double   departureVelocityY                   = lambertQuery.getColumn( 11 );
+        // const double   departureVelocityZ                   = lambertQuery.getColumn( 12 );
+
+        const double   arrivalPositionX                     = lambertQuery.getColumn( 19 );
+        const double   arrivalPositionY                     = lambertQuery.getColumn( 20 );
+        const double   arrivalPositionZ                     = lambertQuery.getColumn( 21 );
+        // const double   arrivalVelocityX                     = lambertQuery.getColumn( 22 );
+        // const double   arrivalVelocityY                     = lambertQuery.getColumn( 23 );
+        // const double   arrivalVelocityZ                     = lambertQuery.getColumn( 24 );
+
+        const double   departureDeltaVX                     = lambertQuery.getColumn( 37 );
+        const double   departureDeltaVY                     = lambertQuery.getColumn( 38 );
+        const double   departureDeltaVZ                     = lambertQuery.getColumn( 39 );
+        // const double   lambertArrivalDeltaVX                = lambertQuery.getColumn( 40 );
+        // const double   lambertArrivalDeltaVY                = lambertQuery.getColumn( 41 );
+        // const double   lambertArrivalDeltaVZ                = lambertQuery.getColumn( 42 );
+
+        const double   lambertTotalDeltaV                   = lambertQuery.getColumn( 43 );
+        // std::cout << "enne is baas" << std::endl;
+
+        // Filter out cases using transfer deltaV cut off given through input file.
+        if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
         {
-            departureEpoch = departureObject.Epoch( );
+            // Bind zeroes to atomQuery.
+            std::string bindZeroes = bindZeroesAtomScannerTable( lambertTransferId );
+            SQLite::Statement zeroQuery( database, bindZeroes );
+            zeroQuery.executeStep( );
+            zeroQuery.reset( );
+
+            ++showProgress;
+            continue;
         }
 
-        const Eci tleDepartureState = sgp4Departure.FindPosition( departureEpoch );
-        const Vector6 departureState = getStateVector( tleDepartureState );
 
+        // Set up DateTime object for departure epoch using Julian date.
+        // Note: The transformation given in the following statement is based on how the DateTime
+        //       class internally handles date transformations.
+        DateTime departureEpoch( ( departureEpochJulian
+                                   - astro::ASTRO_GREGORIAN_EPOCH_IN_JULIAN_DAYS ) * TicksPerDay );
+
+        // Get departure state for the transfer object.
         Vector3 departurePosition;
-        std::copy( departureState.begin( ),
-                   departureState.begin( ) + 3,
-                   departurePosition.begin( ) );
+        departurePosition[ astro::xPositionIndex ] = departurePositionX;
+        departurePosition[ astro::yPositionIndex ] = departurePositionY;
+        departurePosition[ astro::zPositionIndex ] = departurePositionZ;
 
-        Vector3 departureVelocity;
-        std::copy( departureState.begin( ) + 3,
-                   departureState.end( ),
-                   departureVelocity.begin( ) );
+        Vector3 arrivalPosition;
+        arrivalPosition[ astro::xPositionIndex ] = arrivalPositionX;
+        arrivalPosition[ astro::yPositionIndex ] = arrivalPositionY;
+        arrivalPosition[ astro::zPositionIndex ] = arrivalPositionZ;
 
-        const Vector6 departureStateKepler
-            = astro::convertCartesianToKeplerianElements( departureState,
-                                                          earthGravitationalParameter );
-        const int departureObjectId = static_cast< int >( departureObject.NoradNumber( ) );
+        Vector3 departureVelocityGuess;
+        departureVelocityGuess[ 0 ] = departureDeltaVX;
+        departureVelocityGuess[ 1 ] = departureDeltaVY;
+        departureVelocityGuess[ 2 ] = departureDeltaVZ;
 
-        // Loop over arrival objects.
-        for ( unsigned int j = 0; j < tleObjects.size( ); j++ )
-        {
-            // Skip the case of the departure and arrival objects being the same.
-            if ( i == j )
-            {
-                continue;
-            }
 
-            Tle arrivalObject = tleObjects[ j ];
-            SGP4 sgp4Arrival( arrivalObject );
-            const int arrivalObjectId = static_cast< int >( arrivalObject.NoradNumber( ) );
+        // // Create virtual TLE for the transfer object's orbit from its departure state.
+        // // This TLE will be propagated using the SGP4 transfer.
+        // Tle transferTle;
+        // std::string solverStatusSummary;
+        // int numberOfIterations;
+        // const Tle referenceTle = Tle( );
+        // const int maximumIterations = 100;
 
-            // Loop over time-of-flight grid.
-            for ( int k = 0; k < input.timeOfFlightSteps; k++ )
-            {
-                const double timeOfFlight
-                    = input.timeOfFlightMinimum + k * input.timeOfFlightStepSize;
+        // try
+        // {
+        //     transferTle = atom::convertCartesianStateToTwoLineElements< double, Vector6 >(
+        //         transferDepartureState,
+        //         departureEpoch,
+        //         solverStatusSummary,
+        //         numberOfIterations,
+        //         referenceTle,
+        //         earthGravitationalParameter,
+        //         earthMeanRadius,
+        //         input.absoluteTolerance,
+        //         input.relativeTolerance,
+        //         maximumIterations );
+        // }
+        // catch( std::exception& virtualTleError )
+        // {
+        //     // At the moment we just catch the exceptions that are thrown internally and proceed.
+        //     // @todo: Figure out how to handle and register these exceptions.
+        // }
 
-                const DateTime arrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
-                const Eci tleArrivalState   = sgp4Arrival.FindPosition( arrivalEpoch );
-                const Vector6 arrivalState  = getStateVector( tleArrivalState );
+        // // Check if transferTle is correct.
+        // const SGP4 sgp4Check( transferTle );
+        // bool testPassed = false;
 
-                Vector3 arrivalPosition;
-                std::copy( arrivalState.begin( ),
-                           arrivalState.begin( ) + 3,
-                           arrivalPosition.begin( ) );
+        // Eci propagatedStateEci = sgp4Check.FindPosition( 0.0 );
+        // Vector6 propagatedState;
+        // propagatedState[ astro::xPositionIndex ] = propagatedStateEci.Position( ).x;
+        // propagatedState[ astro::yPositionIndex ] = propagatedStateEci.Position( ).y;
+        // propagatedState[ astro::zPositionIndex ] = propagatedStateEci.Position( ).z;
+        // propagatedState[ astro::xVelocityIndex ] = propagatedStateEci.Velocity( ).x;
+        // propagatedState[ astro::yVelocityIndex ] = propagatedStateEci.Velocity( ).y;
+        // propagatedState[ astro::zVelocityIndex ] = propagatedStateEci.Velocity( ).z;
 
-                Vector3 arrivalVelocity;
-                std::copy( arrivalState.begin( ) + 3,
-                           arrivalState.end( ),
-                           arrivalVelocity.begin( ) );
-                const Vector6 arrivalStateKepler
-                    = astro::convertCartesianToKeplerianElements( arrivalState,
-                                                                  earthGravitationalParameter );
+        // Vector6 trueDepartureState;
+        // for ( int i = 0; i < 6; i++ )
+        // {
+        //     trueDepartureState[ i ] = transferDepartureState[ i ];
+        // }
 
-                kep_toolbox::lambert_problem targeter( departurePosition,
-                                                       arrivalPosition,
-                                                       timeOfFlight,
-                                                       earthGravitationalParameter,
-                                                       !input.isPrograde,
-                                                       input.revolutionsMaximum );
+        // testPassed = executeVirtualTleConvergenceTest( propagatedState,
+        //                                                trueDepartureState,
+        //                                                input.relativeTolerance,
+        //                                                input.absoluteTolerance );
 
-                const int numberOfSolutions = targeter.get_v1( ).size( );
+        // if ( testPassed == false )
+        // {
+        //     // Bind zeroes to atomQuery.
+        //     std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
+        //     SQLite::Statement zeroQuery( database, bindZeroes );
+        //     zeroQuery.executeStep( );
+        //     zeroQuery.reset( );
 
-                // Compute Delta-Vs for transfer and determine index of lowest.
-                typedef std::vector< Vector3 > VelocityList;
-                VelocityList departureDeltaVs( numberOfSolutions );
-                VelocityList arrivalDeltaVs( numberOfSolutions );
+        //     ++virtualTleFailCounter;
+        //     ++showProgress;
+        //     continue;
+        // }
 
-                typedef std::vector< double > TransferDeltaVList;
-                TransferDeltaVList transferDeltaVs( numberOfSolutions );
+        // // Propagate transfer object using the SGP4 propagator.
+        // const SGP4 sgp4( transferTle );
+        // DateTime sgp4ArrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
+        // Vector eciPosition = Vector( );
+        // Vector eciVelocity = Vector( );
+        // Eci sgp4ArrivalStateEci( sgp4ArrivalEpoch, eciPosition, eciVelocity );
+        // try
+        // {
+        //     sgp4ArrivalStateEci = sgp4.FindPosition( sgp4ArrivalEpoch );
+        // }
+        // catch( std::exception& sgp4PropagationError )
+        // {
+        //     // Bind zeroes to atomQuery.
+        //     std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
+        //     SQLite::Statement zeroQuery( database, bindZeroes );
+        //     zeroQuery.executeStep( );
+        //     zeroQuery.reset( );
 
-                for ( int i = 0; i < numberOfSolutions; i++ )
-                {
-                    // Compute Delta-V for transfer.
-                    const Vector3 transferDepartureVelocity = targeter.get_v1( )[ i ];
-                    const Vector3 transferArrivalVelocity = targeter.get_v2( )[ i ];
+        //     ++arrivalEpochPropagationFailCounter;
+        //     ++showProgress;
+        //     continue;
+        // }
 
-                    departureDeltaVs[ i ] = sml::add( transferDepartureVelocity,
-                                                      sml::multiply( departureVelocity, -1.0 ) );
-                    arrivalDeltaVs[ i ]   = sml::add( transferArrivalVelocity,
-                                                      sml::multiply( arrivalVelocity, -1.0 ) );
+        // const Vector6 sgp4ArrivalState = getStateVector( sgp4ArrivalStateEci );
 
-                    transferDeltaVs[ i ]
-                        = sml::norm< double >( departureDeltaVs[ i ] )
-                            + sml::norm< double >( arrivalDeltaVs[ i ] );
-                }
+        // // Compute the required results.
+        // const double sgp4ArrivalPositionX = sgp4ArrivalState[ astro::xPositionIndex ];
+        // const double sgp4ArrivalPositionY = sgp4ArrivalState[ astro::yPositionIndex ];
+        // const double sgp4ArrivalPositionZ = sgp4ArrivalState[ astro::zPositionIndex ];
 
-                const TransferDeltaVList::iterator minimumDeltaVIterator
-                    = std::min_element( transferDeltaVs.begin( ), transferDeltaVs.end( ) );
-                const int minimumDeltaVIndex
-                    = std::distance( transferDeltaVs.begin( ), minimumDeltaVIterator );
+        // const double sgp4ArrivalVelocityX = sgp4ArrivalState[ astro::xVelocityIndex ];
+        // const double sgp4ArrivalVelocityY = sgp4ArrivalState[ astro::yVelocityIndex ];
+        // const double sgp4ArrivalVelocityZ = sgp4ArrivalState[ astro::zVelocityIndex ];
 
-                const int revolutions = std::floor( ( minimumDeltaVIndex + 1 ) / 2 );
+        // const double arrivalPositionErrorX = sgp4ArrivalPositionX - lambertArrivalPositionX;
+        // const double arrivalPositionErrorY = sgp4ArrivalPositionY - lambertArrivalPositionY;
+        // const double arrivalPositionErrorZ = sgp4ArrivalPositionZ - lambertArrivalPositionZ;
 
-                Vector6 transferState;
-                std::copy( departurePosition.begin( ),
-                           departurePosition.begin( ) + 3,
-                           transferState.begin( ) );
-                std::copy( targeter.get_v1( )[ minimumDeltaVIndex ].begin( ),
-                           targeter.get_v1( )[ minimumDeltaVIndex ].begin( ) + 3,
-                           transferState.begin( ) + 3 );
+        // Vector3 positionError;
+        // positionError[ astro::xPositionIndex ] = arrivalPositionErrorX;
+        // positionError[ astro::yPositionIndex ] = arrivalPositionErrorY;
+        // positionError[ astro::zPositionIndex ] = arrivalPositionErrorZ;
+        // const double arrivalPositionErrorNorm = sml::norm< double >( positionError );
 
-                const Vector6 transferStateKepler
-                    = astro::convertCartesianToKeplerianElements( transferState,
-                                                                  earthGravitationalParameter );
+        // const double arrivalVelocityErrorX = sgp4ArrivalVelocityX -
+        //                                     ( lambertArrivalVelocityX - lambertArrivalDeltaVX );
+        // const double arrivalVelocityErrorY = sgp4ArrivalVelocityY -
+        //                                     ( lambertArrivalVelocityY - lambertArrivalDeltaVY );
+        // const double arrivalVelocityErrorZ = sgp4ArrivalVelocityZ -
+        //                                     ( lambertArrivalVelocityZ - lambertArrivalDeltaVZ );
 
-                // Bind values to SQL insert query.
-                query.bind( ":departure_object_id",  departureObjectId );
-                query.bind( ":arrival_object_id",    arrivalObjectId );
-                query.bind( ":departure_epoch",      departureEpoch.ToJulian( ) );
-                query.bind( ":time_of_flight",       timeOfFlight );
-                query.bind( ":revolutions",          revolutions );
-                query.bind( ":prograde",             input.isPrograde );
-                query.bind( ":departure_position_x", departureState[ astro::xPositionIndex ] );
-                query.bind( ":departure_position_y", departureState[ astro::yPositionIndex ] );
-                query.bind( ":departure_position_z", departureState[ astro::zPositionIndex ] );
-                query.bind( ":departure_velocity_x", departureState[ astro::xVelocityIndex ] );
-                query.bind( ":departure_velocity_y", departureState[ astro::yVelocityIndex ] );
-                query.bind( ":departure_velocity_z", departureState[ astro::zVelocityIndex ] );
-                query.bind( ":departure_semi_major_axis",
-                    departureStateKepler[ astro::semiMajorAxisIndex ] );
-                query.bind( ":departure_eccentricity",
-                    departureStateKepler[ astro::eccentricityIndex ] );
-                query.bind( ":departure_inclination",
-                    departureStateKepler[ astro::inclinationIndex ] );
-                query.bind( ":departure_argument_of_periapsis",
-                    departureStateKepler[ astro::argumentOfPeriapsisIndex ] );
-                query.bind( ":departure_longitude_of_ascending_node",
-                    departureStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
-                query.bind( ":departure_true_anomaly",
-                    departureStateKepler[ astro::trueAnomalyIndex ] );
-                query.bind( ":arrival_position_x",  arrivalState[ astro::xPositionIndex ] );
-                query.bind( ":arrival_position_y",  arrivalState[ astro::yPositionIndex ] );
-                query.bind( ":arrival_position_z",  arrivalState[ astro::zPositionIndex ] );
-                query.bind( ":arrival_velocity_x",  arrivalState[ astro::xVelocityIndex ] );
-                query.bind( ":arrival_velocity_y",  arrivalState[ astro::yVelocityIndex ] );
-                query.bind( ":arrival_velocity_z",  arrivalState[ astro::zVelocityIndex ] );
-                query.bind( ":arrival_semi_major_axis",
-                    arrivalStateKepler[ astro::semiMajorAxisIndex ] );
-                query.bind( ":arrival_eccentricity",
-                    arrivalStateKepler[ astro::eccentricityIndex ] );
-                query.bind( ":arrival_inclination",
-                    arrivalStateKepler[ astro::inclinationIndex ] );
-                query.bind( ":arrival_argument_of_periapsis",
-                    arrivalStateKepler[ astro::argumentOfPeriapsisIndex ] );
-                query.bind( ":arrival_longitude_of_ascending_node",
-                    arrivalStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
-                query.bind( ":arrival_true_anomaly",
-                    arrivalStateKepler[ astro::trueAnomalyIndex ] );
-                query.bind( ":transfer_semi_major_axis",
-                    transferStateKepler[ astro::semiMajorAxisIndex ] );
-                query.bind( ":transfer_eccentricity",
-                    transferStateKepler[ astro::eccentricityIndex ] );
-                query.bind( ":transfer_inclination",
-                    transferStateKepler[ astro::inclinationIndex ] );
-                query.bind( ":transfer_argument_of_periapsis",
-                    transferStateKepler[ astro::argumentOfPeriapsisIndex ] );
-                query.bind( ":transfer_longitude_of_ascending_node",
-                    transferStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
-                query.bind( ":transfer_true_anomaly",
-                    transferStateKepler[ astro::trueAnomalyIndex ] );
-                query.bind( ":departure_delta_v_x", departureDeltaVs[ minimumDeltaVIndex ][ 0 ] );
-                query.bind( ":departure_delta_v_y", departureDeltaVs[ minimumDeltaVIndex ][ 1 ] );
-                query.bind( ":departure_delta_v_z", departureDeltaVs[ minimumDeltaVIndex ][ 2 ] );
-                query.bind( ":arrival_delta_v_x",   arrivalDeltaVs[ minimumDeltaVIndex ][ 0 ] );
-                query.bind( ":arrival_delta_v_y",   arrivalDeltaVs[ minimumDeltaVIndex ][ 1 ] );
-                query.bind( ":arrival_delta_v_z",   arrivalDeltaVs[ minimumDeltaVIndex ][ 2 ] );
-                query.bind( ":transfer_delta_v",    *minimumDeltaVIterator );
+        // Vector3 velocityError;
+        // velocityError[ 0 ] = arrivalVelocityErrorX;
+        // velocityError[ 1 ] = arrivalVelocityErrorY;
+        // velocityError[ 2 ] = arrivalVelocityErrorZ;
+        // double arrivalVelocityErrorNorm = sml::norm< double >( velocityError );
+        // int lambertTransferId = 37;
+        // Bind computed values to atomQuery.
+        atomQuery.bind( ":departure_object_id",                   lambertTransferId );
+        // atomQuery.bind( ":arrival_position_x",                    sgp4ArrivalPositionX );
+        // atomQuery.bind( ":arrival_position_y",                    sgp4ArrivalPositionY );
+        // atomQuery.bind( ":arrival_position_z",                    sgp4ArrivalPositionZ );
+        // atomQuery.bind( ":arrival_velocity_x",                    sgp4ArrivalVelocityX );
+        // atomQuery.bind( ":arrival_velocity_y",                    sgp4ArrivalVelocityY );
+        // atomQuery.bind( ":arrival_velocity_z",                    sgp4ArrivalVelocityZ );
+        // atomQuery.bind( ":arrival_position_x_error",              arrivalPositionErrorX );
+        // atomQuery.bind( ":arrival_position_y_error",              arrivalPositionErrorY );
+        // atomQuery.bind( ":arrival_position_z_error",              arrivalPositionErrorZ );
+        // atomQuery.bind( ":arrival_position_error",                arrivalPositionErrorNorm );
+        // atomQuery.bind( ":arrival_velocity_x_error",              arrivalVelocityErrorX );
+        // atomQuery.bind( ":arrival_velocity_y_error",              arrivalVelocityErrorY );
+        // atomQuery.bind( ":arrival_velocity_z_error",              arrivalVelocityErrorZ );
+        // atomQuery.bind( ":arrival_velocity_error",                arrivalVelocityErrorNorm );
+        // atomQuery.bind( ":success",                               1 );
 
-                // Execute insert query.
-                query.executeStep( );
-
-                // Reset SQL insert query.
-                query.reset( );
-            }
-        }
+        atomQuery.executeStep( );
+        atomQuery.reset( );
 
         ++showProgress;
     }
+
+    // Fetch number of rows in sgp4_scanner_results table.
+    // std::ostringstream sgp4ScannerTableSizeSelect;
+    // sgp4ScannerTableSizeSelect << "SELECT COUNT(*) FROM sgp4_scanner_results;";
+    // const int sgp4ScannertTableSize
+    //     = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
+
+    // std::ostringstream totalLambertCasesConsideredSelect;
+    // totalLambertCasesConsideredSelect
+    //     << "SELECT COUNT(*) FROM lambert_scanner_results WHERE transfer_delta_v <= "
+    //     << input.transferDeltaVCutoff << ";";
+    // const int totalLambertCasesConsidered
+    //     = database.execAndGet( totalLambertCasesConsideredSelect.str( ) );
+
+    // std::cout << std::endl;
+    // std::cout << "Total Lambert cases = " << lambertScannertTableSize << std::endl;
+    // std::cout << "Total SGP4 cases = " << sgp4ScannertTableSize << std::endl;
+    // std::cout << std::endl;
+    // std::cout << "Number of Lambert cases considered with the transfer deltaV cut-off = "
+    //           << totalLambertCasesConsidered << std::endl;
+    // std::cout << "Number of virtual TLE convergence fail cases = "
+    //           << virtualTleFailCounter << std::endl;
+    // std::cout << "Number of arrival epoch propagation fail cases = "
+    //           << arrivalEpochPropagationFailCounter << std::endl;
 
     // Commit transaction.
     transaction.commit( );
@@ -373,115 +395,35 @@ void executeAtomScanner( const rapidjson::Document& config )
 //! Check atom_scanner input parameters.
 AtomScannerInput checkAtomScannerInput( const rapidjson::Document& config )
 {
-    const std::string catalogPath = find( config, "catalog" )->value.GetString( );
-    std::cout << "Catalog                       " << catalogPath << std::endl;
+    const double transferDeltaVCutoff
+        = find( config, "transfer_deltav_cutoff" )->value.GetDouble( );
+    std::cout << "Transfer deltaV cut-off         " << transferDeltaVCutoff << std::endl;
+
+    const double relativeTolerance = find( config, "relative_tolerance" )->value.GetDouble( );
+    std::cout << "Relative tolerance              " << relativeTolerance << std::endl;
+
+    const double absoluteTolerance = find( config, "absolute_tolerance" )->value.GetDouble( );
+    std::cout << "Absolute tolerance              " << absoluteTolerance << std::endl;
 
     const std::string databasePath = find( config, "database" )->value.GetString( );
-    std::cout << "Database                      " << databasePath << std::endl;
-
-    const ConfigIterator departureEpochIterator = find( config, "departure_epoch" );
-    std::map< std::string, int > departureEpochElements;
-    if ( departureEpochIterator->value.Size( ) == 0 )
-    {
-        DateTime dummyEpoch;
-        departureEpochElements[ "year" ]    = dummyEpoch.Year( );
-        departureEpochElements[ "month" ]   = dummyEpoch.Month( );
-        departureEpochElements[ "day" ]     = dummyEpoch.Day( );
-        departureEpochElements[ "hours" ]   = dummyEpoch.Hour( );
-        departureEpochElements[ "minutes" ] = dummyEpoch.Minute( );
-        departureEpochElements[ "seconds" ] = dummyEpoch.Second( );
-    }
-
-    else
-    {
-        departureEpochElements[ "year" ]    = departureEpochIterator->value[ 0 ].GetInt( );
-        departureEpochElements[ "month" ]   = departureEpochIterator->value[ 1 ].GetInt( );
-        departureEpochElements[ "day" ]     = departureEpochIterator->value[ 2 ].GetInt( );
-
-        if ( departureEpochIterator->value.Size( ) > 3 )
-        {
-            departureEpochElements[ "hours" ] = departureEpochIterator->value[ 3 ].GetInt( );
-
-            if ( departureEpochIterator->value.Size( ) > 4 )
-            {
-                departureEpochElements[ "minutes" ] = departureEpochIterator->value[ 4 ].GetInt( );
-
-                if ( departureEpochIterator->value.Size( ) > 5 )
-                {
-                    departureEpochElements[ "seconds" ]
-                        = departureEpochIterator->value[ 5 ].GetInt( );
-                }
-            }
-        }
-    }
-
-    const DateTime departureEpoch( departureEpochElements[ "year" ],
-                                   departureEpochElements[ "month" ],
-                                   departureEpochElements[ "day" ],
-                                   departureEpochElements[ "hours" ],
-                                   departureEpochElements[ "minutes" ],
-                                   departureEpochElements[ "seconds" ] );
-
-    if ( departureEpochIterator->value.Size( ) == 0 )
-    {
-        std::cout << "Departure epoch               TLE epoch" << std::endl;
-    }
-
-    else
-    {
-        std::cout << "Departure epoch               " << departureEpoch << std::endl;
-    }
-
-    const double timeOfFlightMinimum
-        = find( config, "time_of_flight_grid" )->value[ 0 ].GetDouble( );
-    std::cout << "Minimum Time-of-Flight        " << timeOfFlightMinimum << std::endl;
-    const double timeOfFlightMaximum
-        = find( config, "time_of_flight_grid" )->value[ 1 ].GetDouble( );
-    std::cout << "Maximum Time-of-Flight        " << timeOfFlightMaximum << std::endl;
-
-    if ( timeOfFlightMinimum > timeOfFlightMaximum )
-    {
-        throw std::runtime_error( "ERROR: Maximum time-of-flight must be larger than minimum!" );
-    }
-
-    const double timeOfFlightSteps
-        = find( config, "time_of_flight_grid" )->value[ 2 ].GetDouble( );
-    std::cout << "# Time-of-Flight steps        " << timeOfFlightSteps << std::endl;
-
-    const bool isPrograde = find( config, "is_prograde" )->value.GetBool( );
-    if ( isPrograde )
-    {
-        std::cout << "Prograde transfer?            true" << std::endl;
-    }
-    else
-    {
-        std::cout << "Prograde transfer?            false" << std::endl;
-    }
-
-    const int revolutionsMaximum = find( config, "revolutions_maximum" )->value.GetInt( );
-    std::cout << "Maximum revolutions           " << revolutionsMaximum << std::endl;
+    std::cout << "Database                        " << databasePath << std::endl;
 
     const int shortlistLength = find( config, "shortlist" )->value[ 0 ].GetInt( );
-    std::cout << "# of shortlist transfers      " << shortlistLength << std::endl;
+    std::cout << "# of shortlist transfers        " << shortlistLength << std::endl;
 
     std::string shortlistPath = "";
     if ( shortlistLength > 0 )
     {
         shortlistPath = find( config, "shortlist" )->value[ 1 ].GetString( );
-        std::cout << "Shortlist                     " << shortlistPath << std::endl;
+        std::cout << "Shortlist                       " << shortlistPath << std::endl;
     }
 
-    return AtomScannerInput( catalogPath,
-                                databasePath,
-                                departureEpoch,
-                                timeOfFlightMinimum,
-                                timeOfFlightMaximum,
-                                timeOfFlightSteps,
-                                ( timeOfFlightMaximum - timeOfFlightMinimum ) / timeOfFlightSteps,
-                                isPrograde,
-                                revolutionsMaximum,
-                                shortlistLength,
-                                shortlistPath );
+    return AtomScannerInput(  transferDeltaVCutoff,
+                             relativeTolerance,
+                             absoluteTolerance,
+                             databasePath,
+                             shortlistLength,
+                             shortlistPath );
 }
 
 //! Create atom_scanner table.
@@ -554,6 +496,33 @@ void createAtomScannerTable( SQLite::Database& database )
     {
         throw std::runtime_error( "ERROR: Creating table 'atom_scanner_results' failed!" );
     }
+}
+
+//! Bind zeroes into sgp4_scanner_results table.
+std::string bindZeroesAtomScannerTable( const int lambertTransferId )
+{
+    std::ostringstream zeroEntry;
+    zeroEntry << "INSERT INTO atom_scanner_results VALUES ("
+              << "NULL"                          << ","
+              << lambertTransferId               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0                               << ","
+              << 0
+              << ");";
+
+    return zeroEntry.str( );
 }
 
 //! Write transfer shortlist to file.
@@ -717,3 +686,246 @@ void writeAtomTransferShortlist( SQLite::Database& database,
 }
 
 } // namespace d2d
+
+// // Create sgp4_scanner_results table in SQLite database.
+//     std::cout << "Creating SQLite database table if needed ... " << std::endl;
+//     createSGP4ScannerTable( database );
+//     std::cout << "SQLite database set up successfully!" << std::endl;
+
+
+
+
+//     // Open database in read/write mode.
+//     SQLite::Database database( input.databasePath.c_str( ),
+//                                SQLITE_OPEN_READWRITE|SQLITE_OPEN_CREATE );
+// // Parse catalog and store TLE objects.
+    // std::ifstream catalogFile( input.catalogPath.c_str( ) );
+    // std::string catalogLine;
+
+    // // Check if catalog is 2-line or 3-line version.
+    // std::getline( catalogFile, catalogLine );
+    // const int tleLines = getTleCatalogType( catalogLine );
+
+    // // Reset file stream to start of file.
+    // catalogFile.seekg( 0, std::ios::beg );
+
+    // typedef std::vector< std::string > TleStrings;
+    // typedef std::vector< Tle > TleObjects;
+    // TleObjects tleObjects;
+
+    // while ( std::getline( catalogFile, catalogLine ) )
+    // {
+    //     TleStrings tleStrings;
+    //     removeNewline( catalogLine );
+    //     tleStrings.push_back( catalogLine );
+    //     std::getline( catalogFile, catalogLine );
+    //     removeNewline( catalogLine );
+    //     tleStrings.push_back( catalogLine );
+
+    //     if ( tleLines == 3 )
+    //     {
+    //         std::getline( catalogFile, catalogLine );
+    //         removeNewline( catalogLine );
+    //         tleStrings.push_back( catalogLine );
+    //         tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ], tleStrings[ 2 ] ) );
+    //     }
+
+    //     else if ( tleLines == 2 )
+    //     {
+    //         tleObjects.push_back( Tle( tleStrings[ 0 ], tleStrings[ 1 ] ) );
+    //     }
+    // }
+
+    // catalogFile.close( );
+    // std::cout << tleObjects.size( ) << " TLE objects parsed from catalog!" << std::endl;
+
+
+
+        // // Compute departure state.
+        // Tle departureObject = tleObjects[ i ];
+        // SGP4 sgp4Departure( departureObject );
+
+        // DateTime departureEpoch = input.departureEpoch;
+        // if ( input.departureEpoch == DateTime( ) )
+        // {
+        //     departureEpoch = departureObject.Epoch( );
+        // }
+
+        // const Eci tleDepartureState = sgp4Departure.FindPosition( departureEpoch );
+        // const Vector6 departureState = getStateVector( tleDepartureState );
+
+        // Vector3 departurePosition;
+        // std::copy( departureState.begin( ),
+        //            departureState.begin( ) + 3,
+        //            departurePosition.begin( ) );
+
+        // Vector3 departureVelocity;
+        // std::copy( departureState.begin( ) + 3,
+        //            departureState.end( ),
+        //            departureVelocity.begin( ) );
+
+        // const Vector6 departureStateKepler
+        //     = astro::convertCartesianToKeplerianElements( departureState,
+        //                                                   earthGravitationalParameter );
+        // const int departureObjectId = static_cast< int >( departureObject.NoradNumber( ) );
+
+        // // Loop over arrival objects.
+        // for ( unsigned int j = 0; j < tleObjects.size( ); j++ )
+        // {
+        //     // Skip the case of the departure and arrival objects being the same.
+        //     if ( i == j )
+        //     {
+        //         continue;
+        //     }
+
+        //     Tle arrivalObject = tleObjects[ j ];
+        //     SGP4 sgp4Arrival( arrivalObject );
+        //     const int arrivalObjectId = static_cast< int >( arrivalObject.NoradNumber( ) );
+
+        //     // Loop over time-of-flight grid.
+        //     for ( int k = 0; k < input.timeOfFlightSteps; k++ )
+        //     {
+        //         const double timeOfFlight
+        //             = input.timeOfFlightMinimum + k * input.timeOfFlightStepSize;
+
+        //         const DateTime arrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
+        //         const Eci tleArrivalState   = sgp4Arrival.FindPosition( arrivalEpoch );
+        //         const Vector6 arrivalState  = getStateVector( tleArrivalState );
+
+        //         Vector3 arrivalPosition;
+        //         std::copy( arrivalState.begin( ),
+        //                    arrivalState.begin( ) + 3,
+        //                    arrivalPosition.begin( ) );
+
+        //         Vector3 arrivalVelocity;
+        //         std::copy( arrivalState.begin( ) + 3,
+        //                    arrivalState.end( ),
+        //                    arrivalVelocity.begin( ) );
+        //         const Vector6 arrivalStateKepler
+        //             = astro::convertCartesianToKeplerianElements( arrivalState,
+        //                                                           earthGravitationalParameter );
+
+        //         kep_toolbox::lambert_problem targeter( departurePosition,
+        //                                                arrivalPosition,
+        //                                                timeOfFlight,
+        //                                                earthGravitationalParameter,
+        //                                                !input.isPrograde,
+        //                                                input.revolutionsMaximum );
+
+        //         const int numberOfSolutions = targeter.get_v1( ).size( );
+
+        //         // Compute Delta-Vs for transfer and determine index of lowest.
+        //         typedef std::vector< Vector3 > VelocityList;
+        //         VelocityList departureDeltaVs( numberOfSolutions );
+        //         VelocityList arrivalDeltaVs( numberOfSolutions );
+
+        //         typedef std::vector< double > TransferDeltaVList;
+        //         TransferDeltaVList transferDeltaVs( numberOfSolutions );
+
+        //         for ( int i = 0; i < numberOfSolutions; i++ )
+        //         {
+        //             // Compute Delta-V for transfer.
+        //             const Vector3 transferDepartureVelocity = targeter.get_v1( )[ i ];
+        //             const Vector3 transferArrivalVelocity = targeter.get_v2( )[ i ];
+
+        //             departureDeltaVs[ i ] = sml::add( transferDepartureVelocity,
+        //                                               sml::multiply( departureVelocity, -1.0 ) );
+        //             arrivalDeltaVs[ i ]   = sml::add( transferArrivalVelocity,
+        //                                               sml::multiply( arrivalVelocity, -1.0 ) );
+
+        //             transferDeltaVs[ i ]
+        //                 = sml::norm< double >( departureDeltaVs[ i ] )
+        //                     + sml::norm< double >( arrivalDeltaVs[ i ] );
+        //         }
+
+        //         const TransferDeltaVList::iterator minimumDeltaVIterator
+        //             = std::min_element( transferDeltaVs.begin( ), transferDeltaVs.end( ) );
+        //         const int minimumDeltaVIndex
+        //             = std::distance( transferDeltaVs.begin( ), minimumDeltaVIterator );
+
+        //         const int revolutions = std::floor( ( minimumDeltaVIndex + 1 ) / 2 );
+
+        //         Vector6 transferState;
+        //         std::copy( departurePosition.begin( ),
+        //                    departurePosition.begin( ) + 3,
+        //                    transferState.begin( ) );
+        //         std::copy( targeter.get_v1( )[ minimumDeltaVIndex ].begin( ),
+        //                    targeter.get_v1( )[ minimumDeltaVIndex ].begin( ) + 3,
+        //                    transferState.begin( ) + 3 );
+
+        //         const Vector6 transferStateKepler
+        //             = astro::convertCartesianToKeplerianElements( transferState,
+        //                                                           earthGravitationalParameter );
+
+        //         // Bind values to SQL insert query.
+        //         atomQuery.bind( ":departure_object_id",  departureObjectId );
+        //         atomQuery.bind( ":arrival_object_id",    arrivalObjectId );
+        //         atomQuery.bind( ":departure_epoch",      departureEpoch.ToJulian( ) );
+        //         atomQuery.bind( ":time_of_flight",       timeOfFlight );
+        //         atomQuery.bind( ":revolutions",          revolutions );
+        //         atomQuery.bind( ":prograde",             input.isPrograde );
+        //         atomQuery.bind( ":departure_position_x", departureState[ astro::xPositionIndex ] );
+        //         atomQuery.bind( ":departure_position_y", departureState[ astro::yPositionIndex ] );
+        //         atomQuery.bind( ":departure_position_z", departureState[ astro::zPositionIndex ] );
+        //         atomQuery.bind( ":departure_velocity_x", departureState[ astro::xVelocityIndex ] );
+        //         atomQuery.bind( ":departure_velocity_y", departureState[ astro::yVelocityIndex ] );
+        //         atomQuery.bind( ":departure_velocity_z", departureState[ astro::zVelocityIndex ] );
+        //         atomQuery.bind( ":departure_semi_major_axis",
+        //             departureStateKepler[ astro::semiMajorAxisIndex ] );
+        //         atomQuery.bind( ":departure_eccentricity",
+        //             departureStateKepler[ astro::eccentricityIndex ] );
+        //         atomQuery.bind( ":departure_inclination",
+        //             departureStateKepler[ astro::inclinationIndex ] );
+        //         atomQuery.bind( ":departure_argument_of_periapsis",
+        //             departureStateKepler[ astro::argumentOfPeriapsisIndex ] );
+        //         atomQuery.bind( ":departure_longitude_of_ascending_node",
+        //             departureStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
+        //         atomQuery.bind( ":departure_true_anomaly",
+        //             departureStateKepler[ astro::trueAnomalyIndex ] );
+        //         atomQuery.bind( ":arrival_position_x",  arrivalState[ astro::xPositionIndex ] );
+        //         atomQuery.bind( ":arrival_position_y",  arrivalState[ astro::yPositionIndex ] );
+        //         atomQuery.bind( ":arrival_position_z",  arrivalState[ astro::zPositionIndex ] );
+        //         atomQuery.bind( ":arrival_velocity_x",  arrivalState[ astro::xVelocityIndex ] );
+        //         atomQuery.bind( ":arrival_velocity_y",  arrivalState[ astro::yVelocityIndex ] );
+        //         atomQuery.bind( ":arrival_velocity_z",  arrivalState[ astro::zVelocityIndex ] );
+        //         atomQuery.bind( ":arrival_semi_major_axis",
+        //             arrivalStateKepler[ astro::semiMajorAxisIndex ] );
+        //         atomQuery.bind( ":arrival_eccentricity",
+        //             arrivalStateKepler[ astro::eccentricityIndex ] );
+        //         atomQuery.bind( ":arrival_inclination",
+        //             arrivalStateKepler[ astro::inclinationIndex ] );
+        //         atomQuery.bind( ":arrival_argument_of_periapsis",
+        //             arrivalStateKepler[ astro::argumentOfPeriapsisIndex ] );
+        //         atomQuery.bind( ":arrival_longitude_of_ascending_node",
+        //             arrivalStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
+        //         atomQuery.bind( ":arrival_true_anomaly",
+        //             arrivalStateKepler[ astro::trueAnomalyIndex ] );
+        //         atomQuery.bind( ":transfer_semi_major_axis",
+        //             transferStateKepler[ astro::semiMajorAxisIndex ] );
+        //         atomQuery.bind( ":transfer_eccentricity",
+        //             transferStateKepler[ astro::eccentricityIndex ] );
+        //         atomQuery.bind( ":transfer_inclination",
+        //             transferStateKepler[ astro::inclinationIndex ] );
+        //         atomQuery.bind( ":transfer_argument_of_periapsis",
+        //             transferStateKepler[ astro::argumentOfPeriapsisIndex ] );
+        //         atomQuery.bind( ":transfer_longitude_of_ascending_node",
+        //             transferStateKepler[ astro::longitudeOfAscendingNodeIndex ] );
+        //         atomQuery.bind( ":transfer_true_anomaly",
+        //             transferStateKepler[ astro::trueAnomalyIndex ] );
+        //         atomQuery.bind( ":departure_delta_v_x", departureDeltaVs[ minimumDeltaVIndex ][ 0 ] );
+        //         atomQuery.bind( ":departure_delta_v_y", departureDeltaVs[ minimumDeltaVIndex ][ 1 ] );
+        //         atomQuery.bind( ":departure_delta_v_z", departureDeltaVs[ minimumDeltaVIndex ][ 2 ] );
+        //         atomQuery.bind( ":arrival_delta_v_x",   arrivalDeltaVs[ minimumDeltaVIndex ][ 0 ] );
+        //         atomQuery.bind( ":arrival_delta_v_y",   arrivalDeltaVs[ minimumDeltaVIndex ][ 1 ] );
+        //         atomQuery.bind( ":arrival_delta_v_z",   arrivalDeltaVs[ minimumDeltaVIndex ][ 2 ] );
+        //         atomQuery.bind( ":transfer_delta_v",    *minimumDeltaVIterator );
+
+        //         // Execute insert query.
+        //         atomQuery.executeStep( );
+
+        //         // Reset SQL insert query.
+        //         atomQuery.reset( );
+        //     }
+        // }
+
+

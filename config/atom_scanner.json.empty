@@ -6,31 +6,21 @@
 {
     "mode"                      : "atom_scanner",
 
-    // Set path to TLE catalog file.
-    "catalog"                   : "../data/catalog/test_catalog.txt",
-
     // Set path to output database (SQLite).
-    // WARNING: if the database file already exists, it will be overwritten!
+    // The database file must already exist have a table called "lambert_scanner_results"
+    // and new data will be store in a table called "atom_scanner_results".
     "database"                  : "../data/test_atom_scanner_catalog.db",
 
-    // Set departure epoch for transfers (common to all transfers computed).
-    // Format: [year,month,day,hours,minutes,seconds] (all elements in the array must be integers)/
-    // The elements year, month and day are required. The others are optional but must be included
-    // from left to right.
-    // If departure_epoch array is left empty, the TLE epoch for the departure object is assumed.
-    "departure_epoch"           : [],
+    // Set transfer deltaV cut-off in km/s.
+    // The atom_scanner will only consider the cases from the lambert_scanner_results table where
+    // the total transfer deltaV is less than or equal to the transfer deltaV cut-off given here.
+    "transfer_deltav_cutoff"    : ,
 
-    // Set time-of-flight grid: [min (s), max (s), # of steps].
-    "time_of_flight_grid"       : [,,],
+    // Set relative and absolute tolerances for the Cartesian-to-TLE conversion function.
+    // Default: relative tolerance = 1e-8, absolute tolerance = 1e-10
+    "relative_tolerance"        : 1e-8,
+    "absolute_tolerance"        : 1e-10,
 
-    // Set flag indicating if transfers are prograde. If set to false, retrograde transfers are
-    // computed.
-    // N.B.: Since SQLite doesn't have a boolean type, the flag is stored as an integer
-    // (0=false, 1=true)
-    "is_prograde"               : ,
-
-    // Set maximum number of transfer revolutions (N).
-    "revolutions_maximum"       : ,
 
     // Set number of transfers to include in shortlist and absolute path to output file [N, file].
     // The shortlist is based on the N transfers specified with the lowest transfers Delta-V.

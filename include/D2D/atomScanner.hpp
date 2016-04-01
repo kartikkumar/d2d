@@ -51,72 +51,41 @@ public:
     /*!
      * Constructs data struct based on verified input parameters.
      *
-     * @sa checkAtomScannerInput, executeAtomScanner
-     * @param[in] aCatalogPath          Path to TLE catalog
-     * @param[in] aDatabasePath         Path to SQLite database
-     * @param[in] aDepartureEpoch       Departure epoch for all transfers
-     * @param[in] aTimeOfFlightMinimum  Minimum time-of-flight [s]
-     * @param[in] aTimeOfFlightMaximum  Maximum time-of-flight [s]
-     * @param[in] someTimeOfFlightSteps Number of steps to take in time-of-flight grid
-     * @param[in] aTimeOfFlightStepSize Time-of-flight step size (derived parameter) [s]
-     * @param[in] progradeFlag          Flag indicating if prograde transfer should be computed
-     *                                  (false = retrograde)
-     * @param[in] aRevolutionsMaximum   Maximum number of revolutions
-     * @param[in] aShortlistLength      Number of transfers to include in shortlist
-     * @param[in] aShortlistPath        Path to shortlist file
+     * @sa checkSGP4ScannerInput, executeSGP4Scanner
+     * @param[in] aTransferDeltaVCutoff   Transfer \f$\Delta V\f$ cut-off used by sgp4 scanner
+     * @param[in] aRelativeTolerance      Relative tolerance for Cartesian-to-TLE conversion
+     * @param[in] aAbsoluteTolerance      Absolute tolerance for the Cartesian-to-TLE conversion
+     * @param[in] aDatabasePath           Path to SQLite database
+     * @param[in] aShortlistLength        Number of transfers to include in shortlist
+     * @param[in] aShortlistPath          Path to shortlist file
      */
-    AtomScannerInput( const std::string& aCatalogPath,
-                         const std::string& aDatabasePath,
-                         const DateTime&    aDepartureEpoch,
-                         const double       aTimeOfFlightMinimum,
-                         const double       aTimeOfFlightMaximum,
-                         const double       someTimeOfFlightSteps,
-                         const double       aTimeOfFlightStepSize,
-                         const bool         progradeFlag,
-                         const int          aRevolutionsMaximum,
-                         const int          aShortlistLength,
-                         const std::string& aShortlistPath )
-        : catalogPath( aCatalogPath ),
+    AtomScannerInput( const double       aTransferDeltaVCutoff,
+                      const double       aRelativeTolerance,
+                      const double       aAbsoluteTolerance,
+                      const std::string& aDatabasePath,
+                      const int          aShortlistLength,
+                      const std::string& aShortlistPath )
+        : transferDeltaVCutoff( aTransferDeltaVCutoff ),
+          relativeTolerance( aRelativeTolerance ),
+          absoluteTolerance( aAbsoluteTolerance ),
           databasePath( aDatabasePath ),
-          departureEpoch( aDepartureEpoch ),
-          timeOfFlightMinimum( aTimeOfFlightMinimum ),
-          timeOfFlightMaximum( aTimeOfFlightMaximum ),
-          timeOfFlightSteps( someTimeOfFlightSteps ),
-          timeOfFlightStepSize( aTimeOfFlightStepSize ),
-          isPrograde( progradeFlag ),
-          revolutionsMaximum( aRevolutionsMaximum ),
           shortlistLength( aShortlistLength ),
           shortlistPath( aShortlistPath )
     { }
 
-    //! Path to TLE catalog.
-    const std::string catalogPath;
+    //! Transfer \f$\Delta V\f$ cut-off used by sgp4_scanner.
+    const double transferDeltaVCutoff;
+
+    //! Relative tolerance for Cartesian-to-TLE conversion function.
+    const double relativeTolerance;
+
+    //! Absolute tolerance for Cartesian-to-TLE conversion function.
+    const double absoluteTolerance;
 
     //! Path to SQLite database to store output.
     const std::string databasePath;
 
-    //! Departure epoch.
-    const DateTime departureEpoch;
-
-    //! Minimum time-of-flight [s].
-    const double timeOfFlightMinimum;
-
-    //! Maximum time-of-flight [s].
-    const double timeOfFlightMaximum;
-
-    //! Number of time-of-flight steps.
-    const double timeOfFlightSteps;
-
-    //! Time-of-flight step size [s].
-    const double timeOfFlightStepSize;
-
-    //! Flag indicating if transfers are prograde. False indicates retrograde.
-    const bool isPrograde;
-
-    //! Maximum number of revolutions (N) for transfer. Number of revolutions is 2*N+1.
-    const int revolutionsMaximum;
-
-    //! Number of entries (lowest transfer \f$\Delta V\f$) to include in shortlist.
+    //! Number of entries (lowest Lambert transfer \f$\Delta V\f$) to include in shortlist.
     const int shortlistLength;
 
     //! Path to shortlist file.
@@ -149,6 +118,16 @@ AtomScannerInput checkAtomScannerInput( const rapidjson::Document& config );
  * @param[in] database SQLite database handle
  */
 void createAtomScannerTable( SQLite::Database& database );
+
+//! Bind zeroes into atom_scanner_results table.
+/*!
+ * Bind zeroes into atom_scanner_results table in SQLite database when the total Lambert transfer
+ * \f$\Delta V\f$ is above a user specified cut-off.
+ *
+ * @sa executeAtomScanner
+ * @param[in] lambertTransferId transfer_id in the lambert_scanner_results table
+ */
+std::string bindZeroesAtomScannerTable( const int lambertTransferId );
 
 //! Write transfer shortlist to file.
 /*!
