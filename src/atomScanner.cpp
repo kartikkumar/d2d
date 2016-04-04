@@ -35,6 +35,10 @@
 namespace d2d
 {
 
+// typedef double Real;
+typedef std::pair< Vector3, Vector3 > Velocities;
+
+
 //! Execute atom_scanner.
 void executeAtomScanner( const rapidjson::Document& config )
 {
@@ -75,7 +79,8 @@ void executeAtomScanner( const rapidjson::Document& config )
 
     // Set up select query to fetch data from lambert_scanner_results table.
     std::ostringstream lambertScannerTableSelect;
-    lambertScannerTableSelect << "SELECT * FROM lambert_scanner_results;";
+    // lambertScannerTableSelect << "SELECT * FROM lambert_scanner_results;";
+    lambertScannerTableSelect << "SELECT * FROM sgp4_scanner_results INNER JOIN lambert_scanner_results ON lambert_scanner_results.transfer_id = sgp4_scanner_results.lambert_transfer_id WHERE sgp4_scanner_results.success=1;";
 
     SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
 
@@ -84,49 +89,49 @@ void executeAtomScanner( const rapidjson::Document& config )
     atomScannerTableInsert
         << "INSERT INTO atom_scanner_results VALUES ("
         << "NULL,"
-        << ":departure_object_id,"
-        << ":arrival_object_id,"
-        << ":departure_epoch,"
-        << ":time_of_flight,"
-        << ":revolutions,"
-        << ":prograde,"
-        << ":departure_position_x,"
-        << ":departure_position_y,"
-        << ":departure_position_z,"
-        << ":departure_velocity_x,"
-        << ":departure_velocity_y,"
-        << ":departure_velocity_z,"
-        << ":departure_semi_major_axis,"
-        << ":departure_eccentricity,"
-        << ":departure_inclination,"
-        << ":departure_argument_of_periapsis,"
-        << ":departure_longitude_of_ascending_node,"
-        << ":departure_true_anomaly,"
-        << ":arrival_position_x,"
-        << ":arrival_position_y,"
-        << ":arrival_position_z,"
-        << ":arrival_velocity_x,"
-        << ":arrival_velocity_y,"
-        << ":arrival_velocity_z,"
-        << ":arrival_semi_major_axis,"
-        << ":arrival_eccentricity,"
-        << ":arrival_inclination,"
-        << ":arrival_argument_of_periapsis,"
-        << ":arrival_longitude_of_ascending_node,"
-        << ":arrival_true_anomaly,"
-        << ":transfer_semi_major_axis,"
-        << ":transfer_eccentricity,"
-        << ":transfer_inclination,"
-        << ":transfer_argument_of_periapsis,"
-        << ":transfer_longitude_of_ascending_node,"
-        << ":transfer_true_anomaly,"
-        << ":departure_delta_v_x,"
-        << ":departure_delta_v_y,"
-        << ":departure_delta_v_z,"
-        << ":arrival_delta_v_x,"
-        << ":arrival_delta_v_y,"
-        << ":arrival_delta_v_z,"
-        << ":transfer_delta_v"
+        << ":lambert_transfer_id,"
+        // << ":arrival_object_id,"
+        // << ":departure_epoch,"
+        // << ":time_of_flight,"
+        // << ":revolutions,"
+        // << ":prograde,"
+        // << ":departure_position_x,"
+        // << ":departure_position_y,"
+        // << ":departure_position_z,"
+        // << ":departure_velocity_x,"
+        // << ":departure_velocity_y,"
+        // << ":departure_velocity_z,"
+        // << ":departure_semi_major_axis,"
+        // << ":departure_eccentricity,"
+        // << ":departure_inclination,"
+        // << ":departure_argument_of_periapsis,"
+        // << ":departure_longitude_of_ascending_node,"
+        // << ":departure_true_anomaly,"
+        // << ":arrival_position_x,"
+        // << ":arrival_position_y,"
+        // << ":arrival_position_z,"
+        // << ":arrival_velocity_x,"
+        // << ":arrival_velocity_y,"
+        // << ":arrival_velocity_z,"
+        // << ":arrival_semi_major_axis,"
+        // << ":arrival_eccentricity,"
+        // << ":arrival_inclination,"
+        // << ":arrival_argument_of_periapsis,"
+        // << ":arrival_longitude_of_ascending_node,"
+        // << ":arrival_true_anomaly,"
+        // << ":transfer_semi_major_axis,"
+        // << ":transfer_eccentricity,"
+        // << ":transfer_inclination,"
+        // << ":transfer_argument_of_periapsis,"
+        // << ":transfer_longitude_of_ascending_node,"
+        // << ":transfer_true_anomaly,"
+        << ":atom_departure_delta_v_x,"
+        << ":atom_departure_delta_v_y,"
+        << ":atom_departure_delta_v_z,"
+        << ":atom_arrival_delta_v_x,"
+        << ":atom_arrival_delta_v_y,"
+        << ":atom_arrival_delta_v_z,"
+        << ":atom_transfer_delta_v"
         << ");";
 
     SQLite::Statement atomQuery( database, atomScannerTableInsert.str( ) );
@@ -170,17 +175,17 @@ void executeAtomScanner( const rapidjson::Document& config )
         // std::cout << "enne is baas" << std::endl;
 
         // Filter out cases using transfer deltaV cut off given through input file.
-        if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
-        {
-            // Bind zeroes to atomQuery.
-            std::string bindZeroes = bindZeroesAtomScannerTable( lambertTransferId );
-            SQLite::Statement zeroQuery( database, bindZeroes );
-            zeroQuery.executeStep( );
-            zeroQuery.reset( );
+        // if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
+        // {
+        //     // Bind zeroes to atomQuery.
+        //     std::string bindZeroes = bindZeroesAtomScannerTable( lambertTransferId );
+        //     SQLite::Statement zeroQuery( database, bindZeroes );
+        //     zeroQuery.executeStep( );
+        //     zeroQuery.reset( );
 
-            ++showProgress;
-            continue;
-        }
+        //     ++showProgress;
+        //     continue;
+        // }
 
 
         // Set up DateTime object for departure epoch using Julian date.
@@ -205,6 +210,24 @@ void executeAtomScanner( const rapidjson::Document& config )
         departureVelocityGuess[ 1 ] = departureDeltaVY;
         departureVelocityGuess[ 2 ] = departureDeltaVZ;
 
+        std::string dummyString = "";
+        int numberOfIterations = 0;
+        // Vector3 outputDepartureVelocity( );
+        // Vector3 outputArrivalVelocity( );
+        const Velocities velocities = atom::executeAtomSolver( departurePosition,
+                                                  departureEpoch,
+                                                  arrivalPosition,
+                                                  timeOfFlight,
+                                                  departureVelocityGuess,
+                                                  dummyString,
+                                                  numberOfIterations );
+                                                  // numberOfIterations,
+                                                  // referenceTle,
+                                                  // kMU,
+                                                  // kXKMPER,
+                                                  // 1.0e-10,
+                                                  // 1.0e-5,
+                                                  // maxIterations );
 
         // // Create virtual TLE for the transfer object's orbit from its departure state.
         // // This TLE will be propagated using the SGP4 transfer.
