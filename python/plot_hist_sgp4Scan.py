@@ -146,7 +146,6 @@ plt.ylabel( 'Frequency' )
 if config[ 'add_title' ] == 'True':
     plt.title( plotTitle + " " + 'Magnitude' )
 
-# plt.axis([40, 160, 0, 0.03])
 plt.legend( )
 plt.grid( True )
 
@@ -155,7 +154,7 @@ plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + config['err
              + "_magnitude" + config["figure_format"], dpi=config["figure_dpi"] )
 plt.close( )
 
-# Plot the components of the error in a separate figure.
+# Plot the components of the (position/velocity) error vector in a separate figure.
 if config['grayscale'] == 'False':
     xcolor = 'black'
     ycolor = 'green'
@@ -178,7 +177,21 @@ plt.ylabel( 'Frequency' )
 if config[ 'add_title' ] == 'True':
     plt.title( plotTitle + " " + 'Components' )
 
-# plt.axis([40, 160, 0, 0.03])
+xAxesLowerLimit = config['set_axes'][0]
+xAxesUpperLimit = config['set_axes'][1]
+yAxesLowerLimit = config['set_axes'][2]
+yAxesUpperLimit = config['set_axes'][3]
+
+if xAxesLowerLimit != 0                                                                           \
+  or xAxesUpperLimit != 0                                                                         \
+    or yAxesLowerLimit != 0                                                                       \
+      or yAxesUpperLimit != 0:
+        print "Using user defined axes limits"
+        print ""
+        plt.axis([xAxesLowerLimit,                                                                \
+                  xAxesUpperLimit,                                                                \
+                  yAxesLowerLimit,                                                                \
+                  yAxesUpperLimit])
 
 xlegend = mlines.Line2D( [], [], color=xcolor, label='X Axis' )
 ylegend = mlines.Line2D( [], [], color=ycolor, label='Y Axis' )

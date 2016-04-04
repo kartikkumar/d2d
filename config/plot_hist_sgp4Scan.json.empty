@@ -37,6 +37,12 @@
     // For grayscale, put True otherwise False
     "grayscale"                : "",
 
+    // Set axes limit for the error component's histogram plot
+    // Format: [xmin, xmax, ymin, ymax]
+    // Auto sizing feature for the axes will be used if all the fields
+    // inside the square bracket are made zero.
+    "set_axes"                 : [,,,],
+
     // Characteristics for figures.
     "figure_dpi"                : 300,
     "tick_label_size"           : 4,
