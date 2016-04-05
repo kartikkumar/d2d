@@ -73,9 +73,11 @@ void executeAtomScanner( const rapidjson::Document& config )
 
     // Fetch number of rows in lambert_scanner_results table.
     std::ostringstream lambertScannerTableSizeSelect;
-    lambertScannerTableSizeSelect << "SELECT COUNT(*) FROM lambert_scanner_results;";
-    const int lambertScannertTableSize
+    lambertScannerTableSizeSelect << "SELECT COUNT(*) FROM sgp4_scanner_results INNER JOIN lambert_scanner_results ON lambert_scanner_results.transfer_id = sgp4_scanner_results.lambert_transfer_id WHERE sgp4_scanner_results.success=1;";
+    const int atomScannertTableSize
         = database.execAndGet( lambertScannerTableSizeSelect.str( ) );
+    std::cout << "Cases to process: " << atomScannertTableSize << std::endl;
+
 
     // Set up select query to fetch data from lambert_scanner_results table.
     std::ostringstream lambertScannerTableSelect;
@@ -98,95 +100,49 @@ void executeAtomScanner( const rapidjson::Document& config )
         << ":atom_arrival_delta_v_z,"
         << ":atom_transfer_delta_v"
         << ");";
-        // << ":arrival_object_id,"
-        // << ":departure_epoch,"
-        // << ":time_of_flight,"
-        // << ":revolutions,"
-        // << ":prograde,"
-        // << ":departure_position_x,"
-        // << ":departure_position_y,"
-        // << ":departure_position_z,"
-        // << ":departure_velocity_x,"
-        // << ":departure_velocity_y,"
-        // << ":departure_velocity_z,"
-        // << ":departure_semi_major_axis,"
-        // << ":departure_eccentricity,"
-        // << ":departure_inclination,"
-        // << ":departure_argument_of_periapsis,"
-        // << ":departure_longitude_of_ascending_node,"
-        // << ":departure_true_anomaly,"
-        // << ":arrival_position_x,"
-        // << ":arrival_position_y,"
-        // << ":arrival_position_z,"
-        // << ":arrival_velocity_x,"
-        // << ":arrival_velocity_y,"
-        // << ":arrival_velocity_z,"
-        // << ":arrival_semi_major_axis,"
-        // << ":arrival_eccentricity,"
-        // << ":arrival_inclination,"
-        // << ":arrival_argument_of_periapsis,"
-        // << ":arrival_longitude_of_ascending_node,"
-        // << ":arrival_true_anomaly,"
-        // << ":transfer_semi_major_axis,"
-        // << ":transfer_eccentricity,"
-        // << ":transfer_inclination,"
-        // << ":transfer_argument_of_periapsis,"
-        // << ":transfer_longitude_of_ascending_node,"
-        // << ":transfer_true_anomaly,"
+
 
     SQLite::Statement atomQuery( database, atomScannerTableInsert.str( ) );
 
     std::cout << "Computing Atom transfers and populating database ... " << std::endl;
 
-    boost::progress_display showProgress( lambertScannertTableSize );
+    boost::progress_display showProgress( atomScannertTableSize );
+
+    int failCounter = 0;
 
 
     while ( lambertQuery.executeStep( ) )
     {
-        const int      lambertTransferId                    = lambertQuery.getColumn( 0 );
-        const int      departureObjectId                    = lambertQuery.getColumn( 1 );
-        const int      arrivalObjectId                      = lambertQuery.getColumn( 2 );
+        const int      lambertTransferId                    = lambertQuery.getColumn( 1 );
+        // const int      departureObjectId                    = lambertQuery.getColumn( 1 );
+        // const int      arrivalObjectId                      = lambertQuery.getColumn( 2 );
 
-        const double   departureEpochJulian                 = lambertQuery.getColumn( 3 );
-        const double   timeOfFlight                         = lambertQuery.getColumn( 4 );
+        const double   departureEpochJulian                 = lambertQuery.getColumn( 20 );
+        const double   timeOfFlight                         = lambertQuery.getColumn( 21 );
 
-        const double   departurePositionX                   = lambertQuery.getColumn( 7 );
-        const double   departurePositionY                   = lambertQuery.getColumn( 8 );
-        const double   departurePositionZ                   = lambertQuery.getColumn( 9 );
-        // const double   departureVelocityX                   = lambertQuery.getColumn( 10 );
-        // const double   departureVelocityY                   = lambertQuery.getColumn( 11 );
-        // const double   departureVelocityZ                   = lambertQuery.getColumn( 12 );
+        const double   departurePositionX                   = lambertQuery.getColumn( 24 );
+        const double   departurePositionY                   = lambertQuery.getColumn( 25 );
+        const double   departurePositionZ                   = lambertQuery.getColumn( 26 );
+        const double   departureVelocityX                   = lambertQuery.getColumn( 27 );
+        const double   departureVelocityY                   = lambertQuery.getColumn( 28 );
+        const double   departureVelocityZ                   = lambertQuery.getColumn( 29 );
 
-        const double   arrivalPositionX                     = lambertQuery.getColumn( 19 );
-        const double   arrivalPositionY                     = lambertQuery.getColumn( 20 );
-        const double   arrivalPositionZ                     = lambertQuery.getColumn( 21 );
-        // const double   arrivalVelocityX                     = lambertQuery.getColumn( 22 );
-        // const double   arrivalVelocityY                     = lambertQuery.getColumn( 23 );
-        // const double   arrivalVelocityZ                     = lambertQuery.getColumn( 24 );
+        const double   arrivalPositionX                     = lambertQuery.getColumn( 36 );
+        const double   arrivalPositionY                     = lambertQuery.getColumn( 37 );
+        const double   arrivalPositionZ                     = lambertQuery.getColumn( 38 );
+        const double   arrivalVelocityX                     = lambertQuery.getColumn( 39 );
+        const double   arrivalVelocityY                     = lambertQuery.getColumn( 40 );
+        const double   arrivalVelocityZ                     = lambertQuery.getColumn( 41 );
 
-        const double   departureDeltaVX                     = lambertQuery.getColumn( 37 );
-        const double   departureDeltaVY                     = lambertQuery.getColumn( 38 );
-        const double   departureDeltaVZ                     = lambertQuery.getColumn( 39 );
+        const double   departureDeltaVX                     = lambertQuery.getColumn( 54 );
+        const double   departureDeltaVY                     = lambertQuery.getColumn( 55 );
+        const double   departureDeltaVZ                     = lambertQuery.getColumn( 56 );
         // const double   lambertArrivalDeltaVX                = lambertQuery.getColumn( 40 );
         // const double   lambertArrivalDeltaVY                = lambertQuery.getColumn( 41 );
         // const double   lambertArrivalDeltaVZ                = lambertQuery.getColumn( 42 );
 
-        const double   lambertTotalDeltaV                   = lambertQuery.getColumn( 43 );
+        const double   lambertTotalDeltaV                   = lambertQuery.getColumn( 60 );
         // std::cout << "enne is baas" << std::endl;
-
-        // Filter out cases using transfer deltaV cut off given through input file.
-        // if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
-        // {
-        //     // Bind zeroes to atomQuery.
-        //     std::string bindZeroes = bindZeroesAtomScannerTable( lambertTransferId );
-        //     SQLite::Statement zeroQuery( database, bindZeroes );
-        //     zeroQuery.executeStep( );
-        //     zeroQuery.reset( );
-
-        //     ++showProgress;
-        //     continue;
-        // }
-
 
         // Set up DateTime object for departure epoch using Julian date.
         // Note: The transformation given in the following statement is based on how the DateTime
@@ -194,215 +150,94 @@ void executeAtomScanner( const rapidjson::Document& config )
         DateTime departureEpoch( ( departureEpochJulian
                                    - astro::ASTRO_GREGORIAN_EPOCH_IN_JULIAN_DAYS ) * TicksPerDay );
 
+        // std::cout << "departurePosition" << lambertTransferId << std::endl;
+
         // Get departure state for the transfer object.
         Vector3 departurePosition;
         departurePosition[ astro::xPositionIndex ] = departurePositionX;
         departurePosition[ astro::yPositionIndex ] = departurePositionY;
         departurePosition[ astro::zPositionIndex ] = departurePositionZ;
 
+        Vector3 departureVelocity;
+        departureVelocity[ astro::xPositionIndex ] = departureVelocityX;
+        departureVelocity[ astro::yPositionIndex ] = departureVelocityY;
+        departureVelocity[ astro::zPositionIndex ] = departureVelocityZ;
+        // std::cout << "departurePosition" << departurePosition << std::endl;
+
         Vector3 arrivalPosition;
         arrivalPosition[ astro::xPositionIndex ] = arrivalPositionX;
         arrivalPosition[ astro::yPositionIndex ] = arrivalPositionY;
         arrivalPosition[ astro::zPositionIndex ] = arrivalPositionZ;
 
+        Vector3 arrivalVelocity;
+        arrivalVelocity[ astro::xPositionIndex ] = arrivalVelocityX;
+        arrivalVelocity[ astro::yPositionIndex ] = arrivalVelocityY;
+        arrivalVelocity[ astro::zPositionIndex ] = arrivalVelocityZ;
+        // std::cout << "arrivalPosition" << arrivalPosition << std::endl;
+
         Vector3 departureVelocityGuess;
-        departureVelocityGuess[ 0 ] = departureDeltaVX;
-        departureVelocityGuess[ 1 ] = departureDeltaVY;
-        departureVelocityGuess[ 2 ] = departureDeltaVZ;
+        departureVelocityGuess[ 0 ] = departureDeltaVX + departureVelocityX;
+        departureVelocityGuess[ 1 ] = departureDeltaVY + departureVelocityY;
+        departureVelocityGuess[ 2 ] = departureDeltaVZ + departureVelocityZ;
+        // std::cout << "departureVelocityGuess" << departureVelocityGuess << std::endl;
 
         std::string dummyString = "";
         int numberOfIterations = 0;
         // Vector3 outputDepartureVelocity( );
         // Vector3 outputArrivalVelocity( );
-        const Velocities velocities = atom::executeAtomSolver( departurePosition,
-                                                  departureEpoch,
-                                                  arrivalPosition,
-                                                  timeOfFlight,
-                                                  departureVelocityGuess,
-                                                  dummyString,
-                                                  numberOfIterations );
-                                                  // numberOfIterations,
-                                                  // referenceTle,
-                                                  // kMU,
-                                                  // kXKMPER,
-                                                  // 1.0e-10,
-                                                  // 1.0e-5,
-                                                  // maxIterations );
+        try
+        {
 
-        // // Create virtual TLE for the transfer object's orbit from its departure state.
-        // // This TLE will be propagated using the SGP4 transfer.
-        // Tle transferTle;
-        // std::string solverStatusSummary;
-        // int numberOfIterations;
-        // const Tle referenceTle = Tle( );
-        // const int maximumIterations = 100;
+            const Velocities velocities = atom::executeAtomSolver( departurePosition,
+                                                                   departureEpoch,
+                                                                   arrivalPosition,
+                                                                   timeOfFlight,
+                                                                   departureVelocityGuess,
+                                                                   dummyString,
+                                                                   numberOfIterations );
 
-        // try
-        // {
-        //     transferTle = atom::convertCartesianStateToTwoLineElements< double, Vector6 >(
-        //         transferDepartureState,
-        //         departureEpoch,
-        //         solverStatusSummary,
-        //         numberOfIterations,
-        //         referenceTle,
-        //         earthGravitationalParameter,
-        //         earthMeanRadius,
-        //         input.absoluteTolerance,
-        //         input.relativeTolerance,
-        //         maximumIterations );
-        // }
-        // catch( std::exception& virtualTleError )
-        // {
-        //     // At the moment we just catch the exceptions that are thrown internally and proceed.
-        //     // @todo: Figure out how to handle and register these exceptions.
-        // }
+            Vector3 atom_departure_delta_v = sml::add( velocities.first,
+                                                          sml::multiply( departureVelocity, -1.0 ) );
+            Vector3 atom_arrival_delta_v = sml::add( arrivalVelocity,
+                                                          sml::multiply( velocities.second, -1.0 ) );
 
-        // // Check if transferTle is correct.
-        // const SGP4 sgp4Check( transferTle );
-        // bool testPassed = false;
+            double atom_transfer_delta = sml::norm< double > (atom_departure_delta_v)
+                                                + sml::norm< double > (atom_arrival_delta_v);
 
-        // Eci propagatedStateEci = sgp4Check.FindPosition( 0.0 );
-        // Vector6 propagatedState;
-        // propagatedState[ astro::xPositionIndex ] = propagatedStateEci.Position( ).x;
-        // propagatedState[ astro::yPositionIndex ] = propagatedStateEci.Position( ).y;
-        // propagatedState[ astro::zPositionIndex ] = propagatedStateEci.Position( ).z;
-        // propagatedState[ astro::xVelocityIndex ] = propagatedStateEci.Velocity( ).x;
-        // propagatedState[ astro::yVelocityIndex ] = propagatedStateEci.Velocity( ).y;
-        // propagatedState[ astro::zVelocityIndex ] = propagatedStateEci.Velocity( ).z;
 
-        // Vector6 trueDepartureState;
-        // for ( int i = 0; i < 6; i++ )
-        // {
-        //     trueDepartureState[ i ] = transferDepartureState[ i ];
-        // }
 
-        // testPassed = executeVirtualTleConvergenceTest( propagatedState,
-        //                                                trueDepartureState,
-        //                                                input.relativeTolerance,
-        //                                                input.absoluteTolerance );
+            // std::cout << "Velocities: " << velocities.first << std::endl;
+            atomQuery.bind( ":lambert_transfer_id" ,              lambertTransferId );
+            atomQuery.bind( ":atom_departure_delta_v_x" ,         atom_departure_delta_v[0] );
+            atomQuery.bind( ":atom_departure_delta_v_y" ,         atom_departure_delta_v[1] );
+            atomQuery.bind( ":atom_departure_delta_v_z" ,         atom_departure_delta_v[2] );
+            atomQuery.bind( ":atom_arrival_delta_v_x" ,           atom_arrival_delta_v[0] );
+            atomQuery.bind( ":atom_arrival_delta_v_y" ,           atom_arrival_delta_v[1] );
+            atomQuery.bind( ":atom_arrival_delta_v_z" ,           atom_arrival_delta_v[2] );
+            atomQuery.bind( ":atom_transfer_delta_v" ,            atom_transfer_delta );
 
-        // if ( testPassed == false )
-        // {
-        //     // Bind zeroes to atomQuery.
-        //     std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
-        //     SQLite::Statement zeroQuery( database, bindZeroes );
-        //     zeroQuery.executeStep( );
-        //     zeroQuery.reset( );
+            atomQuery.executeStep( );
+            atomQuery.reset( );
 
-        //     ++virtualTleFailCounter;
-        //     ++showProgress;
-        //     continue;
-        // }
+        }
+        catch( std::exception& virtualTleError )
+        {
+            std::cout << "lambertTransferId: " << lambertTransferId << std::endl;
+            std::cout << "dummyString: " << dummyString << std::endl;
+            std::cout << virtualTleError.what() << std::endl;
+            failCounter = failCounter +1;
 
-        // // Propagate transfer object using the SGP4 propagator.
-        // const SGP4 sgp4( transferTle );
-        // DateTime sgp4ArrivalEpoch = departureEpoch.AddSeconds( timeOfFlight );
-        // Vector eciPosition = Vector( );
-        // Vector eciVelocity = Vector( );
-        // Eci sgp4ArrivalStateEci( sgp4ArrivalEpoch, eciPosition, eciVelocity );
-        // try
-        // {
-        //     sgp4ArrivalStateEci = sgp4.FindPosition( sgp4ArrivalEpoch );
-        // }
-        // catch( std::exception& sgp4PropagationError )
-        // {
-        //     // Bind zeroes to atomQuery.
-        //     std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
-        //     SQLite::Statement zeroQuery( database, bindZeroes );
-        //     zeroQuery.executeStep( );
-        //     zeroQuery.reset( );
-
-        //     ++arrivalEpochPropagationFailCounter;
-        //     ++showProgress;
-        //     continue;
-        // }
-
-        // const Vector6 sgp4ArrivalState = getStateVector( sgp4ArrivalStateEci );
-
-        // // Compute the required results.
-        // const double sgp4ArrivalPositionX = sgp4ArrivalState[ astro::xPositionIndex ];
-        // const double sgp4ArrivalPositionY = sgp4ArrivalState[ astro::yPositionIndex ];
-        // const double sgp4ArrivalPositionZ = sgp4ArrivalState[ astro::zPositionIndex ];
-
-        // const double sgp4ArrivalVelocityX = sgp4ArrivalState[ astro::xVelocityIndex ];
-        // const double sgp4ArrivalVelocityY = sgp4ArrivalState[ astro::yVelocityIndex ];
-        // const double sgp4ArrivalVelocityZ = sgp4ArrivalState[ astro::zVelocityIndex ];
-
-        // const double arrivalPositionErrorX = sgp4ArrivalPositionX - lambertArrivalPositionX;
-        // const double arrivalPositionErrorY = sgp4ArrivalPositionY - lambertArrivalPositionY;
-        // const double arrivalPositionErrorZ = sgp4ArrivalPositionZ - lambertArrivalPositionZ;
-
-        // Vector3 positionError;
-        // positionError[ astro::xPositionIndex ] = arrivalPositionErrorX;
-        // positionError[ astro::yPositionIndex ] = arrivalPositionErrorY;
-        // positionError[ astro::zPositionIndex ] = arrivalPositionErrorZ;
-        // const double arrivalPositionErrorNorm = sml::norm< double >( positionError );
-
-        // const double arrivalVelocityErrorX = sgp4ArrivalVelocityX -
-        //                                     ( lambertArrivalVelocityX - lambertArrivalDeltaVX );
-        // const double arrivalVelocityErrorY = sgp4ArrivalVelocityY -
-        //                                     ( lambertArrivalVelocityY - lambertArrivalDeltaVY );
-        // const double arrivalVelocityErrorZ = sgp4ArrivalVelocityZ -
-        //                                     ( lambertArrivalVelocityZ - lambertArrivalDeltaVZ );
-
-        // Vector3 velocityError;
-        // velocityError[ 0 ] = arrivalVelocityErrorX;
-        // velocityError[ 1 ] = arrivalVelocityErrorY;
-        // velocityError[ 2 ] = arrivalVelocityErrorZ;
-        // double arrivalVelocityErrorNorm = sml::norm< double >( velocityError );
-        // int lambertTransferId = 37;
-        // Bind computed values to atomQuery.
-        atomQuery.bind( ":departure_object_id",                   lambertTransferId );
-        // atomQuery.bind( ":arrival_position_x",                    sgp4ArrivalPositionX );
-        // atomQuery.bind( ":arrival_position_y",                    sgp4ArrivalPositionY );
-        // atomQuery.bind( ":arrival_position_z",                    sgp4ArrivalPositionZ );
-        // atomQuery.bind( ":arrival_velocity_x",                    sgp4ArrivalVelocityX );
-        // atomQuery.bind( ":arrival_velocity_y",                    sgp4ArrivalVelocityY );
-        // atomQuery.bind( ":arrival_velocity_z",                    sgp4ArrivalVelocityZ );
-        // atomQuery.bind( ":arrival_position_x_error",              arrivalPositionErrorX );
-        // atomQuery.bind( ":arrival_position_y_error",              arrivalPositionErrorY );
-        // atomQuery.bind( ":arrival_position_z_error",              arrivalPositionErrorZ );
-        // atomQuery.bind( ":arrival_position_error",                arrivalPositionErrorNorm );
-        // atomQuery.bind( ":arrival_velocity_x_error",              arrivalVelocityErrorX );
-        // atomQuery.bind( ":arrival_velocity_y_error",              arrivalVelocityErrorY );
-        // atomQuery.bind( ":arrival_velocity_z_error",              arrivalVelocityErrorZ );
-        // atomQuery.bind( ":arrival_velocity_error",                arrivalVelocityErrorNorm );
-        // atomQuery.bind( ":success",                               1 );
-
-        atomQuery.executeStep( );
-        atomQuery.reset( );
+        }
 
         ++showProgress;
     }
-
-    // Fetch number of rows in sgp4_scanner_results table.
-    // std::ostringstream sgp4ScannerTableSizeSelect;
-    // sgp4ScannerTableSizeSelect << "SELECT COUNT(*) FROM sgp4_scanner_results;";
-    // const int sgp4ScannertTableSize
-    //     = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
-
-    // std::ostringstream totalLambertCasesConsideredSelect;
-    // totalLambertCasesConsideredSelect
-    //     << "SELECT COUNT(*) FROM lambert_scanner_results WHERE transfer_delta_v <= "
-    //     << input.transferDeltaVCutoff << ";";
-    // const int totalLambertCasesConsidered
-    //     = database.execAndGet( totalLambertCasesConsideredSelect.str( ) );
-
-    // std::cout << std::endl;
-    // std::cout << "Total Lambert cases = " << lambertScannertTableSize << std::endl;
-    // std::cout << "Total SGP4 cases = " << sgp4ScannertTableSize << std::endl;
-    // std::cout << std::endl;
-    // std::cout << "Number of Lambert cases considered with the transfer deltaV cut-off = "
-    //           << totalLambertCasesConsidered << std::endl;
-    // std::cout << "Number of virtual TLE convergence fail cases = "
-    //           << virtualTleFailCounter << std::endl;
-    // std::cout << "Number of arrival epoch propagation fail cases = "
-    //           << arrivalEpochPropagationFailCounter << std::endl;
 
     // Commit transaction.
     transaction.commit( );
 
     std::cout << std::endl;
+    std::cout << "Total cases: " << atomScannertTableSize << std::endl;
+    std::cout << "Failed cases: " << failCounter << std::endl;
     std::cout << "Database populated successfully!" << std::endl;
     std::cout << std::endl;
 
@@ -460,63 +295,17 @@ void createAtomScannerTable( SQLite::Database& database )
     atomScannerTableCreate
         << "CREATE TABLE atom_scanner_results ("
         << "\"atom_transfer_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,"
-        << "\"lambert_transfer_id\"                     INT,"
-        << "\"departure_delta_v_x\"                     REAL,"
-        << "\"departure_delta_v_y\"                     REAL,"
-        << "\"departure_delta_v_z\"                     REAL,"
-        << "\"arrival_delta_v_x\"                       REAL,"
-        << "\"arrival_delta_v_y\"                       REAL,"
-        << "\"arrival_delta_v_z\"                       REAL,"
-        << "\"transfer_delta_v\"                        REAL"
+        << "\"lambert_transfer_id\"                          INT,"
+        << "\"atom_departure_delta_v_x\"                     REAL,"
+        << "\"atom_departure_delta_v_y\"                     REAL,"
+        << "\"atom_departure_delta_v_z\"                     REAL,"
+        << "\"atom_arrival_delta_v_x\"                       REAL,"
+        << "\"atom_arrival_delta_v_y\"                       REAL,"
+        << "\"atom_arrival_delta_v_z\"                       REAL,"
+        << "\"atom_transfer_delta_v\"                        REAL"
         <<                                              ");";
 
- << "INSERT INTO atom_scanner_results VALUES ("
-        << "NULL,"
-        << ":lambert_transfer_id,"
-        << ":atom_departure_delta_v_x,"
-        << ":atom_departure_delta_v_y,"
-        << ":atom_departure_delta_v_z,"
-        << ":atom_arrival_delta_v_x,"
-        << ":atom_arrival_delta_v_y,"
-        << ":atom_arrival_delta_v_z,"
-        << ":atom_transfer_delta_v"
-        << ");";
-        // << "\"arrival_object_id\"                       TEXT,"
-        // << "\"departure_epoch\"                         REAL,"
-        // << "\"time_of_flight\"                          REAL,"
-        // << "\"revolutions\"                             INTEGER,"
-        // // N.B.: SQLite doesn't support booleans so 0 = false, 1 = true for 'prograde'
-        // << "\"prograde\"                                INTEGER,"
-        // << "\"departure_position_x\"                    REAL,"
-        // << "\"departure_position_y\"                    REAL,"
-        // << "\"departure_position_z\"                    REAL,"
-        // << "\"departure_velocity_x\"                    REAL,"
-        // << "\"departure_velocity_y\"                    REAL,"
-        // << "\"departure_velocity_z\"                    REAL,"
-        // << "\"departure_semi_major_axis\"               REAL,"
-        // << "\"departure_eccentricity\"                  REAL,"
-        // << "\"departure_inclination\"                   REAL,"
-        // << "\"departure_argument_of_periapsis\"         REAL,"
-        // << "\"departure_longitude_of_ascending_node\"   REAL,"
-        // << "\"departure_true_anomaly\"                  REAL,"
-        // << "\"arrival_position_x\"                      REAL,"
-        // << "\"arrival_position_y\"                      REAL,"
-        // << "\"arrival_position_z\"                      REAL,"
-        // << "\"arrival_velocity_x\"                      REAL,"
-        // << "\"arrival_velocity_y\"                      REAL,"
-        // << "\"arrival_velocity_z\"                      REAL,"
-        // << "\"arrival_semi_major_axis\"                 REAL,"
-        // << "\"arrival_eccentricity\"                    REAL,"
-        // << "\"arrival_inclination\"                     REAL,"
-        // << "\"arrival_argument_of_periapsis\"           REAL,"
-        // << "\"arrival_longitude_of_ascending_node\"     REAL,"
-        // << "\"arrival_true_anomaly\"                    REAL,"
-        // << "\"transfer_semi_major_axis\"                REAL,"
-        // << "\"transfer_eccentricity\"                   REAL,"
-        // << "\"transfer_inclination\"                    REAL,"
-        // << "\"transfer_argument_of_periapsis\"          REAL,"
-        // << "\"transfer_longitude_of_ascending_node\"    REAL,"
-        // << "\"transfer_true_anomaly\"                   REAL,"
+
 
     // Execute command to create table.
     database.exec( atomScannerTableCreate.str( ).c_str( ) );
