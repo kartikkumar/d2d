@@ -190,7 +190,7 @@ else:
 
 # ECI to RTN frame transformation.
 print ""
-print "Performing ECI to RTN frame conversion..."
+print "Performing ECI to RTN frame conversion for the error vector..."
 print ""
 
 def ECI2RTN( eciX, eciY, eciZ, refX, refY, refZ, refVX, refVY, refVZ ):
@@ -205,65 +205,34 @@ def ECI2RTN( eciX, eciY, eciZ, refX, refY, refZ, refVX, refVY, refVZ ):
   # Normal unit vector:
   unitN = np.zeros( shape=( 1, 3 ), dtype=float )
 
-
   vectorR = np.array( object=[ refX, refY, refZ ], dtype=float )
-  print "vectorR = ", vectorR
 
   vectorV = np.array( object=[ refVX, refVY, refVZ ], dtype=float )
-  print "vectorV = ", vectorV
 
   arrivalPositionMagnitude = np.linalg.norm( vectorR )
 
   if arrivalPositionMagnitude != 0:
     unitR = np.divide( vectorR, arrivalPositionMagnitude )
-  print "unit R = ", unitR
 
   angularMomentumVector = np.cross( vectorR, vectorV )
   angularMomentumMagnitude = np.linalg.norm( angularMomentumVector )
 
   if angularMomentumMagnitude != 0:
     unitN = np.divide( angularMomentumVector, angularMomentumMagnitude )
-  print "unit N = ", unitN
 
   unitT = np.cross( unitN, unitR )
-  print "unit T = ", unitT
 
-  # Position expressed in ECI frame
   vectorECI = np.zeros( shape=( 1, 3 ), dtype=float )
   vectorECI[ 0 ][ 0 ] = eciX
   vectorECI[ 0 ][ 1 ] = eciY
   vectorECI[ 0 ][ 2 ] = eciZ
-  print "ECI = ", vectorECI
 
-  # Position expressed in RTN frame
   vectorRTN = np.zeros( shape=( 3, 1 ), dtype=float )
   vectorRTN[ 0 ] = np.inner( unitR, vectorECI )
   vectorRTN[ 1 ] = np.inner( unitT, vectorECI )
   vectorRTN[ 2 ] = np.inner( unitN, vectorECI )
-  print "RTN: "
-  print vectorRTN
 
   return vectorRTN
-
-# Check for ECI to RTN converter
-# Case 1 from http://www.centerforspace.com/downloads/files/pubs/AAS-03-526.pdf
-eciX = -605.79221660e3
-eciY = -5870.22951108e3
-eciZ = 3493.05319896e3
-eciVX = -1.56825429e3
-eciVY = -3.70234891e3
-eciVZ = -6.47948395e3
-testVectorRTN = [ 0 for x in range( 0, 3 ) ]
-testVectorRTN = ECI2RTN( eciX, eciY, eciZ,                                                        \
-                         eciX + 6857.693605, eciY + 0.0, eciZ + 0.0,                              \
-                         eciVX + 0.007362813, eciVY + 7.62564531, eciVZ + 0.0 )
-
-# Case 2. circular equitorial orbit
-eciX = 10.0e3
-eciY = 0.0
-eciZ = 0.0
-testVectorRTN = ECI2RTN( eciX, eciY, eciZ, 0.0, 10.0e3, 0.0, -10.0, 0.0, 0.0 )
-exit( )
 
 arrivalPositionX = lambert_scan_data[ 'arrivalPositionX' ]
 arrivalPositionY = lambert_scan_data[ 'arrivalPositionY' ]
@@ -274,27 +243,10 @@ arrivalVelocityZ = lambert_scan_data[ 'arrivalVelocityZ' ]
 
 totalCases = len( xerror )
 for i in tqdm( range( totalCases ) ):
-  vectorR = [ arrivalPositionX[ i ], arrivalPositionY[ i ], arrivalPositionZ[ i ] ]
-  vectorV = [ arrivalVelocityX[ i ], arrivalVelocityY[ i ], arrivalVelocityZ[ i ] ]
-  arrivalPositionMagnitude = np.linalg.norm( vectorR )
-  unitR = vectorR / arrivalPositionMagnitude
-
-  angularMomentumVector = np.cross( vectorR, vectorV )
-  angularMomentumMagnitude = np.linalg.norm( angularMomentumVector )
-  unitN = angularMomentumVector / angularMomentumMagnitude
-
-  unitT = np.cross( unitN, unitR )
-
-  gamma[ 0 ][ : ] = unitR
-  gamma[ 1 ][ : ] = unitT
-  gamma[ 2 ][ : ] = unitN
-
-  errorVectorECI = [ xerror[ i ], yerror[ i ], zerror[ i ] ]
-  errorVectorRTN = [ 0 for x in range( 0, 3 ) ]
-  errorVectorRTN[ 0 ] = np.inner( gamma[ 0 ][ : ], errorVectorECI )
-  errorVectorRTN[ 1 ] = np.inner( gamma[ 1 ][ : ], errorVectorECI )
-  errorVectorRTN[ 2 ] = np.inner( gamma[ 2 ][ : ], errorVectorECI )
-
+  errorVectorRTN = np.zeros( shape=( 3, 1 ), dtype=float )
+  errorVectorRTN = ECI2RTN( xerror[ i ], yerror[ i ], zerror[ i ],                                \
+                            arrivalPositionX[ i ], arrivalPositionY[ i ], arrivalPositionZ[ i ],  \
+                            arrivalVelocityX[ i ], arrivalVelocityY[ i ], arrivalVelocityZ[ i ]  )
   xerror[ i ] = errorVectorRTN[ 0 ]
   yerror[ i ] = errorVectorRTN[ 1 ]
   zerror[ i ] = errorVectorRTN[ 2 ]
@@ -342,7 +294,7 @@ plt.grid( True )
 
 # Save figure to file.
 plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + config['error'] + "_error"
-             + "_components" + config["figure_format"], dpi=config["figure_dpi"] )
+             + "_components_RTN" + config["figure_format"], dpi=config["figure_dpi"] )
 plt.close( )
 
 print "Figures generated successfully!"
