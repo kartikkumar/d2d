@@ -108,16 +108,16 @@ for i in xrange(0,1):
                                 toplist_atom['transfer_delta_v'],
                                 toplist_atom['atom_transfer_delta_v'] ], axis=1)
 
-                           # ORDER BY lambert_scanner_results.transfer_delta_v                      \
-    # toplist_lambert = pd.read_sql("SELECT *, min(lambert_scanner_results.transfer_delta_v)        \
-    toplist_lambert = pd.read_sql("SELECT *, min(lambert_scanner_results.arrival_delta_v_x)       \
+    # toplist_lambert = pd.read_sql("SELECT *, min(lambert_scanner_results.arrival_delta_v_x)       \
+    toplist_lambert = pd.read_sql("SELECT *, min(lambert_scanner_results.transfer_delta_v)        \
                            FROM lambert_scanner_results                                           \
                            INNER JOIN    atom_scanner_results                                     \
                            ON lambert_scanner_results.transfer_id                                 \
                               = atom_scanner_results.lambert_transfer_id                          \
                            GROUP BY lambert_scanner_results.departure_object_id,                  \
                                     lambert_scanner_results.arrival_object_id                     \
-                           ORDER BY lambert_scanner_results.arrival_delta_v_x                     \
+                           ORDER BY lambert_scanner_results.transfer_delta_v                      \
+                           # ORDER BY lambert_scanner_results.arrival_delta_v_x                     \
                                     ASC                                                           \
                            LIMIT 10000000                                                         \
                            ;",                                                                    \
@@ -142,12 +142,12 @@ for i in xrange(0,1):
     test =  pd.merge(toplist_atom2,toplist_lambert2, on='combo', how='outer')
     # test['lambert_dv_ranking'] = test['transfer_delta_v'].rank('min')
     # test['atom_dv_ranking'] = test['atom_transfer_delta_v'].rank('min')
-    print 'toplist_atom2'
-    print toplist_atom2
-    print 'toplist_lambert2'
-    print toplist_lambert2
-    print 'test'
-    print test
+    # print 'toplist_atom2'
+    # print toplist_atom2
+    # print 'toplist_lambert2'
+    # print toplist_lambert2
+    # print 'test'
+    # print test
     test.to_csv(str(config['output_directory'] + config['database_tag'][i] + ".csv"), index=False )
 
 # SELECT * FROM atom_scanner_results INNER JOIN lambert_scanner_results ON lambert_scanner_results.transfer_id = atom_scanner_results.lambert_transfer_id WHERE lambert_scanner_results.transfer_id=14441079;
