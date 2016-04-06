@@ -3,30 +3,15 @@
 // See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 {
     // Path to SQLite database containing scan data.
-    "database"                  : ["test1","test2"],
+    "database"          : ["",
+                           "",
+                           ""],
 
-    // Set map order.
-    // This value can be set to any of the following:
-    // - semi_major_axis
-    // - eccentrcity
-    // - inclination
-    // - argument_of_periapsis
-    // - longitude_of_ascending_node
-    // The map order is generated based on the corresponding departure column in the
-    // lambert_scanner_results table in the SQLite database.
-    // "map_order"                 : "",
+    // Identifier for each database as the shortlist will be written per database.
+    "database_tag"      : ["",
+                           "",
+                           ""],
 
-    // // Directory where scan figure is stored.
-    // "output_directory"          : ".",
-
-    // // Filename for scan figure.
-    // // Files are saved as PDF.
-    // "scan_figure"               : ,
-
-    // // Set parameters for figures.
-    // "figure_dpi"                : 300,
-    // "tick_label_size"           : 4,
-    // "axis_label_size"           : 10,
-    // "map_order_axis_label"      : ,
-    // "colormap"                  : "jet"
+    // Directory where shortlists are stored.
+    "output_directory"          : ""
 }
