@@ -26,22 +26,22 @@
 
     // Add or remove figure title.
     // To add a title to the figure, put True otherwise False.
-    "add_title"                : "",
+    "add_title"                 : "",
 
     // Check for GUI
     // If user machine has a display/GUI then put True, else False
-    "display"                  : "",
+    "display"                   : "",
 
     // Set colortype for the figures.
     // For grayscale, put True otherwise False
-    "grayscale"                : "",
+    "grayscale"                 : "",
 
     // Set axes limit for the position and velocity error component's histogram plot
     // Format: [xmin, xmax, ymin, ymax]
     // Auto sizing feature for the axes will be used if all the fields
     // inside the square bracket are made zero.
-    "set_axes_position"        : [,,,],
-    "set_axes_velocity"        : [,,,],
+    "set_axes_position"         : [,,,],
+    "set_axes_velocity"         : [,,,],
 
     // Characteristics for figures.
     "figure_dpi"                : 300,
