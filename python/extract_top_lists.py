@@ -85,7 +85,7 @@ for i in xrange(0,1):
     # print toplist.columns
 
 
-    toplist = pd.read_sql("SELECT *                                                               \
+    toplist_atom = pd.read_sql("SELECT *, min(atom_scanner_results.atom_transfer_delta_v)                                                          \
                            FROM lambert_scanner_results                                           \
                            INNER JOIN    atom_scanner_results                                     \
                            ON lambert_scanner_results.transfer_id                                 \
@@ -97,19 +97,57 @@ for i in xrange(0,1):
                            LIMIT 10000000                                                         \
                            ;",                                                                    \
                            database)
-    test = pd.concat([toplist['transfer_id'],
-                      # toplist['atom_transfer_id'],
-                      toplist['departure_object_id'],
-                      toplist['arrival_object_id'],
-                      toplist['departure_epoch'],
-                      toplist['time_of_flight'],
-                      toplist['revolutions'],
-                      # toplist['time_of_flight'],
-                      toplist['transfer_delta_v'],
-                      toplist['atom_transfer_delta_v'] ], axis=1)
-    test['lambert_dv_ranking'] = test['transfer_delta_v'].rank('min')
-    test['atom_dv_ranking'] = test['atom_transfer_delta_v'].rank('min')
+    toplist_atom2 = pd.concat([ toplist_atom['transfer_id'],
+                                # toplist_atom['lambert_transfer_id'],
+                                toplist_atom['departure_object_id'],
+                                toplist_atom['arrival_object_id'],
+                                toplist_atom['departure_epoch'],
+                                toplist_atom['time_of_flight'],
+                                toplist_atom['revolutions'],
+                                # toplist_atom['time_of_flight'],
+                                toplist_atom['transfer_delta_v'],
+                                toplist_atom['atom_transfer_delta_v'] ], axis=1)
 
+                           # ORDER BY lambert_scanner_results.transfer_delta_v                      \
+    # toplist_lambert = pd.read_sql("SELECT *, min(lambert_scanner_results.transfer_delta_v)        \
+    toplist_lambert = pd.read_sql("SELECT *, min(lambert_scanner_results.arrival_delta_v_x)       \
+                           FROM lambert_scanner_results                                           \
+                           INNER JOIN    atom_scanner_results                                     \
+                           ON lambert_scanner_results.transfer_id                                 \
+                              = atom_scanner_results.lambert_transfer_id                          \
+                           GROUP BY lambert_scanner_results.departure_object_id,                  \
+                                    lambert_scanner_results.arrival_object_id                     \
+                           ORDER BY lambert_scanner_results.arrival_delta_v_x                     \
+                                    ASC                                                           \
+                           LIMIT 10000000                                                         \
+                           ;",                                                                    \
+                           database)
+    toplist_lambert2 = pd.concat([ toplist_lambert['transfer_id'],
+                                   # toplist_lambert['atom_transfer_id'],
+                                   toplist_lambert['departure_object_id'],
+                                   toplist_lambert['arrival_object_id'],
+                                   toplist_lambert['departure_epoch'],
+                                   toplist_lambert['time_of_flight'],
+                                   toplist_lambert['revolutions'],
+                                   # toplist_lambert['time_of_flight'],
+                                   toplist_lambert['transfer_delta_v'],
+                                   toplist_lambert['atom_transfer_delta_v'] ], axis=1)
+
+    toplist_atom2['atom_dv_ranking'] = toplist_atom2['atom_transfer_delta_v'].rank('min')
+    toplist_lambert2['lambert_dv_ranking'] = toplist_lambert2['transfer_delta_v'].rank('min')
+    toplist_atom2['combo'] = toplist_atom2['departure_object_id'].map(str) + '-' + toplist_atom2['arrival_object_id'].map(str)
+    toplist_lambert2['combo'] = toplist_lambert2['departure_object_id'].map(str) + '-' + toplist_lambert2['arrival_object_id'].map(str)
+
+    toplist_lambert2.join(toplist_atom2, on='combo', how='left', lsuffix="_atom")
+    test =  pd.merge(toplist_atom2,toplist_lambert2, on='combo', how='outer')
+    # test['lambert_dv_ranking'] = test['transfer_delta_v'].rank('min')
+    # test['atom_dv_ranking'] = test['atom_transfer_delta_v'].rank('min')
+    print 'toplist_atom2'
+    print toplist_atom2
+    print 'toplist_lambert2'
+    print toplist_lambert2
+    print 'test'
+    print test
     test.to_csv(str(config['output_directory'] + config['database_tag'][i] + ".csv"), index=False )
 
 # SELECT * FROM atom_scanner_results INNER JOIN lambert_scanner_results ON lambert_scanner_results.transfer_id = atom_scanner_results.lambert_transfer_id WHERE lambert_scanner_results.transfer_id=14441079;
