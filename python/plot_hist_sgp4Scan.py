@@ -91,110 +91,9 @@ except sqlite3.Error, e:
     print "Error %s:" % e.args[0]
     sys.exit(1)
 
-# Fetch scan data.
-scan_data = pd.read_sql( "SELECT    " + config['error'] + "_x_error,                              \
-                                    " + config['error'] + "_y_error,                              \
-                                    " + config['error'] + "_z_error,                              \
-                                    " + config['error'] + "_error                                 \
-                          FROM      sgp4_scanner_results                                          \
-                          WHERE     success = 1;",                                                \
-                          database )
-
-scan_data.columns = [ 'xerror', 'yerror', 'zerror', 'magnitudeError' ]
-
-lambert_scan_data = pd.read_sql( "SELECT        lambert_scanner_results.arrival_position_x,       \
-                                                lambert_scanner_results.arrival_position_y,       \
-                                                lambert_scanner_results.arrival_position_z,       \
-                                                lambert_scanner_results.arrival_velocity_x,       \
-                                                lambert_scanner_results.arrival_velocity_y,       \
-                                                lambert_scanner_results.arrival_velocity_z        \
-                                  FROM          lambert_scanner_results                           \
-                                  INNER JOIN    sgp4_scanner_results                              \
-                                  ON            lambert_scanner_results.transfer_id =             \
-                                                sgp4_scanner_results.lambert_transfer_id          \
-                                  AND           sgp4_scanner_results.success = 1;",
-                                  database )
-
-lambert_scan_data.columns = [ 'arrivalPositionX',                                                 \
-                              'arrivalPositionY',                                                 \
-                              'arrivalPositionZ',                                                 \
-                              'arrivalVelocityX',                                                 \
-                              'arrivalVelocityY',                                                 \
-                              'arrivalVelocityZ', ]
-
-print "Fetch successful!"
-print ""
-
-# The histogram of the data
-xerror = scan_data[ 'xerror' ]
-yerror = scan_data[ 'yerror' ]
-zerror = scan_data[ 'zerror' ]
-magnitudeError = scan_data[ 'magnitudeError' ]
-
-# Calculate mean, variance and standard deviation
-mu = sum( magnitudeError ) / len( magnitudeError )
-print 'Mean = ' + repr( mu )
-
-sumOfSquareDeviations = sum( ( x - mu )**2 for x in magnitudeError )
-variance = sumOfSquareDeviations / len( magnitudeError )
-print 'Variance = ' + repr( variance )
-
-sigma = variance**0.5
-print 'Standard Deviation = ' + repr( sigma )
-
-# Plot the magnitude of the error
-if config['grayscale'] == 'False':
-    figureColor = 'green'
-else:
-    figureColor = '0.40'
-
-n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,        \
-                             alpha=1, label='Magnitude' )
-
-# Add a line of expected distribution
-# y = mlab.normpdf( bins, mu, sigma )
-# l = plt.plot( bins, y, 'r--', linewidth=1.5, label='Best fit line' )
-
-# Select appropriate unit and title for the error type
-if config['error'] == 'arrival_position':
-    errorUnit = "[km]"
-    plotTitle = 'Arrival Position Error'
-else:
-    errorUnit = "[km/s]"
-    plotTitle = 'Arrival Velocity Error'
-
-# Figure properties
-plt.xlabel( 'Error' + " " + errorUnit )
-plt.ylabel( 'Frequency' )
-
-if config[ 'add_title' ] == 'True':
-    plt.title( plotTitle + " " + 'Magnitude' )
-
-plt.legend( )
-plt.grid( True )
-
-# Save figure to file.
-plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + config['error'] + "_error"
-             + "_magnitude" + config["figure_format"], dpi=config["figure_dpi"] )
-plt.close( )
-
-# Plot the components of the (position/velocity) error vector in a separate figure.
-if config['grayscale'] == 'False':
-    xcolor = 'black'
-    ycolor = 'green'
-    zcolor = 'red'
-else:
-    xcolor = '0'
-    ycolor = '0.30'
-    zcolor = '0.60'
-
-# ECI to RTN frame transformation.
-print ""
-print "Performing ECI to RTN frame conversion for the error vector..."
-print ""
-
-def ECI2RTN( eciX, eciY, eciZ, refX, refY, refZ, refVX, refVY, refVZ ):
-  "This convertes a state in ECI frame to RTN frame"
+def gammaECI2RTN( refX, refY, refZ, refVX, refVY, refVZ ):
+  "This function returns the transformation matrix that convertes                                 \
+  an error vector in ECI frame to RTN frame"
 
   # Radial unit vector:
   unitR = np.zeros( shape=( 1, 3 ), dtype=float )
@@ -222,82 +121,265 @@ def ECI2RTN( eciX, eciY, eciZ, refX, refY, refZ, refVX, refVY, refVZ ):
 
   unitT = np.cross( unitN, unitR )
 
-  vectorECI = np.zeros( shape=( 1, 3 ), dtype=float )
-  vectorECI[ 0 ][ 0 ] = eciX
-  vectorECI[ 0 ][ 1 ] = eciY
-  vectorECI[ 0 ][ 2 ] = eciZ
+  gamma = np.zeros( shape=( 3, 3 ), dtype=float )
+  gamma[ 0 ][ : ] = unitR
+  gamma[ 1 ][ : ] = unitT
+  gamma[ 2 ][ : ] = unitN
 
-  vectorRTN = np.zeros( shape=( 3, 1 ), dtype=float )
-  vectorRTN[ 0 ] = np.inner( unitR, vectorECI )
-  vectorRTN[ 1 ] = np.inner( unitT, vectorECI )
-  vectorRTN[ 2 ] = np.inner( unitN, vectorECI )
+  return gamma
 
-  return vectorRTN
+# Sanity check for the gammaECI2RTN function:
+# errorVectorECI = [ 10, 10, 0 ]
+# errorVectorRTN = np.zeros( shape=( 3, 1 ), dtype=float )
+# gamma = np.zeros( shape=( 3, 3 ), dtype=float )
+# gamma = gammaECI2RTN( 0, 10, 0, -30, 0, 0 )
+# errorVectorRTN[ 0 ] = np.inner( gamma[ 0 ][ : ], errorVectorECI )
+# errorVectorRTN[ 1 ] = np.inner( gamma[ 1 ][ : ], errorVectorECI )
+# errorVectorRTN[ 2 ] = np.inner( gamma[ 2 ][ : ], errorVectorECI )
+# print "Error Vector RTN: "
+# print errorVectorRTN
+# exit( )
 
-arrivalPositionX = lambert_scan_data[ 'arrivalPositionX' ]
-arrivalPositionY = lambert_scan_data[ 'arrivalPositionY' ]
-arrivalPositionZ = lambert_scan_data[ 'arrivalPositionZ' ]
-arrivalVelocityX = lambert_scan_data[ 'arrivalVelocityX' ]
-arrivalVelocityY = lambert_scan_data[ 'arrivalVelocityY' ]
-arrivalVelocityZ = lambert_scan_data[ 'arrivalVelocityZ' ]
+errorType = [ "arrival_position", "arrival_velocity" ]
 
-totalCases = len( xerror )
-for i in tqdm( range( totalCases ) ):
-  errorVectorRTN = np.zeros( shape=( 3, 1 ), dtype=float )
-  errorVectorRTN = ECI2RTN( xerror[ i ], yerror[ i ], zerror[ i ],                                \
-                            arrivalPositionX[ i ], arrivalPositionY[ i ], arrivalPositionZ[ i ],  \
-                            arrivalVelocityX[ i ], arrivalVelocityY[ i ], arrivalVelocityZ[ i ]  )
-  xerror[ i ] = errorVectorRTN[ 0 ]
-  yerror[ i ] = errorVectorRTN[ 1 ]
-  zerror[ i ] = errorVectorRTN[ 2 ]
+gammaFlag = False
 
-print "ECI to RTN conversion completed!"
+# Fetch scan data.
+scan_data = pd.read_sql( "SELECT    arrival_position_x_error,                                     \
+                                    arrival_position_y_error,                                     \
+                                    arrival_position_z_error,                                     \
+                                    arrival_position_error,                                       \
+                                    arrival_velocity_x_error,                                     \
+                                    arrival_velocity_y_error,                                     \
+                                    arrival_velocity_z_error,                                     \
+                                    arrival_velocity_error                                        \
+                          FROM      sgp4_scanner_results                                          \
+                          WHERE     success = 1;",                                                \
+                          database )
+
+scan_data.columns = [ 'positionErrorX',                                                           \
+                      'positionErrorY',                                                           \
+                      'positionErrorZ',                                                           \
+                      'positionErrorMagnitude',                                                   \
+                      'velocityErrorX',                                                           \
+                      'velocityErrorY',                                                           \
+                      'velocityErrorZ',                                                           \
+                      'velocityErrorMagnitude' ]
+
+lambert_scan_data = pd.read_sql( "SELECT        lambert_scanner_results.arrival_position_x,       \
+                                                lambert_scanner_results.arrival_position_y,       \
+                                                lambert_scanner_results.arrival_position_z,       \
+                                                lambert_scanner_results.arrival_velocity_x,       \
+                                                lambert_scanner_results.arrival_velocity_y,       \
+                                                lambert_scanner_results.arrival_velocity_z        \
+                                  FROM          lambert_scanner_results                           \
+                                  INNER JOIN    sgp4_scanner_results                              \
+                                  ON            lambert_scanner_results.transfer_id =             \
+                                                sgp4_scanner_results.lambert_transfer_id          \
+                                  AND           sgp4_scanner_results.success = 1;",
+                                  database )
+
+lambert_scan_data.columns = [ 'arrivalPositionX',                                                 \
+                              'arrivalPositionY',                                                 \
+                              'arrivalPositionZ',                                                 \
+                              'arrivalVelocityX',                                                 \
+                              'arrivalVelocityY',                                                 \
+                              'arrivalVelocityZ', ]
+
+print "Fetch successful!"
 print ""
 
-n, bins, patches = plt.hist( xerror, bins=200, histtype='step', normed=False, color=xcolor,       \
-                             alpha=1, label='R Axis', log=False )
-n, bins, patches = plt.hist( yerror, bins=200, histtype='step', normed=False, color=ycolor,       \
-                             alpha=1, label='T Axis', log=False )
-n, bins, patches = plt.hist( zerror, bins=200, histtype='step', normed=False, color=zcolor,       \
-                             alpha=1, label='N Axis', log=False )
-# Figure properties
-plt.xlabel( 'Error' + " " + errorUnit )
-plt.ylabel( 'Frequency' )
+for errorTypeIndex in range( len( errorType ) ):
+  if errorType[ errorTypeIndex ] == "arrival_position":
+    print "Plotting position error histograms..."
+    print ""
+    xerror = scan_data[ 'positionErrorX' ]
+    yerror = scan_data[ 'positionErrorY' ]
+    zerror = scan_data[ 'positionErrorZ' ]
+    magnitudeError = scan_data[ 'positionErrorMagnitude' ]
+  else:
+    print "Plotting velocity error histograms..."
+    print ""
+    xerror = scan_data[ 'velocityErrorX' ]
+    yerror = scan_data[ 'velocityErrorY' ]
+    zerror = scan_data[ 'velocityErrorZ' ]
+    magnitudeError = scan_data[ 'velocityErrorMagnitude' ]
 
-if config[ 'add_title' ] == 'True':
-    plt.title( plotTitle + " " + 'Components' )
+  # Calculate mean, variance and standard deviation
+  mu = sum( magnitudeError ) / len( magnitudeError )
+  print 'Mean = ' + repr( mu )
 
-xAxesLowerLimit = config['set_axes'][0]
-xAxesUpperLimit = config['set_axes'][1]
-yAxesLowerLimit = config['set_axes'][2]
-yAxesUpperLimit = config['set_axes'][3]
+  sumOfSquareDeviations = sum( ( x - mu )**2 for x in magnitudeError )
+  variance = sumOfSquareDeviations / len( magnitudeError )
+  print 'Variance = ' + repr( variance )
 
-if xAxesLowerLimit != 0                                                                           \
-  or xAxesUpperLimit != 0                                                                         \
-    or yAxesLowerLimit != 0                                                                       \
-      or yAxesUpperLimit != 0:
-        print "Using user defined axes limits"
-        print ""
-        plt.axis([xAxesLowerLimit,                                                                \
-                  xAxesUpperLimit,                                                                \
-                  yAxesLowerLimit,                                                                \
-                  yAxesUpperLimit])
+  sigma = variance**0.5
+  print 'Standard Deviation = ' + repr( sigma )
 
-xlegend = mlines.Line2D( [], [], color=xcolor, label='R Axis' )
-ylegend = mlines.Line2D( [], [], color=ycolor, label='T Axis' )
-zlegend = mlines.Line2D( [], [], color=zcolor, label='N Axis' )
-lines = [xlegend, ylegend, zlegend]
-labels = [line.get_label( ) for line in lines]
-plt.legend(lines, labels)
+  # Plot the magnitude of the error
+  if config['grayscale'] == 'False':
+      figureColor = 'green'
+  else:
+      figureColor = '0.40'
 
-plt.grid( True )
+  n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,      \
+                               alpha=1, label='Magnitude' )
 
-# Save figure to file.
-plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + config['error'] + "_error"
-             + "_components_RTN" + config["figure_format"], dpi=config["figure_dpi"] )
-plt.close( )
+  # Select appropriate unit and title for the error type
+  if errorType[ errorTypeIndex ] == 'arrival_position':
+      errorUnit = "[km]"
+      plotTitle = 'Arrival Position Error'
+  else:
+      errorUnit = "[km/s]"
+      plotTitle = 'Arrival Velocity Error'
 
-print "Figures generated successfully!"
+  # Figure properties
+  plt.xlabel( 'Error' + " " + errorUnit )
+  plt.ylabel( 'Frequency' )
+
+  if config[ 'add_title' ] == 'True':
+      plt.title( plotTitle + " " + 'Magnitude' )
+
+  plt.legend( )
+  plt.grid( True )
+
+  # Save figure to file.
+  plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + errorType[ errorTypeIndex ]
+               + "_error" + "_magnitude" + config["figure_format"], dpi=config["figure_dpi"] )
+  plt.close( )
+
+  # Plot the components of the (position/velocity) error vector in a separate figure.
+  if config['grayscale'] == 'False':
+      xcolor = 'black'
+      ycolor = 'green'
+      zcolor = 'red'
+  else:
+      xcolor = '0'
+      ycolor = '0.30'
+      zcolor = '0.60'
+
+  if config['frame'] == "RTN":
+    # ECI to RTN frame transformation.
+    print ""
+    print "Performing ECI to RTN frame conversion for the error vector..."
+    print ""
+
+    arrivalPositionX = lambert_scan_data[ 'arrivalPositionX' ]
+    arrivalPositionY = lambert_scan_data[ 'arrivalPositionY' ]
+    arrivalPositionZ = lambert_scan_data[ 'arrivalPositionZ' ]
+    arrivalVelocityX = lambert_scan_data[ 'arrivalVelocityX' ]
+    arrivalVelocityY = lambert_scan_data[ 'arrivalVelocityY' ]
+    arrivalVelocityZ = lambert_scan_data[ 'arrivalVelocityZ' ]
+
+    totalCases = len( xerror )
+    for i in tqdm( range( totalCases ) ):
+      if gammaFlag == False:
+        gamma = np.zeros( shape=( 3, 3 ), dtype=float )
+        gamma = gammaECI2RTN( arrivalPositionX[ i ],                                              \
+                              arrivalPositionY[ i ],                                              \
+                              arrivalPositionZ[ i ],                                              \
+                              arrivalVelocityX[ i ],                                              \
+                              arrivalVelocityY[ i ],                                              \
+                              arrivalVelocityZ[ i ] )
+
+      errorVectorECI = [ xerror[ i ], yerror[ i ], zerror[ i ] ]
+
+      errorVectorRTN = np.zeros( shape=( 3, 1 ), dtype=float )
+      errorVectorRTN[ 0 ] = np.inner( gamma[ 0 ][ : ], errorVectorECI )
+      errorVectorRTN[ 1 ] = np.inner( gamma[ 1 ][ : ], errorVectorECI )
+      errorVectorRTN[ 2 ] = np.inner( gamma[ 2 ][ : ], errorVectorECI )
+
+      xerror[ i ] = errorVectorRTN[ 0 ]
+      yerror[ i ] = errorVectorRTN[ 1 ]
+      zerror[ i ] = errorVectorRTN[ 2 ]
+
+    gammaFlag = True
+
+    print "Plotting error components defined in RTN frame"
+    n, bins, patches = plt.hist( xerror, bins=200, histtype='step', normed=False, color=xcolor,   \
+                                 alpha=1, label='R Axis', log=False )
+    n, bins, patches = plt.hist( yerror, bins=200, histtype='step', normed=False, color=ycolor,   \
+                                 alpha=1, label='T Axis', log=False )
+    n, bins, patches = plt.hist( zerror, bins=200, histtype='step', normed=False, color=zcolor,   \
+                                 alpha=1, label='N Axis', log=False )
+    # Figure properties
+    plt.xlabel( 'Error' + " " + errorUnit )
+    plt.ylabel( 'Frequency' )
+
+    if config[ 'add_title' ] == 'True':
+        plt.title( plotTitle + " " + 'Components' )
+
+    xAxesLowerLimit = config['set_axes'][0]
+    xAxesUpperLimit = config['set_axes'][1]
+    yAxesLowerLimit = config['set_axes'][2]
+    yAxesUpperLimit = config['set_axes'][3]
+
+    if xAxesLowerLimit != 0                                                                       \
+      or xAxesUpperLimit != 0                                                                     \
+        or yAxesLowerLimit != 0                                                                   \
+          or yAxesUpperLimit != 0:
+            print "Using user defined axes limits"
+            print ""
+            plt.axis([xAxesLowerLimit,                                                            \
+                      xAxesUpperLimit,                                                            \
+                      yAxesLowerLimit,                                                            \
+                      yAxesUpperLimit])
+
+    xlegend = mlines.Line2D( [], [], color=xcolor, label='R Axis' )
+    ylegend = mlines.Line2D( [], [], color=ycolor, label='T Axis' )
+    zlegend = mlines.Line2D( [], [], color=zcolor, label='N Axis' )
+    lines = [xlegend, ylegend, zlegend]
+    labels = [line.get_label( ) for line in lines]
+    plt.legend(lines, labels)
+
+    plt.grid( True )
+  else:
+    print "Plotting error components defined in ECI frame"
+    n, bins, patches = plt.hist( xerror, bins=200, histtype='step', normed=False, color=xcolor,   \
+                                 alpha=1, label='X Axis', log=False )
+    n, bins, patches = plt.hist( yerror, bins=200, histtype='step', normed=False, color=ycolor,   \
+                                 alpha=1, label='Y Axis', log=False )
+    n, bins, patches = plt.hist( zerror, bins=200, histtype='step', normed=False, color=zcolor,   \
+                                 alpha=1, label='Z Axis', log=False )
+    # Figure properties
+    plt.xlabel( 'Error' + " " + errorUnit )
+    plt.ylabel( 'Frequency' )
+
+    if config[ 'add_title' ] == 'True':
+        plt.title( plotTitle + " " + 'Components' )
+
+    xAxesLowerLimit = config['set_axes'][0]
+    xAxesUpperLimit = config['set_axes'][1]
+    yAxesLowerLimit = config['set_axes'][2]
+    yAxesUpperLimit = config['set_axes'][3]
+
+    if xAxesLowerLimit != 0                                                                       \
+      or xAxesUpperLimit != 0                                                                     \
+        or yAxesLowerLimit != 0                                                                   \
+          or yAxesUpperLimit != 0:
+            print "Using user defined axes limits"
+            print ""
+            plt.axis([xAxesLowerLimit,                                                            \
+                      xAxesUpperLimit,                                                            \
+                      yAxesLowerLimit,                                                            \
+                      yAxesUpperLimit])
+
+    xlegend = mlines.Line2D( [], [], color=xcolor, label='X Axis' )
+    ylegend = mlines.Line2D( [], [], color=ycolor, label='Y Axis' )
+    zlegend = mlines.Line2D( [], [], color=zcolor, label='Z Axis' )
+    lines = [xlegend, ylegend, zlegend]
+    labels = [line.get_label( ) for line in lines]
+    plt.legend(lines, labels)
+
+    plt.grid( True )
+
+  # Save figure to file.
+  plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + errorType[ errorTypeIndex ]
+               + "_error" + "_components_" + config["frame"] + config["figure_format"],           \
+               dpi=config["figure_dpi"] )
+  plt.close( )
+
+print "All figures generated successfully!"
 print ""
 
 # Close SQLite database if it's still open.

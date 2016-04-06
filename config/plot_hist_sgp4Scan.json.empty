@@ -11,16 +11,15 @@
     // Do not add a '/' at the end of the output dierectory.
     "output_directory"          : "",
 
-    // Set error to be plotted.
-    // This value can be set to any of the following:
-    // - arrival_position
-    // - arrival_velocity
-    "error"                     : "",
-
     // Filename for histogram.
     // Do not mention error type in the file name, it will automatically be included by the python
     // plotting script.
     "histogram_figure"          : "",
+
+    // Set reference frame for histogram plot of the error components.
+    // For Earth-Centered Inertial, use "ECI".
+    // For Radial-Tangen-Normal reference frame, use "RTN"
+    "frame"                     : "",
 
     // Set output format for the figure (example: ".pdf", ".png")
     "figure_format"             : "",
