@@ -34,10 +34,8 @@
 
 namespace d2d
 {
-
 // typedef double Real;
 typedef std::pair< Vector3, Vector3 > Velocities;
-
 
 //! Execute atom_scanner.
 void executeAtomScanner( const rapidjson::Document& config )
@@ -52,6 +50,10 @@ void executeAtomScanner( const rapidjson::Document& config )
     std::cout << "Earth gravitational parameter " << earthGravitationalParameter
               << " kg m^3 s^-2" << std::endl;
 
+    // Set mean radius used [km].
+    const double earthMeanRadius = kXKMPER;
+    std::cout << "Earth mean radius               " << earthMeanRadius << " km" << std::endl;
+
     std::cout << std::endl;
     std::cout << "******************************************************************" << std::endl;
     std::cout << "                       Simulation & Output                        " << std::endl;
@@ -59,8 +61,8 @@ void executeAtomScanner( const rapidjson::Document& config )
     std::cout << std::endl;
 
     // Open database in read/write mode.
-    // N.B.: Database must already exist and contain a populated table called
-    //       "lambert_scanner_results".
+    // N.B.: Database must already exist and contain two populated table called
+    //       "lambert_scanner_results" and "sgp4_scanner_results".
     SQLite::Database database( input.databasePath.c_str( ), SQLITE_OPEN_READWRITE );
 
     // Create table for atom_scanner_results in SQLite database.
@@ -71,20 +73,25 @@ void executeAtomScanner( const rapidjson::Document& config )
     // Start SQL transaction.
     SQLite::Transaction transaction( database );
 
-    // Fetch number of rows in lambert_scanner_results table.
-    std::ostringstream lambertScannerTableSizeSelect;
-    lambertScannerTableSizeSelect << "SELECT COUNT(*) FROM sgp4_scanner_results INNER JOIN lambert_scanner_results ON lambert_scanner_results.transfer_id = sgp4_scanner_results.lambert_transfer_id WHERE sgp4_scanner_results.success=1;";
+    // Fetch number of rows in spg4_scanner_results table.
+    std::ostringstream sgp4ScannerTableSizeSelect;
+    sgp4ScannerTableSizeSelect << "SELECT COUNT(*) "
+                               << "FROM sgp4_scanner_results "
+                               << "WHERE success=1;";
     const int atomScannertTableSize
-        = database.execAndGet( lambertScannerTableSizeSelect.str( ) );
+        = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
     std::cout << "Cases to process: " << atomScannertTableSize << std::endl;
 
+    // Set up select query to fetch data from lambert and sgp4 scanner tables.
+    std::ostringstream lambertSgp4ScannerTableSelect;
+    lambertSgp4ScannerTableSelect << "SELECT * "
+                              << "FROM sgp4_scanner_results "
+                              << "INNER JOIN lambert_scanner_results "
+                              << "ON lambert_scanner_results.transfer_id "
+                              << "= sgp4_scanner_results.lambert_transfer_id "
+                              << "WHERE sgp4_scanner_results.success=1;";
 
-    // Set up select query to fetch data from lambert_scanner_results table.
-    std::ostringstream lambertScannerTableSelect;
-    // lambertScannerTableSelect << "SELECT * FROM lambert_scanner_results;";
-    lambertScannerTableSelect << "SELECT * FROM sgp4_scanner_results INNER JOIN lambert_scanner_results ON lambert_scanner_results.transfer_id = sgp4_scanner_results.lambert_transfer_id WHERE sgp4_scanner_results.success=1;";
-
-    SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
+    SQLite::Statement lambertSgp4Query( database, lambertSgp4ScannerTableSelect.str( ) );
 
     // Setup insert query.
     std::ostringstream atomScannerTableInsert;
@@ -101,44 +108,37 @@ void executeAtomScanner( const rapidjson::Document& config )
         << ":atom_transfer_delta_v"
         << ");";
 
-
     SQLite::Statement atomQuery( database, atomScannerTableInsert.str( ) );
 
     std::cout << "Computing Atom transfers and populating database ... " << std::endl;
-
     boost::progress_display showProgress( atomScannertTableSize );
 
     int failCounter = 0;
 
-
-    while ( lambertQuery.executeStep( ) )
+    while ( lambertSgp4Query.executeStep( ) )
     {
-        const int      lambertTransferId                    = lambertQuery.getColumn( 1 );
-        // const int      departureObjectId                    = lambertQuery.getColumn( 1 );
-        // const int      arrivalObjectId                      = lambertQuery.getColumn( 2 );
+        const int      lambertTransferId                    = lambertSgp4Query.getColumn( 1 );
 
-        const double   departureEpochJulian                 = lambertQuery.getColumn( 20 );
-        const double   timeOfFlight                         = lambertQuery.getColumn( 21 );
+        const double   departureEpochJulian                 = lambertSgp4Query.getColumn( 20 );
+        const double   timeOfFlight                         = lambertSgp4Query.getColumn( 21 );
 
-        const double   departurePositionX                   = lambertQuery.getColumn( 24 );
-        const double   departurePositionY                   = lambertQuery.getColumn( 25 );
-        const double   departurePositionZ                   = lambertQuery.getColumn( 26 );
-        const double   departureVelocityX                   = lambertQuery.getColumn( 27 );
-        const double   departureVelocityY                   = lambertQuery.getColumn( 28 );
-        const double   departureVelocityZ                   = lambertQuery.getColumn( 29 );
+        const double   departurePositionX                   = lambertSgp4Query.getColumn( 24 );
+        const double   departurePositionY                   = lambertSgp4Query.getColumn( 25 );
+        const double   departurePositionZ                   = lambertSgp4Query.getColumn( 26 );
+        const double   departureVelocityX                   = lambertSgp4Query.getColumn( 27 );
+        const double   departureVelocityY                   = lambertSgp4Query.getColumn( 28 );
+        const double   departureVelocityZ                   = lambertSgp4Query.getColumn( 29 );
 
-        const double   arrivalPositionX                     = lambertQuery.getColumn( 36 );
-        const double   arrivalPositionY                     = lambertQuery.getColumn( 37 );
-        const double   arrivalPositionZ                     = lambertQuery.getColumn( 38 );
-        const double   arrivalVelocityX                     = lambertQuery.getColumn( 39 );
-        const double   arrivalVelocityY                     = lambertQuery.getColumn( 40 );
-        const double   arrivalVelocityZ                     = lambertQuery.getColumn( 41 );
+        const double   arrivalPositionX                     = lambertSgp4Query.getColumn( 36 );
+        const double   arrivalPositionY                     = lambertSgp4Query.getColumn( 37 );
+        const double   arrivalPositionZ                     = lambertSgp4Query.getColumn( 38 );
+        const double   arrivalVelocityX                     = lambertSgp4Query.getColumn( 39 );
+        const double   arrivalVelocityY                     = lambertSgp4Query.getColumn( 40 );
+        const double   arrivalVelocityZ                     = lambertSgp4Query.getColumn( 41 );
 
-        const double   departureDeltaVX                     = lambertQuery.getColumn( 54 );
-        const double   departureDeltaVY                     = lambertQuery.getColumn( 55 );
-        const double   departureDeltaVZ                     = lambertQuery.getColumn( 56 );
-
-        const double   lambertTotalDeltaV                   = lambertQuery.getColumn( 60 );
+        const double   departureDeltaVX                     = lambertSgp4Query.getColumn( 54 );
+        const double   departureDeltaVY                     = lambertSgp4Query.getColumn( 55 );
+        const double   departureDeltaVZ                     = lambertSgp4Query.getColumn( 56 );
 
         // Set up DateTime object for departure epoch using Julian date.
         // Note: The transformation given in the following statement is based on how the DateTime
@@ -146,16 +146,15 @@ void executeAtomScanner( const rapidjson::Document& config )
         DateTime departureEpoch( ( departureEpochJulian
                                    - astro::ASTRO_GREGORIAN_EPOCH_IN_JULIAN_DAYS ) * TicksPerDay );
 
-        // Get departure state for the transfer object.
         Vector3 departurePosition;
         departurePosition[ astro::xPositionIndex ] = departurePositionX;
         departurePosition[ astro::yPositionIndex ] = departurePositionY;
         departurePosition[ astro::zPositionIndex ] = departurePositionZ;
 
         Vector3 departureVelocity;
-        departureVelocity[ astro::xPositionIndex ] = departureVelocityX;
-        departureVelocity[ astro::yPositionIndex ] = departureVelocityY;
-        departureVelocity[ astro::zPositionIndex ] = departureVelocityZ;
+        departureVelocity[ 0 ] = departureVelocityX;
+        departureVelocity[ 1 ] = departureVelocityY;
+        departureVelocity[ 2 ] = departureVelocityZ;
 
         Vector3 arrivalPosition;
         arrivalPosition[ astro::xPositionIndex ] = arrivalPositionX;
@@ -163,40 +162,44 @@ void executeAtomScanner( const rapidjson::Document& config )
         arrivalPosition[ astro::zPositionIndex ] = arrivalPositionZ;
 
         Vector3 arrivalVelocity;
-        arrivalVelocity[ astro::xPositionIndex ] = arrivalVelocityX;
-        arrivalVelocity[ astro::yPositionIndex ] = arrivalVelocityY;
-        arrivalVelocity[ astro::zPositionIndex ] = arrivalVelocityZ;
+        arrivalVelocity[ 0 ] = arrivalVelocityX;
+        arrivalVelocity[ 1 ] = arrivalVelocityY;
+        arrivalVelocity[ 2 ] = arrivalVelocityZ;
 
         Vector3 departureVelocityGuess;
         departureVelocityGuess[ 0 ] = departureDeltaVX + departureVelocityX;
         departureVelocityGuess[ 1 ] = departureDeltaVY + departureVelocityY;
         departureVelocityGuess[ 2 ] = departureDeltaVZ + departureVelocityZ;
-        // std::cout << "departureVelocityGuess" << departureVelocityGuess << std::endl;
 
         std::string dummyString = "";
         int numberOfIterations = 0;
+        Tle referenceTle = Tle();
+
         try
         {
-
             const Velocities velocities = atom::executeAtomSolver( departurePosition,
                                                                    departureEpoch,
                                                                    arrivalPosition,
                                                                    timeOfFlight,
                                                                    departureVelocityGuess,
                                                                    dummyString,
-                                                                   numberOfIterations );
+                                                                   numberOfIterations,
+                                                                   referenceTle,
+                                                                   earthGravitationalParameter,
+                                                                   earthMeanRadius,
+                                                                   input.absoluteTolerance,
+                                                                   input.relativeTolerance,
+                                                                   input.maxIterations
+                                                                    );
 
             Vector3 atom_departure_delta_v = sml::add( velocities.first,
-                                                          sml::multiply( departureVelocity, -1.0 ) );
+                                                       sml::multiply( departureVelocity, -1.0 ) );
             Vector3 atom_arrival_delta_v = sml::add( arrivalVelocity,
-                                                          sml::multiply( velocities.second, -1.0 ) );
+                                                       sml::multiply( velocities.second, -1.0 ) );
 
             double atom_transfer_delta = sml::norm< double > (atom_departure_delta_v)
-                                                + sml::norm< double > (atom_arrival_delta_v);
+                                         + sml::norm< double > (atom_arrival_delta_v);
 
-
-
-            // std::cout << "Velocities: " << velocities.first << std::endl;
             atomQuery.bind( ":lambert_transfer_id" ,              lambertTransferId );
             atomQuery.bind( ":atom_departure_delta_v_x" ,         atom_departure_delta_v[0] );
             atomQuery.bind( ":atom_departure_delta_v_y" ,         atom_departure_delta_v[1] );
@@ -208,15 +211,11 @@ void executeAtomScanner( const rapidjson::Document& config )
 
             atomQuery.executeStep( );
             atomQuery.reset( );
-
         }
+
         catch( std::exception& virtualTleError )
         {
-            // std::cout << "lambertTransferId: " << lambertTransferId << std::endl;
-            // std::cout << "dummyString: " << dummyString << std::endl;
-            // std::cout << virtualTleError.what() << std::endl;
             failCounter = failCounter +1;
-
         }
 
         ++showProgress;
@@ -243,9 +242,8 @@ void executeAtomScanner( const rapidjson::Document& config )
 //! Check atom_scanner input parameters.
 AtomScannerInput checkAtomScannerInput( const rapidjson::Document& config )
 {
-    const double transferDeltaVCutoff
-        = find( config, "transfer_deltav_cutoff" )->value.GetDouble( );
-    std::cout << "Transfer deltaV cut-off         " << transferDeltaVCutoff << std::endl;
+    const std::string databasePath = find( config, "database" )->value.GetString( );
+    std::cout << "Database                        " << databasePath << std::endl;
 
     const double relativeTolerance = find( config, "relative_tolerance" )->value.GetDouble( );
     std::cout << "Relative tolerance              " << relativeTolerance << std::endl;
@@ -253,8 +251,8 @@ AtomScannerInput checkAtomScannerInput( const rapidjson::Document& config )
     const double absoluteTolerance = find( config, "absolute_tolerance" )->value.GetDouble( );
     std::cout << "Absolute tolerance              " << absoluteTolerance << std::endl;
 
-    const std::string databasePath = find( config, "database" )->value.GetString( );
-    std::cout << "Database                        " << databasePath << std::endl;
+    const int maxIterations = find( config, "maximum_iterations" )->value.GetInt( );
+    std::cout << "Maximum iterations Atom solver  " << maxIterations << std::endl;
 
     const int shortlistLength = find( config, "shortlist" )->value[ 0 ].GetInt( );
     std::cout << "# of shortlist transfers        " << shortlistLength << std::endl;
@@ -266,10 +264,10 @@ AtomScannerInput checkAtomScannerInput( const rapidjson::Document& config )
         std::cout << "Shortlist                       " << shortlistPath << std::endl;
     }
 
-    return AtomScannerInput(  transferDeltaVCutoff,
-                             relativeTolerance,
+    return AtomScannerInput( relativeTolerance,
                              absoluteTolerance,
                              databasePath,
+                             maxIterations,
                              shortlistLength,
                              shortlistPath );
 }
@@ -284,7 +282,7 @@ void createAtomScannerTable( SQLite::Database& database )
     std::ostringstream atomScannerTableCreate;
     atomScannerTableCreate
         << "CREATE TABLE atom_scanner_results ("
-        << "\"atom_transfer_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,"
+        << "\"transfer_id\"                                  INTEGER PRIMARY KEY AUTOINCREMENT,"
         << "\"lambert_transfer_id\"                          INT,"
         << "\"atom_departure_delta_v_x\"                     REAL,"
         << "\"atom_departure_delta_v_y\"                     REAL,"
@@ -312,7 +310,10 @@ void writeAtomTransferShortlist( SQLite::Database& database,
     // Fetch transfers to include in shortlist.
     // Database table is sorted by transfer_delta_v, in ascending order.
     std::ostringstream shortlistSelect;
-    shortlistSelect << "SELECT * FROM atom_scanner_results ORDER BY atom_transfer_delta_v ASC LIMIT "
+    shortlistSelect << "SELECT * "
+                    << "FROM atom_scanner_results "
+                    << "ORDER BY atom_transfer_delta_v ASC "
+                    << "LIMIT "
                     << shortlistNumber << ";";
     SQLite::Statement query( database, shortlistSelect.str( ) );
 
@@ -352,37 +353,11 @@ void writeAtomTransferShortlist( SQLite::Database& database,
                       << atomArrivalDeltaVX         << ","
                       << atomArrivalDeltaVY         << ","
                       << atomArrivalDeltaVZ         << ","
-                      << atomTransferDeltaV         << ","
+                      << atomTransferDeltaV
+                      << std::endl;
     }
 
     shortlistFile.close( );
-}
-
-//! Bind zeroes into sgp4_scanner_results table.
-std::string bindZeroesAtomScannerTable( const int lambertTransferId )
-{
-    std::ostringstream zeroEntry;
-    zeroEntry << "INSERT INTO atom_scanner_results VALUES ("
-              << "NULL"                          << ","
-              << lambertTransferId               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0
-              << ");";
-
-    return zeroEntry.str( );
 }
 
 } // namespace d2d

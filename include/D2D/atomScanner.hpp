@@ -52,35 +52,35 @@ public:
      * Constructs data struct based on verified input parameters.
      *
      * @sa checkSGP4ScannerInput, executeSGP4Scanner
-     * @param[in] aTransferDeltaVCutoff   Transfer \f$\Delta V\f$ cut-off used by sgp4 scanner
      * @param[in] aRelativeTolerance      Relative tolerance for Cartesian-to-TLE conversion
      * @param[in] aAbsoluteTolerance      Absolute tolerance for the Cartesian-to-TLE conversion
      * @param[in] aDatabasePath           Path to SQLite database
+     * @param[in] aMaximumOfIterations    Maximum of iterations the atom solver can do
      * @param[in] aShortlistLength        Number of transfers to include in shortlist
      * @param[in] aShortlistPath          Path to shortlist file
      */
-    AtomScannerInput( const double       aTransferDeltaVCutoff,
-                      const double       aRelativeTolerance,
+    AtomScannerInput( const double       aRelativeTolerance,
                       const double       aAbsoluteTolerance,
                       const std::string& aDatabasePath,
+                      const int          aMaximumOfIterations,
                       const int          aShortlistLength,
                       const std::string& aShortlistPath )
-        : transferDeltaVCutoff( aTransferDeltaVCutoff ),
-          relativeTolerance( aRelativeTolerance ),
+        : relativeTolerance( aRelativeTolerance ),
           absoluteTolerance( aAbsoluteTolerance ),
+          maxIterations( aMaximumOfIterations ),
           databasePath( aDatabasePath ),
           shortlistLength( aShortlistLength ),
           shortlistPath( aShortlistPath )
     { }
-
-    //! Transfer \f$\Delta V\f$ cut-off used by sgp4_scanner.
-    const double transferDeltaVCutoff;
 
     //! Relative tolerance for Cartesian-to-TLE conversion function.
     const double relativeTolerance;
 
     //! Absolute tolerance for Cartesian-to-TLE conversion function.
     const double absoluteTolerance;
+
+    //! Maximum of iterations for Atoms solver
+    const int maxIterations;
 
     //! Path to SQLite database to store output.
     const std::string databasePath;
@@ -118,16 +118,6 @@ AtomScannerInput checkAtomScannerInput( const rapidjson::Document& config );
  * @param[in] database SQLite database handle
  */
 void createAtomScannerTable( SQLite::Database& database );
-
-//! Bind zeroes into atom_scanner_results table.
-/*!
- * Bind zeroes into atom_scanner_results table in SQLite database when the total Lambert transfer
- * \f$\Delta V\f$ is above a user specified cut-off.
- *
- * @sa executeAtomScanner
- * @param[in] lambertTransferId transfer_id in the lambert_scanner_results table
- */
-std::string bindZeroesAtomScannerTable( const int lambertTransferId );
 
 //! Write transfer shortlist to file.
 /*!
