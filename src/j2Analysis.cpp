@@ -201,10 +201,11 @@ void executeJ2Analysis( const rapidjson::Document& config )
         longitudeAscendingNodeDot = -1.5 * meanMotionDegreesPerDay * j2Constant *
                                         std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
                                             std::cos( inclination ) /
-                                                std::pow( ( 1 - std::pow( eccentricity, 2 ), 2 ) );
+                                                std::pow( ( 1 - std::pow( eccentricity, 2 ) ), 2 );
 
         // Total change in longitude of ascending node in degrees over the time of flight:
-        double deltaLongitudeAscendingNode = ( longitudeAscendingNodeDot / 86400.0 ) * timeOfFlight;
+        double deltaLongitudeAscendingNode
+                = ( ( longitudeAscendingNodeDot / 86400.0 ) * sml::SML_PI / 180.0 ) * timeOfFlight;
 
         // Evaluate change in argument of periapsis due to J2 perturbation.
         // Change in argument of periapsis in degrees per day:
@@ -212,10 +213,11 @@ void executeJ2Analysis( const rapidjson::Document& config )
         argumentOfPeriapsisDot = 0.75 * meanMotionDegreesPerDay * j2Constant *
                                     std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
                                         ( 4 - 5 * std::pow( std::sin( inclination ), 2 ) ) /
-                                            std::pow( ( 1 - std::pow( eccentricity, 2 ), 2 ) );
+                                            std::pow( ( 1 - std::pow( eccentricity, 2 ) ), 2 );
 
         // Total change in largument of periapsis in degrees over the time of flight:
-        double deltaArgumentOfPeriapsis = ( argumentOfPeriapsisDot / 86400.0 ) * timeOfFlight;
+        double deltaArgumentOfPeriapsis
+                = ( ( argumentOfPeriapsisDot / 86400.0 ) * sml::SML_PI / 180.0 ) * timeOfFlight;
 
         // Evaluate change in true anomaly over the time of flight.
         // Get initial eccentric anomaly from the initial true anomaly:
@@ -229,15 +231,20 @@ void executeJ2Analysis( const rapidjson::Document& config )
                                         eccentricity );
 
         // Get final mean anomaly at the arrival point of the trasnfer orbit:
-        double finalMeanAnomaly = meanMotion * timeOfFlight + initialMeanAnomaly;
+        double finalMeanAnomaly = sml::computeModulo(
+                        ( meanMotion * timeOfFlight + initialMeanAnomaly ),
+                          2 * sml::SML_PI );
 
         // Get final eccentric anomaly at the arrival point of the transfer orbit:
-        double finalEccentricAnomaly = kep_toolbox::m2e( finalMeanAnomaly, eccentricity );
+        double finalEccentricAnomaly = sml::computeModulo(
+                 kep_toolbox::m2e( finalMeanAnomaly, eccentricity ),
+                 2 * sml::SML_PI );
 
         // Get final true anomaly at the arrival point of the transfer orbit:
         double finalTrueAnomaly = astro::convertEllipticalEccentricAnomalyToTrueAnomaly(
                                      finalEccentricAnomaly,
                                      eccentricity );
+        finalTrueAnomaly = sml::computeModulo( finalTrueAnomaly, 2 * sml::SML_PI );
 
         // Update the Orbital elements.
         longitudeAscendingNode = longitudeAscendingNode + deltaLongitudeAscendingNode;
