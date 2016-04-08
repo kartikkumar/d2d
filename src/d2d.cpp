@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
  * Copyright (c) 2014-2016 Abhishek Agrawal (abhishek.agrawal@protonmail.com)
+ * Copyright (c) 2014-2016 Enne Hekma (ennehekma@gmail.com)
  * Distributed under the MIT License.
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
@@ -20,6 +21,7 @@
 #include "D2D/lambertScanner.hpp"
 #include "D2D/lambertTransfer.hpp"
 #include "D2D/sgp4Scanner.hpp"
+#include "D2D/j2Analysis.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {
@@ -29,9 +31,10 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     std::cout << "------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
     std::cout << "                               D2D                                " << std::endl;
-    std::cout << "                              0.0.3                               " << std::endl;
     std::cout << std::endl;
-    std::cout << "       Copyright (c) 2014-2015, K. Kumar (me@kartikkumar.com)     " << std::endl;
+    std::cout << "       Copyright (c) 2014-2016, K. Kumar (me@kartikkumar.com)     " << std::endl;
+    std::cout << "       Copyright (c) 2016, E. Hekma (ennehekma@gmail.com)         " << std::endl;
+    std::cout << " Copyright (c) 2016, A. Agrawal (abhishek.agrawal@protonmail.com) " << std::endl;
     std::cout << std::endl;
     std::cout << "------------------------------------------------------------------" << std::endl;
     std::cout << std::endl;
@@ -115,6 +118,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         std::cout << "Mode:                           " << mode << std::endl;
         d2d::executeSGP4Scanner( config );
+    }
+    else if ( mode.compare( "j2_analysis" ) == 0 )
+    {
+        std::cout << "Mode:                           " << mode << std::endl;
+        d2d::executeJ2Analysis( config );
     }
     else
     {

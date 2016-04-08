@@ -25,7 +25,7 @@
 #include "D2D/tools.hpp"
 #include "D2D/typedefs.hpp"
 
-#include <pykep/src/core_functions/convert_anomalies.h>
+#include <keplerian_toolbox.h>
 
 namespace d2d
 {
@@ -166,49 +166,52 @@ void executeJ2Analysis( const rapidjson::Document& config )
 
         // Convert transfer object's departure state to osculating elements.
         Vector6 departureOsculatingElements;
-        const Real tolerance = 10.0 * std::numeric_limits< Real >::epsilon( );
+        const double tolerance = 10.0 * std::numeric_limits< double >::epsilon( );
         departureOsculatingElements = astro::convertCartesianToKeplerianElements(
                                         transferDepartureState,
                                         earthGravitationalParameter,
                                         tolerance );
 
-        double semiMajorAxis    = departureOsculatingElements[ astro::semiMajorAxisIndex ];
-        double eccentricity     = departureOsculatingElements[ astro::eccentricityIndex ];
-        double inclination      = departureOsculatingElements[ astro::inclinationIndex ];
+        double semiMajorAxis = departureOsculatingElements[ astro::semiMajorAxisIndex ];
+        double eccentricity  = departureOsculatingElements[ astro::eccentricityIndex ];
+        double inclination   = departureOsculatingElements[ astro::inclinationIndex ];
         double argumentOfPeriapsis
-                                = departureOsculatingElements[ astro::argumentOfPeriapsisIndex ];
+                             = departureOsculatingElements[ astro::argumentOfPeriapsisIndex ];
         double longitudeAscendingNode
-                                = departureOsculatingElements[ astro::longitudeAscendingNodeIndex ];
-        double trueAnomaly      = departureOsculatingElements[ astro::trueAnomalyIndex ];
+                             = departureOsculatingElements[ astro::longitudeOfAscendingNodeIndex ];
+        double trueAnomaly   = departureOsculatingElements[ astro::trueAnomalyIndex ];
 
         // Evaluate change in longitude of ascending node due to J2 perturbation.
+        const double massOfOrbitingBody = 0.0;
         double meanMotion = astro::computeKeplerMeanMotion(
                                 semiMajorAxis,
                                 earthGravitationalParameter,
-                                const double massOfOrbitingBody = 0.0 );
+                                massOfOrbitingBody );
 
         double meanMotionDegreesPerDay = ( meanMotion * 180.0 / sml::SML_PI ) * 86400.0;
 
         const double j2Constant = 0.00108263;
 
         // Change in longitude of ascending node in degrees per day:
+        double longitudeAscendingNodeDot;
         longitudeAscendingNodeDot = -1.5 * meanMotionDegreesPerDay * j2Constant *
                                         std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
                                             std::cos( inclination ) /
                                                 ( 1 - std::pow( eccentricity, 2 ) );
 
         // Total change in longitude of ascending node in degrees over the time of flight:
-        deltaLongitudeAscendingNode = ( longitudeAscendingNodeDot / 86400.0 ) * timeOfFlight;
+        double deltaLongitudeAscendingNode = ( longitudeAscendingNodeDot / 86400.0 ) * timeOfFlight;
 
         // Evaluate change in argument of periapsis due to J2 perturbation.
         // Change in argument of periapsis in degrees per day:
+        double argumentOfPeriapsisDot;
         argumentOfPeriapsisDot = 0.75 * meanMotionDegreesPerDay * j2Constant *
                                     std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
                                         ( 4 - 5 * std::pow( std::sin( inclination ), 2 ) ) /
                                             ( 1 - std::pow( eccentricity, 2 ) );
 
         // Total change in largument of periapsis in degrees over the time of flight:
-        deltaArgumentOfPeriapsis = ( argumentOfPeriapsisDot / 86400.0 ) * timeOfFlight;
+        double deltaArgumentOfPeriapsis = ( argumentOfPeriapsisDot / 86400.0 ) * timeOfFlight;
 
         // Evaluate change in true anomaly over the time of flight.
         // Get initial eccentric anomaly from the initial true anomaly:
@@ -228,9 +231,9 @@ void executeJ2Analysis( const rapidjson::Document& config )
         double finalEccentricAnomaly = kep_toolbox::m2e( finalMeanAnomaly, eccentricity );
 
         // Get final true anomaly at the arrival point of the transfer orbit:
-        finalTrueAnomaly = astro::convertEllipticalEccentricAnomalyToTrueAnomaly(
-                                finalEccentricAnomaly,
-                                eccentricity );
+        double finalTrueAnomaly = astro::convertEllipticalEccentricAnomalyToTrueAnomaly(
+                                     finalEccentricAnomaly,
+                                     eccentricity );
 
         // Update the osculating elements.
         longitudeAscendingNode = longitudeAscendingNode + deltaLongitudeAscendingNode;
@@ -238,12 +241,12 @@ void executeJ2Analysis( const rapidjson::Document& config )
         trueAnomaly            = finalTrueAnomaly;
 
         Vector6 keplerianElements;
-        keplerianElements[ astro::semiMajorAxisIndex ]          = semiMajorAxis * 1000.0;
-        keplerianElements[ astro::eccentricityIndex ]           = eccentricity;
-        keplerianElements[ astro::inclinationIndex ]            = inclination;
-        keplerianElements[ astro::argumentOfPeriapsisIndex ]    = argumentOfPeriapsis;
-        keplerianElements[ astro::longitudeAscendingNodeIndex ] = longitudeAscendingNode;
-        keplerianElements[ astro::trueAnomalyIndex ]            = trueAnomaly;
+        keplerianElements[ astro::semiMajorAxisIndex ]              = semiMajorAxis;
+        keplerianElements[ astro::eccentricityIndex ]               = eccentricity;
+        keplerianElements[ astro::inclinationIndex ]                = inclination;
+        keplerianElements[ astro::argumentOfPeriapsisIndex ]        = argumentOfPeriapsis;
+        keplerianElements[ astro::longitudeOfAscendingNodeIndex ]   = longitudeAscendingNode;
+        keplerianElements[ astro::trueAnomalyIndex ]                = trueAnomaly;
 
         // Convert the osculating elements at the arrival point back to cartesian state.
         Vector6 arrivalTransferState = astro::convertKeplerianToCartesianElements(
@@ -252,17 +255,17 @@ void executeJ2Analysis( const rapidjson::Document& config )
                                             tolerance );
 
         // Compute the required results.
-        const double j2ArrivalPositionX = sgp4ArrivalState[ astro::xPositionIndex ];
-        const double j2ArrivalPositionY = sgp4ArrivalState[ astro::yPositionIndex ];
-        const double j2ArrivalPositionZ = sgp4ArrivalState[ astro::zPositionIndex ];
+        const double j2ArrivalPositionX = arrivalTransferState[ astro::xPositionIndex ];
+        const double j2ArrivalPositionY = arrivalTransferState[ astro::yPositionIndex ];
+        const double j2ArrivalPositionZ = arrivalTransferState[ astro::zPositionIndex ];
 
-        const double j2ArrivalVelocityX = sgp4ArrivalState[ astro::xVelocityIndex ];
-        const double j2ArrivalVelocityY = sgp4ArrivalState[ astro::yVelocityIndex ];
-        const double j2ArrivalVelocityZ = sgp4ArrivalState[ astro::zVelocityIndex ];
+        const double j2ArrivalVelocityX = arrivalTransferState[ astro::xVelocityIndex ];
+        const double j2ArrivalVelocityY = arrivalTransferState[ astro::yVelocityIndex ];
+        const double j2ArrivalVelocityZ = arrivalTransferState[ astro::zVelocityIndex ];
 
-        const double arrivalPositionErrorX = sgp4ArrivalPositionX - lambertArrivalPositionX;
-        const double arrivalPositionErrorY = sgp4ArrivalPositionY - lambertArrivalPositionY;
-        const double arrivalPositionErrorZ = sgp4ArrivalPositionZ - lambertArrivalPositionZ;
+        const double arrivalPositionErrorX = j2ArrivalPositionX - lambertArrivalPositionX;
+        const double arrivalPositionErrorY = j2ArrivalPositionY - lambertArrivalPositionY;
+        const double arrivalPositionErrorZ = j2ArrivalPositionZ - lambertArrivalPositionZ;
 
         Vector3 positionError;
         positionError[ astro::xPositionIndex ] = arrivalPositionErrorX;
@@ -270,11 +273,11 @@ void executeJ2Analysis( const rapidjson::Document& config )
         positionError[ astro::zPositionIndex ] = arrivalPositionErrorZ;
         const double arrivalPositionErrorNorm = sml::norm< double >( positionError );
 
-        const double arrivalVelocityErrorX = sgp4ArrivalVelocityX -
+        const double arrivalVelocityErrorX = j2ArrivalVelocityX -
                                             ( lambertArrivalVelocityX - lambertArrivalDeltaVX );
-        const double arrivalVelocityErrorY = sgp4ArrivalVelocityY -
+        const double arrivalVelocityErrorY = j2ArrivalVelocityY -
                                             ( lambertArrivalVelocityY - lambertArrivalDeltaVY );
-        const double arrivalVelocityErrorZ = sgp4ArrivalVelocityZ -
+        const double arrivalVelocityErrorZ = j2ArrivalVelocityZ -
                                             ( lambertArrivalVelocityZ - lambertArrivalDeltaVZ );
 
         Vector3 velocityError;
@@ -284,52 +287,38 @@ void executeJ2Analysis( const rapidjson::Document& config )
         double arrivalVelocityErrorNorm = sml::norm< double >( velocityError );
 
         // Bind computed values to sgp4Query.
-        sgp4Query.bind( ":lambert_transfer_id",                   lambertTransferId );
-        sgp4Query.bind( ":arrival_position_x",                    sgp4ArrivalPositionX );
-        sgp4Query.bind( ":arrival_position_y",                    sgp4ArrivalPositionY );
-        sgp4Query.bind( ":arrival_position_z",                    sgp4ArrivalPositionZ );
-        sgp4Query.bind( ":arrival_velocity_x",                    sgp4ArrivalVelocityX );
-        sgp4Query.bind( ":arrival_velocity_y",                    sgp4ArrivalVelocityY );
-        sgp4Query.bind( ":arrival_velocity_z",                    sgp4ArrivalVelocityZ );
-        sgp4Query.bind( ":arrival_position_x_error",              arrivalPositionErrorX );
-        sgp4Query.bind( ":arrival_position_y_error",              arrivalPositionErrorY );
-        sgp4Query.bind( ":arrival_position_z_error",              arrivalPositionErrorZ );
-        sgp4Query.bind( ":arrival_position_error",                arrivalPositionErrorNorm );
-        sgp4Query.bind( ":arrival_velocity_x_error",              arrivalVelocityErrorX );
-        sgp4Query.bind( ":arrival_velocity_y_error",              arrivalVelocityErrorY );
-        sgp4Query.bind( ":arrival_velocity_z_error",              arrivalVelocityErrorZ );
-        sgp4Query.bind( ":arrival_velocity_error",                arrivalVelocityErrorNorm );
-        sgp4Query.bind( ":success",                               1 );
+        j2Query.bind( ":lambert_transfer_id",                   lambertTransferId );
+        j2Query.bind( ":arrival_position_x",                    j2ArrivalPositionX );
+        j2Query.bind( ":arrival_position_y",                    j2ArrivalPositionY );
+        j2Query.bind( ":arrival_position_z",                    j2ArrivalPositionZ );
+        j2Query.bind( ":arrival_velocity_x",                    j2ArrivalVelocityX );
+        j2Query.bind( ":arrival_velocity_y",                    j2ArrivalVelocityY );
+        j2Query.bind( ":arrival_velocity_z",                    j2ArrivalVelocityZ );
+        j2Query.bind( ":arrival_position_x_error",              arrivalPositionErrorX );
+        j2Query.bind( ":arrival_position_y_error",              arrivalPositionErrorY );
+        j2Query.bind( ":arrival_position_z_error",              arrivalPositionErrorZ );
+        j2Query.bind( ":arrival_position_error",                arrivalPositionErrorNorm );
+        j2Query.bind( ":arrival_velocity_x_error",              arrivalVelocityErrorX );
+        j2Query.bind( ":arrival_velocity_y_error",              arrivalVelocityErrorY );
+        j2Query.bind( ":arrival_velocity_z_error",              arrivalVelocityErrorZ );
+        j2Query.bind( ":arrival_velocity_error",                arrivalVelocityErrorNorm );
 
-        sgp4Query.executeStep( );
-        sgp4Query.reset( );
+        j2Query.executeStep( );
+        j2Query.reset( );
 
         ++showProgress;
     }
 
-    // Fetch number of rows in sgp4_scanner_results table.
-    std::ostringstream sgp4ScannerTableSizeSelect;
-    sgp4ScannerTableSizeSelect << "SELECT COUNT(*) FROM sgp4_scanner_results;";
-    const int sgp4ScannertTableSize
-        = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
-
-    std::ostringstream totalLambertCasesConsideredSelect;
-    totalLambertCasesConsideredSelect
-        << "SELECT COUNT(*) FROM lambert_scanner_results WHERE transfer_delta_v <= "
-        << input.transferDeltaVCutoff << ";";
-    const int totalLambertCasesConsidered
-        = database.execAndGet( totalLambertCasesConsideredSelect.str( ) );
+    // Fetch number of rows in j2_analysis_results table.
+    std::ostringstream j2AnalysisTableSizeSelect;
+    j2AnalysisTableSizeSelect << "SELECT COUNT(*) FROM j2_analysis_results;";
+    const int j2AnalysistTableSize
+        = database.execAndGet( j2AnalysisTableSizeSelect.str( ) );
 
     std::cout << std::endl;
-    std::cout << "Total Lambert cases = " << lambertScannertTableSize << std::endl;
-    std::cout << "Total SGP4 cases = " << sgp4ScannertTableSize << std::endl;
+    std::cout << "Total SGP4 (success) cases = " << sgp4ScannertTableSize << std::endl;
     std::cout << std::endl;
-    std::cout << "Number of Lambert cases considered with the transfer deltaV cut-off = "
-              << totalLambertCasesConsidered << std::endl;
-    std::cout << "Number of virtual TLE convergence fail cases = "
-              << virtualTleFailCounter << std::endl;
-    std::cout << "Number of arrival epoch propagation fail cases = "
-              << arrivalEpochPropagationFailCounter << std::endl;
+    std::cout << "Total j2 analysis cases = " << j2AnalysistTableSize << std::endl;
 
     // Commit transaction.
     transaction.commit( );
@@ -342,24 +331,14 @@ void executeJ2Analysis( const rapidjson::Document& config )
     if ( input.shortlistLength > 0 )
     {
         std::cout << "Writing shortlist to file ... " << std::endl;
-        writeSGP4TransferShortlist( database, input.shortlistLength, input.shortlistPath );
+        writeJ2TransferShortlist( database, input.shortlistLength, input.shortlistPath );
         std::cout << "Shortlist file created successfully!" << std::endl;
     }
 }
 
-//! Check sgp4_scanner input parameters.
-sgp4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
+//! Check j2_analysis input parameters.
+j2AnalysisInput checkJ2AnalysisInput( const rapidjson::Document& config )
 {
-    const double transferDeltaVCutoff
-        = find( config, "transfer_deltav_cutoff" )->value.GetDouble( );
-    std::cout << "Transfer deltaV cut-off         " << transferDeltaVCutoff << std::endl;
-
-    const double relativeTolerance = find( config, "relative_tolerance" )->value.GetDouble( );
-    std::cout << "Relative tolerance              " << relativeTolerance << std::endl;
-
-    const double absoluteTolerance = find( config, "absolute_tolerance" )->value.GetDouble( );
-    std::cout << "Absolute tolerance              " << absoluteTolerance << std::endl;
-
     const std::string databasePath = find( config, "database" )->value.GetString( );
     std::cout << "Database                        " << databasePath << std::endl;
 
@@ -373,16 +352,13 @@ sgp4ScannerInput checkSGP4ScannerInput( const rapidjson::Document& config )
         std::cout << "Shortlist                       " << shortlistPath << std::endl;
     }
 
-    return sgp4ScannerInput( transferDeltaVCutoff,
-                             relativeTolerance,
-                             absoluteTolerance,
-                             databasePath,
-                             shortlistLength,
-                             shortlistPath );
+    return j2AnalysisInput( databasePath,
+                           shortlistLength,
+                           shortlistPath );
 }
 
-//! Create sgp4_scanner table.
-void createSGP4ScannerTable( SQLite::Database& database )
+//! Create j2_analysis_results table.
+void createJ2AnalysisTable( SQLite::Database& database )
 {
     // Check that lambert_scanner_results table exists.
     if ( !database.tableExists( "lambert_scanner_results" ) )
@@ -391,13 +367,20 @@ void createSGP4ScannerTable( SQLite::Database& database )
             "ERROR: \"lambert_scanner_results\" must exist and be populated!" );
     }
 
-    // Drop table from database if it exists.
-    database.exec( "DROP TABLE IF EXISTS sgp4_scanner_results;" );
+    // Check that sgp4_scanner_results table exists.
+    if ( !database.tableExists( "sgp4_scanner_results" ) )
+    {
+        throw std::runtime_error(
+            "ERROR: \"sgp4_scanner_results\" must exist and be populated!" );
+    }
 
-    // Set up SQL command to create table to store SGP4 Scanner results.
-    std::ostringstream sgp4ScannerTableCreate;
-    sgp4ScannerTableCreate
-        << "CREATE TABLE sgp4_scanner_results ("
+    // Drop table from database if it exists.
+    database.exec( "DROP TABLE IF EXISTS j2_analysis_results;" );
+
+    // Set up SQL command to create table to store J2 Analysis results.
+    std::ostringstream j2AnalysisTableCreate;
+    j2AnalysisTableCreate
+        << "CREATE TABLE j2_analysis_results ("
         << "\"transfer_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,"
         << "\"lambert_transfer_id\"                     INTEGER,"
         << "\"arrival_position_x\"                      REAL,"
@@ -414,91 +397,63 @@ void createSGP4ScannerTable( SQLite::Database& database )
         << "\"arrival_velocity_y_error\"                REAL,"
         << "\"arrival_velocity_z_error\"                REAL,"
         << "\"arrival_velocity_error\"                  REAL,"
-        << "\"success\"                                 INTEGER"
         <<                                              ");";
 
     // Execute command to create table.
-    database.exec( sgp4ScannerTableCreate.str( ).c_str( ) );
+    database.exec( j2AnalysisTableCreate.str( ).c_str( ) );
 
     // Execute command to create index on transfer arrival_position_error column.
     std::ostringstream arrivalPositionErrorIndexCreate;
     arrivalPositionErrorIndexCreate << "CREATE INDEX IF NOT EXISTS \"arrival_position_error\" on "
-                                    << "sgp4_scanner_results (arrival_position_error ASC);";
+                                    << "j2_analysis_results (arrival_position_error ASC);";
     database.exec( arrivalPositionErrorIndexCreate.str( ).c_str( ) );
 
     // Execute command to create index on transfer arrival_velocity_error column.
     std::ostringstream arrivalVelocityErrorIndexCreate;
     arrivalVelocityErrorIndexCreate << "CREATE INDEX IF NOT EXISTS \"arrival_velocity_error\" on "
-                                    << "sgp4_scanner_results (arrival_velocity_error ASC);";
+                                    << "j2_analysis_results (arrival_velocity_error ASC);";
     database.exec( arrivalVelocityErrorIndexCreate.str( ).c_str( ) );
 
-    if ( !database.tableExists( "sgp4_scanner_results" ) )
+    if ( !database.tableExists( "j2_analysis_results" ) )
     {
         std::ostringstream errorMessage;
-        errorMessage << "ERROR: Creating table 'sgp4_scanner_results' failed in sgp4Scanner.cpp!";
+        errorMessage << "ERROR: Creating table 'j2_analysis_results' failed in j2Analysis.cpp!";
         throw std::runtime_error( errorMessage.str( ) );
     }
 }
 
-//! Bind zeroes into sgp4_scanner_results table.
-std::string bindZeroesSGP4ScannerTable( const int lambertTransferId )
-{
-    std::ostringstream zeroEntry;
-    zeroEntry << "INSERT INTO sgp4_scanner_results VALUES ("
-              << "NULL"                          << ","
-              << lambertTransferId               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0                               << ","
-              << 0
-              << ");";
-
-    return zeroEntry.str( );
-}
-
 //! Write transfer shortlist to file.
-void writeSGP4TransferShortlist( SQLite::Database& database,
-                                 const int shortlistNumber,
-                                 const std::string& shortlistPath )
+void writeJ2TransferShortlist( SQLite::Database& database,
+                               const int shortlistNumber,
+                               const std::string& shortlistPath )
 {
     // Fetch transfers to include in shortlist.
-    // The sgp4_scanner_results table is sorted by transfer_delta_v from the lambert_scanner_results
+    // The j2_analysis_results table is sorted by transfer_delta_v from the lambert_scanner_results
     // table in ascending order.
     std::ostringstream shortlistSelect;
-    shortlistSelect << "SELECT      sgp4_scanner_results.transfer_id, "
-                    << "            sgp4_scanner_results.lambert_transfer_id, "
+    shortlistSelect << "SELECT      j2_analysis_results.transfer_id, "
+                    << "            j2_analysis_results.lambert_transfer_id, "
                     << "            lambert_scanner_results.transfer_delta_v, "
                     << "            lambert_scanner_results.departure_object_id, "
                     << "            lambert_scanner_results.arrival_object_id, "
-                    << "            sgp4_scanner_results.arrival_position_x, "
-                    << "            sgp4_scanner_results.arrival_position_y, "
-                    << "            sgp4_scanner_results.arrival_position_z, "
-                    << "            sgp4_scanner_results.arrival_velocity_x, "
-                    << "            sgp4_scanner_results.arrival_velocity_y, "
-                    << "            sgp4_scanner_results.arrival_velocity_z, "
-                    << "            sgp4_scanner_results.arrival_position_x_error, "
-                    << "            sgp4_scanner_results.arrival_position_y_error, "
-                    << "            sgp4_scanner_results.arrival_position_z_error, "
-                    << "            sgp4_scanner_results.arrival_position_error, "
-                    << "            sgp4_scanner_results.arrival_velocity_x_error, "
-                    << "            sgp4_scanner_results.arrival_velocity_y_error, "
-                    << "            sgp4_scanner_results.arrival_velocity_z_error, "
-                    << "            sgp4_scanner_results.arrival_velocity_error "
-                    << "FROM        sgp4_scanner_results "
+                    << "            j2_analysis_results.arrival_position_x, "
+                    << "            j2_analysis_results.arrival_position_y, "
+                    << "            j2_analysis_results.arrival_position_z, "
+                    << "            j2_analysis_results.arrival_velocity_x, "
+                    << "            j2_analysis_results.arrival_velocity_y, "
+                    << "            j2_analysis_results.arrival_velocity_z, "
+                    << "            j2_analysis_results.arrival_position_x_error, "
+                    << "            j2_analysis_results.arrival_position_y_error, "
+                    << "            j2_analysis_results.arrival_position_z_error, "
+                    << "            j2_analysis_results.arrival_position_error, "
+                    << "            j2_analysis_results.arrival_velocity_x_error, "
+                    << "            j2_analysis_results.arrival_velocity_y_error, "
+                    << "            j2_analysis_results.arrival_velocity_z_error, "
+                    << "            j2_analysis_results.arrival_velocity_error "
+                    << "FROM        j2_analysis_results "
                     << "INNER JOIN  lambert_scanner_results "
                     << "ON          lambert_scanner_results.transfer_id = "
-                    << "            sgp4_scanner_results.lambert_transfer_id "
+                    << "            j2_analysis_results.lambert_transfer_id "
                     << "ORDER BY    lambert_scanner_results.transfer_delta_v ASC LIMIT "
                     << shortlistNumber << ";";
 
