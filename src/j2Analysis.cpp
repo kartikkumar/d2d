@@ -71,6 +71,8 @@ void executeJ2Analysis( const rapidjson::Document& config )
     sgp4ScannerTableSizeSelect << "SELECT COUNT(*) FROM sgp4_scanner_results WHERE success = 1;";
     const int sgp4ScannertTableSize
         = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
+    std::cout << "# of cases to be considered in the J2 analysis = " << sgp4ScannertTableSize;
+    std::cout << std::endl;
 
     // Set up select query to fetch data from lambert_scanner_results table.
     std::ostringstream lambertScannerTableSelect;
@@ -93,14 +95,15 @@ void executeJ2Analysis( const rapidjson::Document& config )
                               << "              lambert_scanner_results.arrival_velocity_z,"
                               << "              lambert_scanner_results.arrival_delta_v_x,"
                               << "              lambert_scanner_results.arrival_delta_v_y,"
-                              << "              lambert_scanner_results.arrival_delta_v_z,"
-                              << "FROM          lambert_scanner_results"
-                              << "INNER JOIN    sgp4_scanner_results"
-                              << "ON            sgp4_scanner_results.success = 1"
+                              << "              lambert_scanner_results.arrival_delta_v_z "
+                              << "FROM          lambert_scanner_results "
+                              << "INNER JOIN    sgp4_scanner_results "
+                              << "ON            sgp4_scanner_results.success = 1 "
                               << "AND           sgp4_scanner_results.lambert_transfer_id = "
                               << "              lambert_scanner_results.transfer_id;";
 
     SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
+    std::cout << "Data selection from lambert_scanner_results table successfull!" << std::endl;
 
     // Set up insert query to insert data into j2_analysis_results table.
     std::ostringstream j2AnalysisTableInsert;
@@ -120,40 +123,41 @@ void executeJ2Analysis( const rapidjson::Document& config )
         << ":arrival_velocity_x_error,"
         << ":arrival_velocity_y_error,"
         << ":arrival_velocity_z_error,"
-        << ":arrival_velocity_error,"
+        << ":arrival_velocity_error"
         << ");";
 
     SQLite::Statement j2Query( database, j2AnalysisTableInsert.str( ) );
-
-    boost::progress_display showProgress( sgp4ScannertTableSize );
+    std::cout << "Column headers set up successfully for j2_analysis_results table!" << std::endl;
 
     std::cout << "Performing J2 Analysis on transfer orbits ..." << std::endl << std::endl;
+
+    boost::progress_display showProgress( sgp4ScannertTableSize );
 
     // Step through select query to fetch data from lambert_scanner_results.
     while ( lambertQuery.executeStep( ) )
     {
         const int      lambertTransferId                    = lambertQuery.getColumn( 0 );
-        const double   timeOfFlight                         = lambertQuery.getColumn( 4 );
+        const double   timeOfFlight                         = lambertQuery.getColumn( 1 );
 
-        const double   departurePositionX                   = lambertQuery.getColumn( 7 );
-        const double   departurePositionY                   = lambertQuery.getColumn( 8 );
-        const double   departurePositionZ                   = lambertQuery.getColumn( 9 );
-        const double   departureVelocityX                   = lambertQuery.getColumn( 10 );
-        const double   departureVelocityY                   = lambertQuery.getColumn( 11 );
-        const double   departureVelocityZ                   = lambertQuery.getColumn( 12 );
-        const double   departureDeltaVX                     = lambertQuery.getColumn( 37 );
-        const double   departureDeltaVY                     = lambertQuery.getColumn( 38 );
-        const double   departureDeltaVZ                     = lambertQuery.getColumn( 39 );
+        const double   departurePositionX                   = lambertQuery.getColumn( 2 );
+        const double   departurePositionY                   = lambertQuery.getColumn( 3 );
+        const double   departurePositionZ                   = lambertQuery.getColumn( 4 );
+        const double   departureVelocityX                   = lambertQuery.getColumn( 5 );
+        const double   departureVelocityY                   = lambertQuery.getColumn( 6 );
+        const double   departureVelocityZ                   = lambertQuery.getColumn( 7 );
+        const double   departureDeltaVX                     = lambertQuery.getColumn( 8 );
+        const double   departureDeltaVY                     = lambertQuery.getColumn( 9 );
+        const double   departureDeltaVZ                     = lambertQuery.getColumn( 10 );
 
-        const double   lambertArrivalPositionX              = lambertQuery.getColumn( 19 );
-        const double   lambertArrivalPositionY              = lambertQuery.getColumn( 20 );
-        const double   lambertArrivalPositionZ              = lambertQuery.getColumn( 21 );
-        const double   lambertArrivalVelocityX              = lambertQuery.getColumn( 22 );
-        const double   lambertArrivalVelocityY              = lambertQuery.getColumn( 23 );
-        const double   lambertArrivalVelocityZ              = lambertQuery.getColumn( 24 );
-        const double   lambertArrivalDeltaVX                = lambertQuery.getColumn( 40 );
-        const double   lambertArrivalDeltaVY                = lambertQuery.getColumn( 41 );
-        const double   lambertArrivalDeltaVZ                = lambertQuery.getColumn( 42 );
+        const double   lambertArrivalPositionX              = lambertQuery.getColumn( 11 );
+        const double   lambertArrivalPositionY              = lambertQuery.getColumn( 12 );
+        const double   lambertArrivalPositionZ              = lambertQuery.getColumn( 13 );
+        const double   lambertArrivalVelocityX              = lambertQuery.getColumn( 14 );
+        const double   lambertArrivalVelocityY              = lambertQuery.getColumn( 15 );
+        const double   lambertArrivalVelocityZ              = lambertQuery.getColumn( 16 );
+        const double   lambertArrivalDeltaVX                = lambertQuery.getColumn( 17 );
+        const double   lambertArrivalDeltaVY                = lambertQuery.getColumn( 18 );
+        const double   lambertArrivalDeltaVZ                = lambertQuery.getColumn( 19 );
 
         // Get departure state for the transfer object.
         Vector6 transferDepartureState;
@@ -353,8 +357,8 @@ j2AnalysisInput checkJ2AnalysisInput( const rapidjson::Document& config )
     }
 
     return j2AnalysisInput( databasePath,
-                           shortlistLength,
-                           shortlistPath );
+                            shortlistLength,
+                            shortlistPath );
 }
 
 //! Create j2_analysis_results table.
@@ -396,7 +400,7 @@ void createJ2AnalysisTable( SQLite::Database& database )
         << "\"arrival_velocity_x_error\"                REAL,"
         << "\"arrival_velocity_y_error\"                REAL,"
         << "\"arrival_velocity_z_error\"                REAL,"
-        << "\"arrival_velocity_error\"                  REAL,"
+        << "\"arrival_velocity_error\"                  REAL"
         <<                                              ");";
 
     // Execute command to create table.
