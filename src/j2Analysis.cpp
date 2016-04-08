@@ -159,7 +159,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
         const double   lambertArrivalDeltaVY                = lambertQuery.getColumn( 18 );
         const double   lambertArrivalDeltaVZ                = lambertQuery.getColumn( 19 );
 
-        // Get departure state for the transfer object.
+        // Get departure state for the transfer object ([km] and [km/s]).
         Vector6 transferDepartureState;
         transferDepartureState[ astro::xPositionIndex ] = departurePositionX;
         transferDepartureState[ astro::yPositionIndex ] = departurePositionY;
@@ -168,22 +168,22 @@ void executeJ2Analysis( const rapidjson::Document& config )
         transferDepartureState[ astro::yVelocityIndex ] = departureVelocityY + departureDeltaVY;
         transferDepartureState[ astro::zVelocityIndex ] = departureVelocityZ + departureDeltaVZ;
 
-        // Convert transfer object's departure state to osculating elements.
-        Vector6 departureOsculatingElements;
+        // Convert transfer object's departure state to Orbital elements.
+        Vector6 departureOrbitalElements;
         const double tolerance = 10.0 * std::numeric_limits< double >::epsilon( );
-        departureOsculatingElements = astro::convertCartesianToKeplerianElements(
+        departureOrbitalElements = astro::convertCartesianToKeplerianElements(
                                         transferDepartureState,
                                         earthGravitationalParameter,
                                         tolerance );
 
-        double semiMajorAxis = departureOsculatingElements[ astro::semiMajorAxisIndex ];
-        double eccentricity  = departureOsculatingElements[ astro::eccentricityIndex ];
-        double inclination   = departureOsculatingElements[ astro::inclinationIndex ];
+        double semiMajorAxis = departureOrbitalElements[ astro::semiMajorAxisIndex ];
+        double eccentricity  = departureOrbitalElements[ astro::eccentricityIndex ];
+        double inclination   = departureOrbitalElements[ astro::inclinationIndex ];
         double argumentOfPeriapsis
-                             = departureOsculatingElements[ astro::argumentOfPeriapsisIndex ];
+                             = departureOrbitalElements[ astro::argumentOfPeriapsisIndex ];
         double longitudeAscendingNode
-                             = departureOsculatingElements[ astro::longitudeOfAscendingNodeIndex ];
-        double trueAnomaly   = departureOsculatingElements[ astro::trueAnomalyIndex ];
+                             = departureOrbitalElements[ astro::longitudeOfAscendingNodeIndex ];
+        double trueAnomaly   = departureOrbitalElements[ astro::trueAnomalyIndex ];
 
         // Evaluate change in longitude of ascending node due to J2 perturbation.
         const double massOfOrbitingBody = 0.0;
@@ -201,7 +201,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
         longitudeAscendingNodeDot = -1.5 * meanMotionDegreesPerDay * j2Constant *
                                         std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
                                             std::cos( inclination ) /
-                                                ( 1 - std::pow( eccentricity, 2 ) );
+                                                std::pow( ( 1 - std::pow( eccentricity, 2 ), 2 ) );
 
         // Total change in longitude of ascending node in degrees over the time of flight:
         double deltaLongitudeAscendingNode = ( longitudeAscendingNodeDot / 86400.0 ) * timeOfFlight;
@@ -212,7 +212,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
         argumentOfPeriapsisDot = 0.75 * meanMotionDegreesPerDay * j2Constant *
                                     std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
                                         ( 4 - 5 * std::pow( std::sin( inclination ), 2 ) ) /
-                                            ( 1 - std::pow( eccentricity, 2 ) );
+                                            std::pow( ( 1 - std::pow( eccentricity, 2 ), 2 ) );
 
         // Total change in largument of periapsis in degrees over the time of flight:
         double deltaArgumentOfPeriapsis = ( argumentOfPeriapsisDot / 86400.0 ) * timeOfFlight;
@@ -239,7 +239,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
                                      finalEccentricAnomaly,
                                      eccentricity );
 
-        // Update the osculating elements.
+        // Update the Orbital elements.
         longitudeAscendingNode = longitudeAscendingNode + deltaLongitudeAscendingNode;
         argumentOfPeriapsis    = argumentOfPeriapsis + deltaArgumentOfPeriapsis;
         trueAnomaly            = finalTrueAnomaly;
@@ -252,7 +252,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
         keplerianElements[ astro::longitudeOfAscendingNodeIndex ]   = longitudeAscendingNode;
         keplerianElements[ astro::trueAnomalyIndex ]                = trueAnomaly;
 
-        // Convert the osculating elements at the arrival point back to cartesian state.
+        // Convert the Orbital elements at the arrival point back to cartesian state.
         Vector6 arrivalTransferState = astro::convertKeplerianToCartesianElements(
                                             keplerianElements,
                                             earthGravitationalParameter,
