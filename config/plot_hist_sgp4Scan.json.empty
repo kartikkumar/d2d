@@ -16,6 +16,10 @@
     // plotting script.
     "histogram_figure"          : "",
 
+    // Add or remove j2 analysis curve in position and velocity error histogram plots.
+    // Put True to add the j2 curve, else False.
+    "add_j2"                    : "",
+
     // Set reference frame for histogram plot of the error components.
     // For Earth-Centered Inertial, use "ECI".
     // For Radial-Tangen-Normal reference frame, use "RTN"

@@ -64,6 +64,7 @@ else:
 import matplotlib.colors
 import matplotlib.axes
 import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
 import matplotlib.pyplot as plt
 import matplotlib.mlab as mlab
 from matplotlib import rcParams
@@ -256,6 +257,28 @@ lambert_scan_data.columns = [ 'arrivalPositionX',                               
                               'arrivalVelocityY',                                                 \
                               'arrivalVelocityZ', ]
 
+if config['add_j2'] == "True":
+  j2_analysis_data = pd.read_sql( "SELECT     arrival_position_x_error,                           \
+                                              arrival_position_y_error,                           \
+                                              arrival_position_z_error,                           \
+                                              arrival_position_error,                             \
+                                              arrival_velocity_x_error,                           \
+                                              arrival_velocity_y_error,                           \
+                                              arrival_velocity_z_error,                           \
+                                              arrival_velocity_error                              \
+                                  FROM        j2_analysis_results;",                              \
+                                  database )
+
+  j2_analysis_data.columns = [ 'positionErrorX',                                                  \
+                               'positionErrorY',                                                  \
+                               'positionErrorZ',                                                  \
+                               'positionErrorMagnitude',                                          \
+                               'velocityErrorX',                                                  \
+                               'velocityErrorY',                                                  \
+                               'velocityErrorZ',                                                  \
+                               'velocityErrorMagnitude' ]
+
+
 print "Fetch successful!"
 print ""
 
@@ -264,11 +287,15 @@ for errorTypeIndex in range( len( errorType ) ):
     print "Plotting position error magnitude histogram ..."
     print ""
     magnitudeError = scan_data[ 'positionErrorMagnitude' ]
+    if config['add_j2'] == "True":
+      j2magnitudeError = j2_analysis_data[ 'positionErrorMagnitude' ]
   else:
     print ""
     print "Plotting velocity error magnitude histogram ..."
     print ""
     magnitudeError = scan_data[ 'velocityErrorMagnitude' ]
+    if config['add_j2'] == "True":
+      j2magnitudeError = j2_analysis_data[ 'velocityErrorMagnitude' ]
 
   # Calculate mean, variance and standard deviation
   mu = sum( magnitudeError ) / len( magnitudeError )
@@ -284,11 +311,31 @@ for errorTypeIndex in range( len( errorType ) ):
   # Plot the magnitude of the error
   if config['grayscale'] == 'False':
       figureColor = 'green'
+      j2CurveColor = 'red'
   else:
       figureColor = '0.40'
+      j2CurveColor = '1'
 
-  n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,      \
-                               alpha=1, label='Magnitude' )
+  if config['add_j2'] == "True":
+    n, bins, patches = plt.hist( [ magnitudeError, j2magnitudeError ], bins=50,
+                                 histtype='barstacked', normed=False,
+                                 color=[ figureColor, j2CurveColor ], alpha=1,
+                                 label=['Magnitude', 'J2'], stacked=True )
+    plt.legend( )
+    # n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,    \
+    #                              alpha=1, label='Magnitude' )
+    # n, bins, patches = plt.hist( j2magnitudeError, bins=50, histtype='step', normed=False,        \
+    #                              facecolor=j2CurveColor, alpha=1, label='J2' )
+
+    # j2Legend = mlines.Line2D( [], [], color=j2CurveColor, label='J2' )
+    # magnitudeLegend = mpatches.Patch( color=figureColor, label='Magnitude' )
+    # lines = [ magnitudeLegend, j2Legend ]
+    # labels = [ line.get_label( ) for line in lines ]
+    # plt.legend( lines, labels )
+  else:
+    n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,    \
+                                 alpha=1, label='Magnitude' )
+    plt.legend( )
 
   # Select appropriate unit and title for the error type
   if errorType[ errorTypeIndex ] == 'arrival_position':
@@ -305,13 +352,18 @@ for errorTypeIndex in range( len( errorType ) ):
   if config[ 'add_title' ] == 'True':
       plt.title( plotTitle + " " + 'Magnitude' )
 
-  plt.legend( )
   plt.grid( True )
 
   # Save figure to file.
-  plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + errorType[ errorTypeIndex ]
-               + "_error" + "_magnitude" + config["figure_format"], dpi=config["figure_dpi"] )
-  plt.close( )
+  if config['add_j2'] == "True":
+    plt.savefig( output_path_prefix + "J2_" + config["histogram_figure"] + "_"
+                 + errorType[ errorTypeIndex ] + "_error" + "_magnitude"
+                 + config["figure_format"], dpi=config["figure_dpi"] )
+    plt.close( )
+  else:
+    plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + errorType[ errorTypeIndex ]
+                 + "_error" + "_magnitude" + config["figure_format"], dpi=config["figure_dpi"] )
+    plt.close( )
 
 # Plot the components of the (position/velocity) error vector in a separate figure.
 if config['grayscale'] == 'False':
