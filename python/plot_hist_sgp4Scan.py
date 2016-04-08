@@ -317,21 +317,16 @@ for errorTypeIndex in range( len( errorType ) ):
       j2CurveColor = '1'
 
   if config['add_j2'] == "True":
-    n, bins, patches = plt.hist( [ magnitudeError, j2magnitudeError ], bins=50,
-                                 histtype='barstacked', normed=False,
-                                 color=[ figureColor, j2CurveColor ], alpha=1,
-                                 label=['Magnitude', 'J2'], stacked=True )
-    plt.legend( )
-    # n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,    \
-    #                              alpha=1, label='Magnitude' )
-    # n, bins, patches = plt.hist( j2magnitudeError, bins=50, histtype='step', normed=False,        \
-    #                              facecolor=j2CurveColor, alpha=1, label='J2' )
+    n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,    \
+                                 alpha=1, label='Magnitude' )
+    n, bins, patches = plt.hist( j2magnitudeError, bins=50, histtype='step', normed=False,        \
+                                 color=j2CurveColor, alpha=1, label='J2' )
 
-    # j2Legend = mlines.Line2D( [], [], color=j2CurveColor, label='J2' )
-    # magnitudeLegend = mpatches.Patch( color=figureColor, label='Magnitude' )
-    # lines = [ magnitudeLegend, j2Legend ]
-    # labels = [ line.get_label( ) for line in lines ]
-    # plt.legend( lines, labels )
+    j2Legend = mlines.Line2D( [], [], color=j2CurveColor, label='J2' )
+    magnitudeLegend = mpatches.Patch( color=figureColor, label='Magnitude' )
+    lines = [ magnitudeLegend, j2Legend ]
+    labels = [ line.get_label( ) for line in lines ]
+    plt.legend( lines, labels )
   else:
     n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,    \
                                  alpha=1, label='Magnitude' )
