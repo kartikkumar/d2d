@@ -3,14 +3,14 @@
 // Distributed under the MIT License.
 // See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 
-// Configuration file for D2D "sgp4_scanner" application mode.
+// Configuration file for D2D "j2_analysis" application mode.
 {
-    "mode"                      : "sgp4_scanner",
+    "mode"                      : "j2_analysis",
 
     // Set path to output database (SQLite).
     // WARNING: The database file must already exist and be populated with data using the
-    //          "lambert_scanner" mode (data will be store in a table called
-    //          "sgp4_scanner_results")!
+    //          "lambert_scanner" and "sgp4_scanner" mode (data will be store in a table called
+    //          "j2_analysis_results")!
     "database"                  : "",
 
     // Set number of transfers to include in shortlist and absolute path to output file [N, file].
