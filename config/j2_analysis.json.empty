@@ -9,7 +9,7 @@
 
     // Set path to output database (SQLite).
     // WARNING: The database file must already exist and be populated with data using the
-    //          "lambert_scanner" and "sgp4_scanner" mode (data will be store in a table called
+    //          "lambert_scanner" and "sgp4_scanner" modes (data will be store in a table called
     //          "j2_analysis_results")!
     "database"                  : "",
 

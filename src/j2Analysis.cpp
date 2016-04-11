@@ -36,7 +36,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
     std::cout.precision( 15 );
 
     // Verify config parameters. Exception is thrown if any of the parameters are missing.
-    const j2AnalysisInput input = checkJ2AnalysisInput( config );
+    const J2AnalysisInput input = checkJ2AnalysisInput( config );
 
     // Set gravitational parameter used [km^3 s^-2].
     const double earthGravitationalParameter = kMU;
@@ -69,9 +69,8 @@ void executeJ2Analysis( const rapidjson::Document& config )
     // Fetch number of rows in sgp4_scanner_results table where success = 1.
     std::ostringstream sgp4ScannerTableSizeSelect;
     sgp4ScannerTableSizeSelect << "SELECT COUNT(*) FROM sgp4_scanner_results WHERE success = 1;";
-    const int sgp4ScannertTableSize
-        = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
-    std::cout << "# of cases to be considered in the J2 analysis = " << sgp4ScannertTableSize;
+    const int sgp4ScannertTableSize = database.execAndGet( sgp4ScannerTableSizeSelect.str( ) );
+    std::cout << "# of cases to be considered in J2 analysis = " << sgp4ScannertTableSize;
     std::cout << std::endl;
 
     // Set up select query to fetch data from lambert_scanner_results table.
@@ -103,7 +102,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
                               << "              lambert_scanner_results.transfer_id;";
 
     SQLite::Statement lambertQuery( database, lambertScannerTableSelect.str( ) );
-    std::cout << "Data selection from lambert_scanner_results table successfull!" << std::endl;
+    std::cout << "Data selection from lambert_scanner_results table successful!" << std::endl;
 
     // Set up insert query to insert data into j2_analysis_results table.
     std::ostringstream j2AnalysisTableInsert;
@@ -168,7 +167,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
         transferDepartureState[ astro::yVelocityIndex ] = departureVelocityY + departureDeltaVY;
         transferDepartureState[ astro::zVelocityIndex ] = departureVelocityZ + departureDeltaVZ;
 
-        // Convert transfer object's departure state to Orbital elements.
+        // Convert transfer object's departure state to orbital elements.
         Vector6 departureOrbitalElements;
         const double tolerance = 10.0 * std::numeric_limits< double >::epsilon( );
         departureOrbitalElements = astro::convertCartesianToKeplerianElements(
@@ -176,92 +175,89 @@ void executeJ2Analysis( const rapidjson::Document& config )
                                         earthGravitationalParameter,
                                         tolerance );
 
-        double semiMajorAxis = departureOrbitalElements[ astro::semiMajorAxisIndex ];
-        double eccentricity  = departureOrbitalElements[ astro::eccentricityIndex ];
-        double inclination   = departureOrbitalElements[ astro::inclinationIndex ];
-        double argumentOfPeriapsis
-                             = departureOrbitalElements[ astro::argumentOfPeriapsisIndex ];
-        double longitudeAscendingNode
-                             = departureOrbitalElements[ astro::longitudeOfAscendingNodeIndex ];
-        double trueAnomaly   = departureOrbitalElements[ astro::trueAnomalyIndex ];
+        const double semiMajorAxis = departureOrbitalElements[ astro::semiMajorAxisIndex ];
+        const double eccentricity  = departureOrbitalElements[ astro::eccentricityIndex ];
+        const double inclination   = departureOrbitalElements[ astro::inclinationIndex ];
+        const double argumentOfPeriapsis
+            = departureOrbitalElements[ astro::argumentOfPeriapsisIndex ];
+        const double longitudeAscendingNode
+            = departureOrbitalElements[ astro::longitudeOfAscendingNodeIndex ];
+        const double trueAnomaly   = departureOrbitalElements[ astro::trueAnomalyIndex ];
 
         // Evaluate change in longitude of ascending node due to J2 perturbation.
         const double massOfOrbitingBody = 0.0;
-        double meanMotion = astro::computeKeplerMeanMotion(
-                                semiMajorAxis,
-                                earthGravitationalParameter,
-                                massOfOrbitingBody );
+        const double meanMotion = astro::computeKeplerMeanMotion( semiMajorAxis,
+                                                                  earthGravitationalParameter,
+                                                                  massOfOrbitingBody );
 
-        double meanMotionDegreesPerDay = ( meanMotion * 180.0 / sml::SML_PI ) * 86400.0;
+        const double meanMotionDegreesPerDay = ( meanMotion * 180.0 / sml::SML_PI ) * 86400.0;
 
         const double j2Constant = 0.00108263;
 
-        // Change in longitude of ascending node in degrees per day:
-        double longitudeAscendingNodeDot;
-        longitudeAscendingNodeDot = -1.5 * meanMotionDegreesPerDay * j2Constant *
-                                        std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
-                                            std::cos( inclination ) /
-                                                std::pow( ( 1 - std::pow( eccentricity, 2 ) ), 2 );
+        // Compute change in longitude of ascending node in degrees per day.
+        const double longitudeAscendingNodeDot
+            = -1.5 * meanMotionDegreesPerDay * j2Constant
+              * ( earthMeanRadius / semiMajorAxis ) * ( earthMeanRadius / semiMajorAxis )
+              * std::cos( inclination )
+              / ( ( 1.0 - eccentricity * eccentricity ) * ( 1.0 - eccentricity * eccentricity ) );
 
-        // Total change in longitude of ascending node in degrees over the time of flight:
-        double deltaLongitudeAscendingNode
-                = ( ( longitudeAscendingNodeDot / 86400.0 ) * sml::SML_PI / 180.0 ) * timeOfFlight;
+        // Compute total change in longitude of ascending node in degrees over the time-of-flight.
+        const double deltaLongitudeAscendingNode
+            = ( ( longitudeAscendingNodeDot / 86400.0 ) * sml::SML_PI / 180.0 ) * timeOfFlight;
 
         // Evaluate change in argument of periapsis due to J2 perturbation.
-        // Change in argument of periapsis in degrees per day:
-        double argumentOfPeriapsisDot;
-        argumentOfPeriapsisDot = 0.75 * meanMotionDegreesPerDay * j2Constant *
-                                    std::pow( ( earthMeanRadius / semiMajorAxis ), 2 ) *
-                                        ( 4 - 5 * std::pow( std::sin( inclination ), 2 ) ) /
-                                            std::pow( ( 1 - std::pow( eccentricity, 2 ) ), 2 );
+        // Compute change in argument of periapsis in degrees per day.
+        const double argumentOfPeriapsisDot
+            = 0.75 * meanMotionDegreesPerDay * j2Constant
+              * ( earthMeanRadius / semiMajorAxis ) * ( earthMeanRadius / semiMajorAxis )
+              * ( 4.0 - 5.0 * std::sin( inclination ) * std::sin( inclination ) )
+              / ( ( 1.0 - eccentricity * eccentricity ) * ( 1.0 - eccentricity * eccentricity ) );
 
-        // Total change in largument of periapsis in degrees over the time of flight:
-        double deltaArgumentOfPeriapsis
+        // Compute total change in argument of periapsis in degrees over the time of flight.
+        const double deltaArgumentOfPeriapsis
                 = ( ( argumentOfPeriapsisDot / 86400.0 ) * sml::SML_PI / 180.0 ) * timeOfFlight;
 
         // Evaluate change in true anomaly over the time of flight.
-        // Get initial eccentric anomaly from the initial true anomaly:
-        double initialEccentricAnomaly = astro::convertTrueAnomalyToEllipticalEccentricAnomaly(
-                                            trueAnomaly,
-                                            eccentricity );
+        // Get initial eccentric anomaly from the initial true anomaly.
+        const double initialEccentricAnomaly
+            = astro::convertTrueAnomalyToEllipticalEccentricAnomaly( trueAnomaly, eccentricity );
 
-        // Get initial mean anomaly from the initial eccentric anomaly:
-        double initialMeanAnomaly = astro::convertEllipticalEccentricAnomalyToMeanAnomaly(
-                                        initialEccentricAnomaly,
-                                        eccentricity );
+        // Get initial mean anomaly from the initial eccentric anomaly.
+        const double initialMeanAnomaly
+            = astro::convertEllipticalEccentricAnomalyToMeanAnomaly( initialEccentricAnomaly,
+                                                                     eccentricity );
 
-        // Get final mean anomaly at the arrival point of the trasnfer orbit:
-        double finalMeanAnomaly = sml::computeModulo(
-                        ( meanMotion * timeOfFlight + initialMeanAnomaly ),
-                          2 * sml::SML_PI );
+        // Get final mean anomaly at the arrival point of the transfer orbit.
+        const double finalMeanAnomaly
+            = sml::computeModulo( ( meanMotion * timeOfFlight + initialMeanAnomaly ),
+                                  2.0 * sml::SML_PI );
 
-        // Get final eccentric anomaly at the arrival point of the transfer orbit:
-        double finalEccentricAnomaly = sml::computeModulo(
-                 kep_toolbox::m2e( finalMeanAnomaly, eccentricity ),
-                 2 * sml::SML_PI );
+        // Get final eccentric anomaly at the arrival point of the transfer orbit.
+        const double finalEccentricAnomaly
+            = sml::computeModulo( kep_toolbox::m2e( finalMeanAnomaly, eccentricity ),
+                                  2.0 * sml::SML_PI );
 
-        // Get final true anomaly at the arrival point of the transfer orbit:
-        double finalTrueAnomaly = astro::convertEllipticalEccentricAnomalyToTrueAnomaly(
-                                     finalEccentricAnomaly,
-                                     eccentricity );
-        finalTrueAnomaly = sml::computeModulo( finalTrueAnomaly, 2 * sml::SML_PI );
+        // Get final true anomaly at the arrival point of the transfer orbit.
+        const double finalTrueAnomaly
+            = sml::computeModulo(
+                astro::convertEllipticalEccentricAnomalyToTrueAnomaly( finalEccentricAnomaly,
+                                                                       eccentricity ),
+                2.0 * sml::SML_PI );
 
-        // Update the Orbital elements.
-        longitudeAscendingNode = longitudeAscendingNode + deltaLongitudeAscendingNode;
-        argumentOfPeriapsis    = argumentOfPeriapsis + deltaArgumentOfPeriapsis;
-        trueAnomaly            = finalTrueAnomaly;
+        // Compute the updated orbital elements at the arrival point.
+        Vector6 arrivalTransferKeplerianElements;
+        arrivalTransferKeplerianElements[ astro::semiMajorAxisIndex ]            = semiMajorAxis;
+        arrivalTransferKeplerianElements[ astro::eccentricityIndex ]             = eccentricity;
+        arrivalTransferKeplerianElements[ astro::inclinationIndex ]              = inclination;
+        arrivalTransferKeplerianElements[ astro::argumentOfPeriapsisIndex ]
+            = argumentOfPeriapsis + deltaArgumentOfPeriapsis;
+        arrivalTransferKeplerianElements[ astro::longitudeOfAscendingNodeIndex ]
+            = longitudeAscendingNode + deltaLongitudeAscendingNode;
+        arrivalTransferKeplerianElements[ astro::trueAnomalyIndex ]              = finalTrueAnomaly;
 
-        Vector6 keplerianElements;
-        keplerianElements[ astro::semiMajorAxisIndex ]              = semiMajorAxis;
-        keplerianElements[ astro::eccentricityIndex ]               = eccentricity;
-        keplerianElements[ astro::inclinationIndex ]                = inclination;
-        keplerianElements[ astro::argumentOfPeriapsisIndex ]        = argumentOfPeriapsis;
-        keplerianElements[ astro::longitudeOfAscendingNodeIndex ]   = longitudeAscendingNode;
-        keplerianElements[ astro::trueAnomalyIndex ]                = trueAnomaly;
-
-        // Convert the Orbital elements at the arrival point back to cartesian state.
+        // Convert the orbital elements at the arrival point back to Cartesian elements.
         Vector6 arrivalTransferState = astro::convertKeplerianToCartesianElements(
-                                            keplerianElements,
+                                            arrivalTransferKeplerianElements,
                                             earthGravitationalParameter,
                                             tolerance );
 
@@ -297,7 +293,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
         velocityError[ 2 ] = arrivalVelocityErrorZ;
         double arrivalVelocityErrorNorm = sml::norm< double >( velocityError );
 
-        // Bind computed values to sgp4Query.
+        // Bind computed values to j2Query and execute insertion in database.
         j2Query.bind( ":lambert_transfer_id",                   lambertTransferId );
         j2Query.bind( ":arrival_position_x",                    j2ArrivalPositionX );
         j2Query.bind( ":arrival_position_y",                    j2ArrivalPositionY );
@@ -329,7 +325,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
     std::cout << std::endl;
     std::cout << "Total SGP4 (success) cases = " << sgp4ScannertTableSize << std::endl;
     std::cout << std::endl;
-    std::cout << "Total j2 analysis cases = " << j2AnalysistTableSize << std::endl;
+    std::cout << "Total J2 analysis cases = " << j2AnalysistTableSize << std::endl;
 
     // Commit transaction.
     transaction.commit( );
@@ -348,7 +344,7 @@ void executeJ2Analysis( const rapidjson::Document& config )
 }
 
 //! Check j2_analysis input parameters.
-j2AnalysisInput checkJ2AnalysisInput( const rapidjson::Document& config )
+J2AnalysisInput checkJ2AnalysisInput( const rapidjson::Document& config )
 {
     const std::string databasePath = find( config, "database" )->value.GetString( );
     std::cout << "Database                        " << databasePath << std::endl;
@@ -360,10 +356,10 @@ j2AnalysisInput checkJ2AnalysisInput( const rapidjson::Document& config )
     if ( shortlistLength > 0 )
     {
         shortlistPath = find( config, "shortlist" )->value[ 1 ].GetString( );
-        std::cout << "Shortlist                       " << shortlistPath << std::endl;
+        std::cout << "Shortlist                   " << shortlistPath << std::endl;
     }
 
-    return j2AnalysisInput( databasePath,
+    return J2AnalysisInput( databasePath,
                             shortlistLength,
                             shortlistPath );
 }
