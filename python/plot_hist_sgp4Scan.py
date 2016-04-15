@@ -244,16 +244,16 @@ def plotComponentsMarkers( errorX, errorY, errorZ,                              
   zBinCentre = ( zBinEdges[:-1] + zBinEdges[1:] ) / 2
 
   xMarkerLine = mlines.Line2D( xBinCentre, xDataHist,                                             \
-                               linestyle='solid', linewidth=1, color=xcolor, label=xlegend,       \
-                               marker='s', markersize=5, markerfacecolor=xcolor )
+                               linestyle='solid', linewidth=3, color=xcolor, label=xlegend,       \
+                               marker='s', markersize=6, markerfacecolor=xcolor )
 
   yMarkerLine = mlines.Line2D( yBinCentre, yDataHist,                                             \
-                               linestyle='solid', linewidth=1, color=ycolor, label=ylegend,       \
-                               marker='v', markersize=5, markerfacecolor=ycolor )
+                               linestyle='solid', linewidth=3, color=ycolor, label=ylegend,       \
+                               marker='v', markersize=6, markerfacecolor=ycolor )
 
   zMarkerLine = mlines.Line2D( zBinCentre, zDataHist,                                             \
-                               linestyle='solid', linewidth=1, color=zcolor, label=zlegend,       \
-                               marker='*', markersize=5, markerfacecolor=zcolor )
+                               linestyle='solid', linewidth=3, color=zcolor, label=zlegend,       \
+                               marker='*', markersize=6, markerfacecolor=zcolor )
 
   markerFigure = plt.figure( )
   ax = markerFigure.add_subplot( 1, 1, 1 )
@@ -447,7 +447,7 @@ for errorTypeIndex in range( len( errorType ) ):
 if config['grayscale'] == 'False':
     xcolor = 'red'
     ycolor = 'blue'
-    zcolor = 'orange'
+    zcolor = 'black'
 else:
     xcolor = '0'
     ycolor = '0.30'
