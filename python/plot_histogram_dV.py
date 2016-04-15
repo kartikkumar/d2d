@@ -80,7 +80,7 @@ try:
 except sqlite3.Error, e:
     print "Error %s:" % e.args[0]
     sys.exit(1)
-                      
+
 # Fetch scan data.
 scan_data = pd.read_sql( "SELECT transfer_delta_v FROM lambert_scanner_results WHERE transfer_delta_v < 30;",
                               database )
@@ -88,8 +88,8 @@ scan_data.columns = [ 'transfer_delta_v' ]
 
 # The histogram of the data
 x = scan_data[ 'transfer_delta_v']
-# print x    
-plt.hist( x, bins=50, facecolor='green', alpha=0.75 )
+# print x
+plt.hist( x, bins=50, facecolor='grey', alpha=0.75 )
 
 # Figure properties
 plt.xlabel('Total dV magnitude [km/s]')
@@ -98,7 +98,7 @@ plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 # plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
 # plt.axis([40, 160, 0, 0.03])
 plt.grid(True)
-    
+
 # Save figure to file.
 plt.savefig(config["output_directory"] + "/" + config["scan_figure"] +                 \
                        ".png", dpi=config["figure_dpi"])
