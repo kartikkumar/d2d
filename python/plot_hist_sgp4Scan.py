@@ -244,15 +244,15 @@ def plotComponentsMarkers( errorX, errorY, errorZ,                              
   zBinCentre = ( zBinEdges[:-1] + zBinEdges[1:] ) / 2
 
   xMarkerLine = mlines.Line2D( xBinCentre, xDataHist,                                             \
-                               linestyle='solid', linewidth=3, color=xcolor, label=xlegend,       \
+                               linestyle='solid', linewidth=2, color=xcolor, label=xlegend,       \
                                marker='s', markersize=6, markerfacecolor=xcolor )
 
   yMarkerLine = mlines.Line2D( yBinCentre, yDataHist,                                             \
-                               linestyle='solid', linewidth=3, color=ycolor, label=ylegend,       \
+                               linestyle='solid', linewidth=2, color=ycolor, label=ylegend,       \
                                marker='v', markersize=6, markerfacecolor=ycolor )
 
   zMarkerLine = mlines.Line2D( zBinCentre, zDataHist,                                             \
-                               linestyle='solid', linewidth=3, color=zcolor, label=zlegend,       \
+                               linestyle='solid', linewidth=2, color=zcolor, label=zlegend,       \
                                marker='*', markersize=6, markerfacecolor=zcolor )
 
   markerFigure = plt.figure( )
