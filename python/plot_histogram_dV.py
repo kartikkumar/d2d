@@ -15,6 +15,7 @@ from matplotlib import rcParams
 from matplotlib import cm
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d import axes3d
+import matplotlib.mlab as mlab
 
 # I/O
 import commentjson
@@ -27,6 +28,7 @@ import sqlite3
 # Numerical
 import numpy as np
 import pandas as pd
+from scipy.stats import norm
 
 # System
 import sys
@@ -89,7 +91,12 @@ scan_data.columns = [ 'transfer_delta_v' ]
 # The histogram of the data
 x = scan_data[ 'transfer_delta_v']
 # print x
-plt.hist( x, bins=50, facecolor='grey', alpha=0.75 )
+# (mu, sigma) = norm.fit(x)
+# n, bins, patches = plt.hist( x, bins=50, facecolor='grey', alpha=0.75, normed=1)
+
+# y = mlab.normpdf( bins, mu, sigma)
+# l = plt.plot(bins, y, 'r--', linewidth=2)
+
 
 # Figure properties
 plt.xlabel('Total dV magnitude [km/s]')
@@ -97,6 +104,7 @@ plt.ylabel('Frequency')
 plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 # plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
 # plt.axis([40, 160, 0, 0.03])
+plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=%.3f,\ \sigma=%.3f$' %(mu, sigma))
 plt.grid(True)
 
 # Save figure to file.
