@@ -169,12 +169,13 @@ def plotComponents( errorX, errorY, errorZ,                                     
                     xAxisLabel, yAxisLabel, plotTitle,                                            \
                     flag ):
 
-  n, bins, patches = plt.hist( errorX, bins=200, histtype='step', normed=False,                   \
-                               color=xcolor, alpha=1, label=xlegend, log=False )
-  n, bins, patches = plt.hist( errorY, bins=200, histtype='step', normed=False,                   \
-                               color=ycolor, alpha=1, label=ylegend, log=False )
-  n, bins, patches = plt.hist( errorZ, bins=200, histtype='step', normed=False,                   \
-                               color=zcolor, alpha=1, label=zlegend, log=False )
+  n, bins, patches = plt.hist( errorX, bins=200, histtype='step', normed=False,                 \
+                                 color=xcolor, alpha=1, label=xlegend, log=False )
+  n, bins, patches = plt.hist( errorY, bins=200, histtype='step', normed=False,                 \
+                                 color=ycolor, alpha=1, label=ylegend, log=False )
+  n, bins, patches = plt.hist( errorZ, bins=200, histtype='step', normed=False,                 \
+                                 color=zcolor, alpha=1, label=zlegend, log=False )
+
   # Figure properties
   plt.xlabel( xAxisLabel )
   plt.ylabel( yAxisLabel )
@@ -212,6 +213,88 @@ def plotComponents( errorX, errorY, errorZ,                                     
   plt.legend(lines, labels)
 
   plt.grid( True )
+
+# Function to plot the components of position/velocity error vector using line and markers
+# @param[in]  errorX        x component
+# @param[in]  errorY        y component
+# @param[in]  errorZ        z component
+# @param[in]  xcolor        x component color in the plot
+# @param[in]  ycolor        y component color in the plot
+# @param[in]  zcolor        z component color in the plot
+# @param[in]  xlegend       legend for the x component curve in the plot
+# @param[in]  ylegend       legend for the y component curve in the plot
+# @param[in]  zlegend       legend for the z component curve in the plot
+# @param[in]  xAxisLabel    Label for the X axis
+# @param[in]  yAxisLabel    Label for the Y axis
+# @param[in]  zAxisLabel    Label for the Z axis
+# @param[in]  flag          Set True if position error vector is being plotted, else False
+def plotComponentsMarkers( errorX, errorY, errorZ,                                                \
+                           xcolor, ycolor, zcolor,                                                \
+                           xlegend, ylegend, zlegend,                                             \
+                           xAxisLabel, yAxisLabel, plotTitle,                                     \
+                           flag ):
+
+  xDataHist, xBinEdges = np.histogram( errorX, bins=50, normed=False )
+  xBinCentre = ( xBinEdges[:-1] + xBinEdges[1:] ) / 2
+
+  yDataHist, yBinEdges = np.histogram( errorY, bins=50, normed=False )
+  yBinCentre = ( yBinEdges[:-1] + yBinEdges[1:] ) / 2
+
+  zDataHist, zBinEdges = np.histogram( errorZ, bins=50, normed=False )
+  zBinCentre = ( zBinEdges[:-1] + zBinEdges[1:] ) / 2
+
+  xMarkerLine = mlines.Line2D( xBinCentre, xDataHist,                                             \
+                               linestyle='solid', linewidth=1, color=xcolor, label=xlegend,       \
+                               marker='s', markersize=5, markerfacecolor=xcolor )
+
+  yMarkerLine = mlines.Line2D( yBinCentre, yDataHist,                                             \
+                               linestyle='solid', linewidth=1, color=ycolor, label=ylegend,       \
+                               marker='v', markersize=5, markerfacecolor=ycolor )
+
+  zMarkerLine = mlines.Line2D( zBinCentre, zDataHist,                                             \
+                               linestyle='solid', linewidth=1, color=zcolor, label=zlegend,       \
+                               marker='*', markersize=5, markerfacecolor=zcolor )
+
+  markerFigure = plt.figure( )
+  ax = markerFigure.add_subplot( 1, 1, 1 )
+  ax.add_line( xMarkerLine )
+  ax.add_line( yMarkerLine )
+  ax.add_line( zMarkerLine )
+
+  # Figure properties
+  plt.xlabel( xAxisLabel )
+  plt.ylabel( yAxisLabel )
+
+  if config[ 'add_title' ] == 'True':
+      plt.title( plotTitle )
+
+  if flag == True:
+    xAxesLowerLimit = config['set_axes_position'][ 0 ]
+    xAxesUpperLimit = config['set_axes_position'][ 1 ]
+    yAxesLowerLimit = config['set_axes_position'][ 2 ]
+    yAxesUpperLimit = config['set_axes_position'][ 3 ]
+  else:
+    xAxesLowerLimit = config['set_axes_velocity'][ 0 ]
+    xAxesUpperLimit = config['set_axes_velocity'][ 1 ]
+    yAxesLowerLimit = config['set_axes_velocity'][ 2 ]
+    yAxesUpperLimit = config['set_axes_velocity'][ 3 ]
+
+  if xAxesLowerLimit != 0                                                                         \
+    or xAxesUpperLimit != 0                                                                       \
+      or yAxesLowerLimit != 0                                                                     \
+        or yAxesUpperLimit != 0:
+          print "Using user defined axes limits"
+          print ""
+          ax.set_xlim( xAxesLowerLimit, xAxesUpperLimit )
+          ax.set_ylim( yAxesLowerLimit, yAxesUpperLimit )
+
+  xmin, xmax, ymin, ymax = ax.axis('auto')
+  ax.set_xlim( xmin, xmax )
+  ax.set_ylim( ymin, ymax )
+
+  plt.legend( )
+  plt.grid( True )
+
 
 errorType = [ "arrival_position", "arrival_velocity" ]
 
@@ -330,18 +413,18 @@ for errorTypeIndex in range( len( errorType ) ):
   else:
     n, bins, patches = plt.hist( magnitudeError, bins=50, normed=False, facecolor=figureColor,    \
                                  alpha=1, label='Magnitude' )
-    plt.legend( )
+    # plt.legend( )
 
   # Select appropriate unit and title for the error type
   if errorType[ errorTypeIndex ] == 'arrival_position':
-      errorUnit = "[km]"
-      plotTitle = 'Arrival Position Error'
+      plotTitle  = 'Arrival Position Error'
+      xAxisLabel = 'Arrival position error [km]'
   else:
-      errorUnit = "[km/s]"
-      plotTitle = 'Arrival Velocity Error'
+      plotTitle  = 'Arrival Velocity Error'
+      xAxisLabel = 'Arrival velocity error [km/s]'
 
   # Figure properties
-  plt.xlabel( 'Error' + " " + errorUnit )
+  plt.xlabel( xAxisLabel )
   plt.ylabel( 'Frequency' )
 
   if config[ 'add_title' ] == 'True':
@@ -362,9 +445,9 @@ for errorTypeIndex in range( len( errorType ) ):
 
 # Plot the components of the (position/velocity) error vector in a separate figure.
 if config['grayscale'] == 'False':
-    xcolor = 'black'
-    ycolor = 'green'
-    zcolor = 'red'
+    xcolor = 'red'
+    ycolor = 'blue'
+    zcolor = 'orange'
 else:
     xcolor = '0'
     ycolor = '0.30'
@@ -413,10 +496,19 @@ if config['frame'] == "RTN":
     velocityErrorZ[ i ] = np.inner( gamma[ 2 ][ : ], velocityErrorVectorECI )
 
   print "Plotting position error components defined in RTN frame"
-  plotComponents( positionErrorX, positionErrorY, positionErrorZ,                                 \
-                  xcolor, ycolor, zcolor,                                                         \
-                  "R Axis", "T Axis", "N Axis",                                                   \
-                  "Error [km]", "Frequency", "Position Error Components", True )
+
+  if config['component_marker'] == "False":
+    plotComponents( positionErrorX, positionErrorY, positionErrorZ,                               \
+                    xcolor, ycolor, zcolor,                                                       \
+                    "Radial", "Transverse", "Normal",                                             \
+                    "Arrival position error [km]", "Frequency", "Position Error Components",      \
+                    True )
+  else:
+    plotComponentsMarkers( positionErrorX, positionErrorY, positionErrorZ,                        \
+                           xcolor, ycolor, zcolor,                                                \
+                           "Radial", "Transverse", "Normal",                                      \
+                           "Arrival position error [km]", "Frequency",
+                           "Position Error Components", True )
 
   # Save figure to file.
   plt.savefig( output_path_prefix + config["histogram_figure"] + "_arrival_position_error"
@@ -425,10 +517,19 @@ if config['frame'] == "RTN":
   plt.close( )
 
   print "Plotting velocity error components defined in RTN frame"
-  plotComponents( velocityErrorX, velocityErrorY, velocityErrorZ,                                 \
-                  xcolor, ycolor, zcolor,                                                         \
-                  "R Axis", "T Axis", "N Axis",                                                   \
-                  "Error [km/s]", "Frequency", "Velocity Error Components", False )
+
+  if config['component_marker'] == "False":
+    plotComponents( velocityErrorX, velocityErrorY, velocityErrorZ,                               \
+                    xcolor, ycolor, zcolor,                                                       \
+                    "Radial", "Transverse", "Normal",                                             \
+                    "Arrival velocity error [km/s]", "Frequency", "Velocity Error Components",    \
+                    False )
+  else:
+    plotComponentsMarkers( velocityErrorX, velocityErrorY, velocityErrorZ,                        \
+                           xcolor, ycolor, zcolor,                                                \
+                           "Radial", "Transverse", "Normal",                                      \
+                           "Arrival velocity error [km/s]", "Frequency",
+                           "Velocity Error Components", False )
 
   # Save figure to file.
   plt.savefig( output_path_prefix + config["histogram_figure"] + "_arrival_velocity_error"
@@ -438,10 +539,19 @@ if config['frame'] == "RTN":
 
 else:
   print "Plotting position error components defined in ECI frame"
-  plotComponents( positionErrorX, positionErrorY, positionErrorZ,                                 \
-                  xcolor, ycolor, zcolor,                                                         \
-                  "X Axis", "Y Axis", "Z Axis",                                                   \
-                  "Error [km]", "Frequency", "Position Error Components", True )
+
+  if config['component_marker'] == "False":
+    plotComponents( positionErrorX, positionErrorY, positionErrorZ,                               \
+                    xcolor, ycolor, zcolor,                                                       \
+                    "X Axis", "Y Axis", "Z Axis",                                                 \
+                    "Arrival position error [km]", "Frequency", "Position Error Components",      \
+                    True )
+  else:
+    plotComponentsMarkers( positionErrorX, positionErrorY, positionErrorZ,                        \
+                           xcolor, ycolor, zcolor,                                                \
+                           "X Axis", "Y Axis", "Z Axis",                                          \
+                           "Arrival position error [km]", "Frequency",
+                           "Position Error Components", True )
 
   # Save figure to file.
   plt.savefig( output_path_prefix + config["histogram_figure"] + "_arrival_position_error"
@@ -450,10 +560,19 @@ else:
   plt.close( )
 
   print "Plotting velocity error components defined in ECI frame"
-  plotComponents( velocityErrorX, velocityErrorY, velocityErrorZ,                                 \
-                  xcolor, ycolor, zcolor,                                                         \
-                  "X Axis", "Y Axis", "Z Axis",                                                   \
-                  "Error [km/s]", "Frequency", "Velocity Error Components", False )
+
+  if config['component_marker'] == "False":
+    plotComponents( velocityErrorX, velocityErrorY, velocityErrorZ,                               \
+                    xcolor, ycolor, zcolor,                                                       \
+                    "X Axis", "Y Axis", "Z Axis",                                                 \
+                    "Arrival velocity error [km/s]", "Frequency", "Velocity Error Components",    \
+                    False )
+  else:
+    plotComponentsMarkers( velocityErrorX, velocityErrorY, velocityErrorZ,                        \
+                           xcolor, ycolor, zcolor,                                                \
+                           "X Axis", "Y Axis", "Z Axis",                                          \
+                           "Arrival velocity error [km/s]", "Frequency",
+                           "Velocity Error Components", False )
 
   # Save figure to file.
   plt.savefig( output_path_prefix + config["histogram_figure"] + "_arrival_velocity_error"

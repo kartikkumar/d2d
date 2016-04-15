@@ -25,6 +25,11 @@
     // For Radial-Tangen-Normal reference frame, use "RTN"
     "frame"                     : "",
 
+    // Set plot style for error component plots
+    // Set to "True" for plot with lines and markers
+    // Set to "False" for a histogram step plot with small bin size
+    "component_marker"          : "",
+
     // Set output format for the figure (example: ".pdf", ".png")
     "figure_format"             : "",
 
