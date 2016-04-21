@@ -16,6 +16,7 @@
 
 #include <rapidjson/document.h>
 
+#include "D2D/atomScanner.hpp"
 #include "D2D/catalogPruner.hpp"
 #include "D2D/j2Analysis.hpp"
 #include "D2D/lambertFetch.hpp"
@@ -123,6 +124,11 @@ int main( const int numberOfInputs, const char* inputArguments[ ] )
     {
         std::cout << "Mode:                           " << mode << std::endl;
         d2d::executeJ2Analysis( config );
+    }
+    else if ( mode.compare( "atom_scanner" ) == 0 )
+    {
+        std::cout << "Mode                          " << mode << std::endl;
+        d2d::executeAtomScanner( config );
     }
     else
     {

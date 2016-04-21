@@ -1,0 +1,28 @@
+// Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "atom_scanner" application mode.
+{
+    "mode"                      : "atom_scanner",
+
+    // Set path to output database (SQLite).
+    // The database file must already exist and have a table called "lambert_scanner_results".
+    // Results from atom scanner will be stored in a table called "atom_scanner_results" in the
+    // same database.
+    "database"                  : "",
+
+    // Set relative and absolute tolerances for the Cartesian-to-TLE conversion function.
+    // Default: relative tolerance = 1e-8, absolute tolerance = 1e-10
+    "relative_tolerance"        : 1e-8,
+    "absolute_tolerance"        : 1e-10,
+
+    // Set maximum number of iterations for the atom solver.
+    "maximum_iterations"        : 100,
+
+
+    // Set number of transfers to include in shortlist and absolute path to output file [N, file].
+    // The shortlist is based on the N transfers specified with the lowest transfers Delta-V
+    // obtained from the atom scanner mode. If N is set to 0 no output will be written to file.
+    "shortlist"                 : [0,""]
+}
