@@ -16,13 +16,13 @@
 
 #include <rapidjson/document.h>
 
+#include "D2D/atomScanner.hpp"
 #include "D2D/catalogPruner.hpp"
 #include "D2D/j2Analysis.hpp"
 #include "D2D/lambertFetch.hpp"
 #include "D2D/lambertScanner.hpp"
 #include "D2D/lambertTransfer.hpp"
 #include "D2D/sgp4Scanner.hpp"
-#include "D2D/atomScanner.hpp"
 
 int main( const int numberOfInputs, const char* inputArguments[ ] )
 {

@@ -9,6 +9,7 @@ set(MAIN_SRC
 
 # Set project source files.
 set(SRC
+ "${SRC_PATH}/atomScanner.cpp"
  "${SRC_PATH}/catalogPruner.cpp"
  "${SRC_PATH}/lambertFetch.cpp"
  "${SRC_PATH}/lambertScanner.cpp"
@@ -16,7 +17,6 @@ set(SRC
  "${SRC_PATH}/sgp4Scanner.cpp"
  "${SRC_PATH}/j2Analysis.cpp"
  "${SRC_PATH}/tools.cpp"
- "${SRC_PATH}/atomScanner.cpp"
 )
 
 # Set project test source files.

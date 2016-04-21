@@ -9,13 +9,13 @@
 
 #include <string>
 
-#include <keplerian_toolbox.h>
-
 #include <libsgp4/DateTime.h>
 
 #include <rapidjson/document.h>
 
 #include <SQLiteCpp/SQLiteCpp.h>
+
+#include <keplerian_toolbox.h>
 
 namespace d2d
 {
@@ -23,8 +23,9 @@ namespace d2d
 //! Execute atom_scanner.
 /*!
  * Executes atom_scanner application mode that performs a grid search to compute \f$\Delta V\f$
- * for debris-to-debris transfers. The transfers are modelled as conic sections. The Lambert
- * targeter employed is based on Izzo (2014), implemented in PyKEP (Izzo, 2012).
+ * for debris-to-debris transfers. To compute transfer trajectories, the atom scanner makes use of
+ * an initial guess from the Lambert targeter developed by Izzo (2014), implemented in
+ * PyKEP (Izzo, 2012).
  *
  * The results obtained from the grid search are stored in a SQLite database, containing the
  * following table:
@@ -51,41 +52,43 @@ public:
     /*!
      * Constructs data struct based on verified input parameters.
      *
-     * @sa checkSGP4ScannerInput, executeSGP4Scanner
-     * @param[in] aRelativeTolerance      Relative tolerance for Cartesian-to-TLE conversion
-     * @param[in] aAbsoluteTolerance      Absolute tolerance for the Cartesian-to-TLE conversion
+     * @sa checkAtomScannerInput, executeAtomScanner
+     * @param[in] aRelativeTolerance      Relative tolerance for the atom solver and the
+     *                                    Cartesian-to-TLE convertor
+     * @param[in] anAbsoluteTolerance     Absolute tolerance for the atom solver and the
+     *                                    Cartesian-to-TLE convertor
      * @param[in] aDatabasePath           Path to SQLite database
-     * @param[in] aMaximumOfIterations    Maximum of iterations the atom solver can do
+     * @param[in] aMaximumOfIterations    Maximum number of iterations for the Atom solver
      * @param[in] aShortlistLength        Number of transfers to include in shortlist
      * @param[in] aShortlistPath          Path to shortlist file
      */
     AtomScannerInput( const double       aRelativeTolerance,
-                      const double       aAbsoluteTolerance,
+                      const double       anAbsoluteTolerance,
                       const std::string& aDatabasePath,
                       const int          aMaximumOfIterations,
                       const int          aShortlistLength,
                       const std::string& aShortlistPath )
         : relativeTolerance( aRelativeTolerance ),
-          absoluteTolerance( aAbsoluteTolerance ),
+          absoluteTolerance( anAbsoluteTolerance ),
           maxIterations( aMaximumOfIterations ),
           databasePath( aDatabasePath ),
           shortlistLength( aShortlistLength ),
           shortlistPath( aShortlistPath )
     { }
 
-    //! Relative tolerance for Cartesian-to-TLE conversion function.
+    //! Relative tolerance for the atom solver and the Cartesian-to-TLE conversion function.
     const double relativeTolerance;
 
-    //! Absolute tolerance for Cartesian-to-TLE conversion function.
+    //! Absolute tolerance for the atom solver and the Cartesian-to-TLE conversion function.
     const double absoluteTolerance;
 
-    //! Maximum of iterations for Atoms solver
+    //! Maximum number of iterations for the Atom solver.
     const int maxIterations;
 
-    //! Path to SQLite database to store output.
+    //! Path to SQLite database to store the Atom scanner results.
     const std::string databasePath;
 
-    //! Number of entries (lowest Lambert transfer \f$\Delta V\f$) to include in shortlist.
+    //! Number of entries (lowest Atom transfer \f$\Delta V\f$) to include in shortlist.
     const int shortlistLength;
 
     //! Path to shortlist file.
@@ -104,15 +107,15 @@ private:
  * and related functions.
  *
  * @sa executeAtomScanner, AtomScannerInput
- * @param[in] config User-defined configuration options (extracted from JSON input file)
- * @return           Struct containing all valid input to execute atom_scanner
+ * @param[in]   config  User-defined configuration options (extracted from JSON input file)
+ * @return              Struct containing all valid input to execute atom_scanner
  */
 AtomScannerInput checkAtomScannerInput( const rapidjson::Document& config );
 
 //! Create atom_scanner table.
 /*!
- * Creates atom_scanner table in SQLite database used to store results obtaned from running
- * the atom_scanner application mode.
+ * Creates "atom_scanner_results" table in SQLite database. The table is used to store results
+ * obtained from running the atom_scanner application mode.
  *
  * @sa executeAtomScanner
  * @param[in] database SQLite database handle
@@ -132,16 +135,16 @@ void createAtomScannerTable( SQLite::Database& database );
  * @param[in] shortlistPath   Path to shortlist file
  */
 void writeAtomTransferShortlist( SQLite::Database& database,
-                             const int shortlistNumber,
-                             const std::string& shortlistPath );
+                                 const int shortlistNumber,
+                                 const std::string& shortlistPath );
 
 } // namespace d2d
 
-/*!
+#endif // D2D_ATOM_SCANNER_HPP
+
+/*! References:
  * Izzo, D. (2014) Revisiting Lambert's problem, http://arxiv.org/abs/1403.2705.
  * Izzo, D. (2012) PyGMO and PyKEP: open source tools for massively parallel optimization in
- * 	astrodynamics (the case of interplanetary trajectory optimization). Proceed. Fifth
+ *  astrodynamics (the case of interplanetary trajectory optimization). Proceed. Fifth
  *  International Conf. Astrodynam. Tools and Techniques, ESA/ESTEC, The Netherlands.
  */
-
-#endif // D2D_ATOM_SCANNER_HPP
