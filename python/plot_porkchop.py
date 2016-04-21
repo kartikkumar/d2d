@@ -108,14 +108,14 @@ departure_epochs = departure_epochs - first_departure_epoch
 
 times_of_flight = times_of_flight / 86400
 
-z = np.array(transfer_delta_vs).reshape(len(departure_epochs), len(times_of_flight)) 
+z = np.array(transfer_delta_vs).reshape(len(departure_epochs), len(times_of_flight))
 x1, y1 = np.meshgrid(times_of_flight,departure_epochs)
 datapoints = np.size(z)
 failures = np.count_nonzero(np.isnan(z))
 
 # Add cutoff dV if user input requires to do so
-if config['cutoff'] != 0:
-	cutoff = config['cutoff']
+if config['transfer_deltaV_cutoff'] != 0:
+	cutoff = config['transfer_deltaV_cutoff']
 	for i in xrange(0,len(departure_epochs)):
 		for j in xrange(0,len(times_of_flight)):
 			if math.isnan(z[i][j]) == True:
@@ -139,17 +139,21 @@ ax1.set_xlabel('Time since initial epoch [days] \n Initial departure epoch = ' +
 ax1.set_ylabel('T$_{ToF}$ [days]', fontsize=13)
 cbar.ax.set_ylabel('Total transfer $\Delta V$ [km/s]', rotation=270, fontsize=13, labelpad=20)
 plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
-# if config['cutoff'] == 0:
-#  	plt.title("Porkchop plot of TLE elements " + str(a) + " to " + str(b) + 					  \
-#  			  ".\n Number of datapoints: " + str(datapoints) +" (" + str(len(departure_epochs)) + \
-#  			  "x" + str(len(times_of_flight)) + "). Total failures: " + str(failures),		  	  \
-#  			  fontsize=10, y=1.02)
-# else:
-# 	plt.title("Porkchop plot of TLE elements " + str(a) + " to " + str(b) +						  \
-# 			  "\n with a cutoff $\Delta V$ of " + str(config['cutoff']) + "\n Number of 		  \
-# 			  datapoints: " + str(datapoints) + " (" + str(len(departure_epochs)) + "x" + 	      \
-# 			  str(len(times_of_flight)) + ") " + "Total failures: " + str(failures), 			  \
-# 			  fontsize=10, y=1.02)
+
+if config['title'] == "True":
+	if config['transfer_deltaV_cutoff'] == 0:
+	 	plt.title("Porkchop plot of TLE elements " + str(a) + " to " + str(b) + 				  \
+	 			  ".\n Number of datapoints: " + str(datapoints) + " (" + 						  \
+	 			  str( len( departure_epochs ) ) + "x" + str(len(times_of_flight)) + 			  \
+	 			  "). Total failures: " + str(failures),		 								  \
+	 			  fontsize=10, y=1.02)
+	else:
+		plt.title("Porkchop plot of TLE elements " + str(a) + " to " + str(b) +				 	  \
+				  "\n with a cutoff $\Delta V$ of " + str(config['transfer_deltaV_cutoff']) + 	  \
+				  "\n Number of datapoints: " + str(datapoints) + " (" + 						  \
+				  str(len(departure_epochs)) + "x" + str(len(times_of_flight)) + ") " +			  \
+				  "Total failures: " + str(failures), 		  									  \
+				  fontsize=10, y=1.02)
 
 plt.tight_layout()
 

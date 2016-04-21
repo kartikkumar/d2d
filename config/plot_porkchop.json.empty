@@ -9,8 +9,8 @@
     // Directory where scan figure is stored.
     "output_directory"          : "",
 
-    // Departure and arrival objects. 
-    // If empty the departure and arrival objects of the lowest dV in the database is chosen. 
+    // Departure and arrival objects.
+    // If empty the departure and arrival objects of the lowest delta V in the database is chosen.
     // Format: [departure object id, arrival object id] in integers.
     "objects"                   : [],
 
@@ -18,10 +18,14 @@
     // Files are saved as png.
     "scan_figure"               : "",
 
-    // Give dV cutoff to be added to the minimum dV in the porkchopplot to display 
-    // more or less details. If 0 no cutoff is assumed.
-    "cutoff"                    : 0,
-    
+    // Give delta V cutoff to be added to the minimum delta V of Lambert in the pork chop plot to
+    // display more or less details. If 0 no cutoff is assumed.
+    "transfer_deltaV_cutoff"    : 0,
+
+    // Plot title or not, title includes information on the plot but isn't desired for publication.
+    // Give "True" is title is desired, "False" if not.
+    "title"                     : "",
+
     // Set parameters for figures.
     "figure_dpi"                : 300,
     "colormap"                  : "jet"
