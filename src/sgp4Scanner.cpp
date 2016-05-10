@@ -178,12 +178,6 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         // Filter out cases using transfer deltaV cut off given through input file.
         if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
         {
-            // Bind zeroes to sgp4Query.
-            std::string bindZeroes = bindZeroesSGP4ScannerTable( lambertTransferId );
-            SQLite::Statement zeroQuery( database, bindZeroes );
-            zeroQuery.executeStep( );
-            zeroQuery.reset( );
-
             ++showProgress;
             continue;
         }
