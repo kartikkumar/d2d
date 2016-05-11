@@ -1,0 +1,60 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Copyright (c) 2014-2016 Abhishek Agrawal, Delft University of Technology
+//                                           (abhishek.agrawal@protonmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+{
+    // Path to SQLite database containing scan data.
+    "database"                  : "",
+
+    // Directory where the histogram is stored.
+    // Do not add a '/' at the end of the output dierectory.
+    "output_directory"          : "",
+
+    // Filename for histogram.
+    // Do not mention error type in the file name, it will automatically be included by the python
+    // plotting script.
+    "histogram_figure"          : "",
+
+    // Add or remove j2 analysis curve in position and velocity error histogram plots.
+    // Put True to add the j2 curve, else False.
+    "add_j2"                    : "",
+
+    // Set reference frame for histogram plot of the error components.
+    // For Earth-Centered Inertial, use "ECI".
+    // For Radial-Tangen-Normal reference frame, use "RTN"
+    "frame"                     : "",
+
+    // Set plot style for error component plots
+    // Set to "True" for plot with lines and markers
+    // Set to "False" for a histogram step plot with small bin size
+    "component_marker"          : "",
+
+    // Set output format for the figure (example: ".pdf", ".png")
+    "figure_format"             : "",
+
+    // Add or remove figure title.
+    // To add a title to the figure, put True otherwise False.
+    "add_title"                 : "",
+
+    // Check for GUI
+    // If user machine has a display/GUI then put True, else False
+    "display"                   : "",
+
+    // Set colortype for the figures.
+    // For grayscale, put True otherwise False
+    "grayscale"                 : "",
+
+    // Set axes limit for the position and velocity error component's histogram plot
+    // Format: [xmin, xmax, ymin, ymax]
+    // Auto sizing feature for the axes will be used if all the fields
+    // inside the square bracket are made zero.
+    "set_axes_position"         : [,,,],
+    "set_axes_velocity"         : [,,,],
+
+    // Characteristics for figures.
+    "figure_dpi"                : 300,
+    "tick_label_size"           : 4,
+    "axis_label_size"           : 10,
+    "colormap"                  : "jet"
+}
