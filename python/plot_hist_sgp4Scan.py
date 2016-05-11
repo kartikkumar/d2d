@@ -169,11 +169,11 @@ def plotComponents( errorX, errorY, errorZ,                                     
                     xAxisLabel, yAxisLabel, plotTitle,                                            \
                     flag ):
 
-  n, bins, patches = plt.hist( errorX, bins=200, histtype='step', normed=False,                 \
+  n, bins, patches = plt.hist( errorX, bins=200, histtype='step', normed=False,                   \
                                  color=xcolor, alpha=1, label=xlegend, log=False )
-  n, bins, patches = plt.hist( errorY, bins=200, histtype='step', normed=False,                 \
+  n, bins, patches = plt.hist( errorY, bins=200, histtype='step', normed=False,                   \
                                  color=ycolor, alpha=1, label=ylegend, log=False )
-  n, bins, patches = plt.hist( errorZ, bins=200, histtype='step', normed=False,                 \
+  n, bins, patches = plt.hist( errorZ, bins=200, histtype='step', normed=False,                   \
                                  color=zcolor, alpha=1, label=zlegend, log=False )
 
   # Figure properties
@@ -439,8 +439,9 @@ for errorTypeIndex in range( len( errorType ) ):
                  + config["figure_format"], dpi=config["figure_dpi"] )
     plt.close( )
   else:
-    plt.savefig( output_path_prefix + config["histogram_figure"] + "_" + errorType[ errorTypeIndex ]
-                 + "_error" + "_magnitude" + config["figure_format"], dpi=config["figure_dpi"] )
+    plt.savefig( output_path_prefix + config["histogram_figure"] + "_"
+                 + errorType[ errorTypeIndex ] + "_error" + "_magnitude"
+                 + config["figure_format"], dpi=config["figure_dpi"] )
     plt.close( )
 
 # Plot the components of the (position/velocity) error vector in a separate figure.
@@ -507,7 +508,7 @@ if config['frame'] == "RTN":
     plotComponentsMarkers( positionErrorX, positionErrorY, positionErrorZ,                        \
                            xcolor, ycolor, zcolor,                                                \
                            "Radial", "Transverse", "Normal",                                      \
-                           "Arrival position error [km]", "Frequency",
+                           "Arrival position error [km]", "Frequency",                            \
                            "Position Error Components", True )
 
   # Save figure to file.
@@ -528,7 +529,7 @@ if config['frame'] == "RTN":
     plotComponentsMarkers( velocityErrorX, velocityErrorY, velocityErrorZ,                        \
                            xcolor, ycolor, zcolor,                                                \
                            "Radial", "Transverse", "Normal",                                      \
-                           "Arrival velocity error [km/s]", "Frequency",
+                           "Arrival velocity error [km/s]", "Frequency",                          \
                            "Velocity Error Components", False )
 
   # Save figure to file.
@@ -550,7 +551,7 @@ else:
     plotComponentsMarkers( positionErrorX, positionErrorY, positionErrorZ,                        \
                            xcolor, ycolor, zcolor,                                                \
                            "X Axis", "Y Axis", "Z Axis",                                          \
-                           "Arrival position error [km]", "Frequency",
+                           "Arrival position error [km]", "Frequency",                            \
                            "Position Error Components", True )
 
   # Save figure to file.
@@ -571,7 +572,7 @@ else:
     plotComponentsMarkers( velocityErrorX, velocityErrorY, velocityErrorZ,                        \
                            xcolor, ycolor, zcolor,                                                \
                            "X Axis", "Y Axis", "Z Axis",                                          \
-                           "Arrival velocity error [km/s]", "Frequency",
+                           "Arrival velocity error [km/s]", "Frequency",                          \
                            "Velocity Error Components", False )
 
   # Save figure to file.
