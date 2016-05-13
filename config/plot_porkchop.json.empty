@@ -1,0 +1,32 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Copyright (c) 2016 Enne Hekma, Delft University of Technology (ennehekma@gmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+{
+    // Path to SQLite database containing scan data.
+    "database"                  : "",
+
+    // Directory where scan figure is stored.
+    "output_directory"          : "",
+
+    // Departure and arrival objects.
+    // If empty the departure and arrival objects of the lowest delta V in the database is chosen.
+    // Format: [departure object id, arrival object id] in integers.
+    "objects"                   : [],
+
+    // Filename for scan figure.
+    // Files are saved as png.
+    "scan_figure"               : "",
+
+    // Give delta V cutoff to be added to the minimum delta V of Lambert in the pork chop plot to
+    // display more or less details. If 0 no cutoff is assumed.
+    "transfer_deltaV_cutoff"    : 0,
+
+    // Plot title or not, title includes information on the plot but isn't desired for publication.
+    // Give "True" if title is desired, "False" if not.
+    "title"                     : "",
+
+    // Set parameters for figures.
+    "figure_dpi"                : 300,
+    "colormap"                  : "jet"
+}
