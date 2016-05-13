@@ -23,7 +23,7 @@
     "transfer_deltaV_cutoff"    : 0,
 
     // Plot title or not, title includes information on the plot but isn't desired for publication.
-    // Give "True" is title is desired, "False" if not.
+    // Give "True" if title is desired, "False" if not.
     "title"                     : "",
 
     // Set parameters for figures.

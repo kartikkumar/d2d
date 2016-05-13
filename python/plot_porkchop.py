@@ -72,7 +72,6 @@ try:
     database = sqlite3.connect(config['database'])
 
 except sqlite3.Error, e:
-
     print "Error %s:" % e.args[0]
     sys.exit(1)
 
@@ -135,7 +134,8 @@ ax1.xaxis.set_major_formatter(formatter)
 ax1.yaxis.set_major_formatter(formatter)
 ax1.get_yaxis().set_tick_params(direction='out')
 ax1.get_xaxis().set_tick_params(direction='out')
-ax1.set_xlabel('Time since initial epoch [days] \n Initial departure epoch = ' + str(first_departure_epoch) + ' [mjd]', fontsize=13)
+ax1.set_xlabel('Time since initial epoch [days] \n Initial departure epoch = ' 					  \
+			   + str(first_departure_epoch) + ' [mjd]', fontsize=13)
 ax1.set_ylabel('T$_{ToF}$ [days]', fontsize=13)
 cbar.ax.set_ylabel('Total transfer $\Delta V$ [km/s]', rotation=270, fontsize=13, labelpad=20)
 plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
@@ -160,17 +160,20 @@ plt.tight_layout()
 plt.savefig(config["output_directory"] + "/" + config["scan_figure"] + ".png", 					  \
             dpi=config["figure_dpi"])
 
-print "Figure generated successfully!"
 print ""
+print "Figure generated successfully!"
 
 # Stop timer
 end_time = time.time( )
-
+print ""
+print "------------------------------------------------------------------"
+print ""
 # Print elapsed time
-print "Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
 
 print ""
 print "------------------------------------------------------------------"
-print "                         Exited successfully!                     "
+print "			Exited successfully!                     "
+print "                              "
+print "			Script time: " + str("{:,g}".format(end_time - start_time)) + "s"
 print "------------------------------------------------------------------"
 print ""
