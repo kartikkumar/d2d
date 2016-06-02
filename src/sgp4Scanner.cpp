@@ -150,6 +150,9 @@ void executeSGP4Scanner( const rapidjson::Document& config )
         const double   lambertArrivalDeltaVY                = lambertQuery.getColumn( 41 );
         const double   lambertArrivalDeltaVZ                = lambertQuery.getColumn( 42 );
 
+        const double   lambertTransferSemiMajorAxis         = lambertQuery.getColumn( 31 );
+        const double   lambertTransferEccentricity          = lambertQuery.getColumn( 32 );
+
         const double   lambertTotalDeltaV                   = lambertQuery.getColumn( 43 );
 
         // Set up DateTime object for departure epoch using Julian date.
@@ -177,6 +180,18 @@ void executeSGP4Scanner( const rapidjson::Document& config )
 
         // Filter out cases using transfer deltaV cut off given through input file.
         if ( lambertTotalDeltaV > input.transferDeltaVCutoff )
+        {
+            ++showProgress;
+            continue;
+        }
+
+        // Filter out cases where the periapsis of the transfer orbit is less than the Earth's
+        // mean radius.
+        // This is necessary, since the SGP4 propagator only functions outside the Earth's mean
+        // radius.
+        const double lambertTransferPeriapsis
+            = lambertTransferSemiMajorAxis * ( 1.0 - lambertTransferEccentricity );
+        if ( lambertTransferPeriapsis < earthMeanRadius )
         {
             ++showProgress;
             continue;
