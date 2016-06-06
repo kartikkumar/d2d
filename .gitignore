@@ -53,6 +53,7 @@ data/*
 !data/catalog/
 data/catalog/*
 !data/catalog/test_catalog.txt
+*.db
 
 # Project files
 *.sublime*
