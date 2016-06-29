@@ -97,7 +97,7 @@ bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
                                        const Vector6& trueCartesianState,
                                        const double relativeTolerance,
                                        const double absoluteTolerance )
-{    
+{
     // Check for NAN values.
     for ( int i = 0; i < 6; i++ )
     {
@@ -109,20 +109,20 @@ bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
         }
     }
 
-    // Check if error between target and propagated Cartesian states is within specified 
+    // Check if error between target and propagated Cartesian states is within specified
     // tolerances.
     Vector6 absoluteDifference = propagatedCartesianState;
     Vector6 relativeDifference = propagatedCartesianState;
     for ( int i = 0; i < 6; i++ )
     {
-        absoluteDifference[ i ] 
-            = std::fabs( propagatedCartesianState[ i ] - trueCartesianState[ i ] );        
+        absoluteDifference[ i ]
+            = std::fabs( propagatedCartesianState[ i ] - trueCartesianState[ i ] );
         relativeDifference[ i ] = absoluteDifference[ i ] / std::fabs( trueCartesianState[ i ] );
         if ( relativeDifference[ i ] > relativeTolerance )
         {
             if ( absoluteDifference[ i ] > absoluteTolerance )
             {
-                // If the relative and absolute difference for the ith element exceeds the 
+                // If the relative and absolute difference for the ith element exceeds the
                 // specified tolerances, the convergence test has failed.
                 return false;
             }
@@ -208,6 +208,40 @@ int getTleCatalogType( const std::string& catalogFirstLine )
     }
 
     return tleLines;
+}
+
+//! Recurse leg-by-leg to generate list of TLE sequences.
+void recurseSequences( const int            currentSequencePosition,
+                       const TleObjects&    tleObjects,
+                       Sequence&            sequence,
+                       ListOfSequences&     listOfSequences )
+{
+    // If current leg has reached the length of the sequence, then the sequence is complete.
+    if ( currentSequencePosition == sequence.size( ) )
+    {
+        return;
+    }
+
+    // Loop through pool of TLE objects and store IDs in sequence.
+    for ( unsigned int i = 0; i < tleObjects.size( ); i++ )
+    {
+        // Store ith TLE object in sequence at position of current leg.
+        sequence[ currentSequencePosition ] = tleObjects[ i ];
+
+        // Create a local copy of the list of TLE objects and erase the object selected for the
+        // current leg.
+        TleObjects tleObjectsLocal = tleObjects;
+        tleObjectsLocal.erase( tleObjectsLocal.begin( ) + i );
+
+        // Proceed to the next leg in the sequence through recursion.
+        recurseSequences( currentSequencePosition + 1, tleObjectsLocal, sequence, listOfSequences );
+
+        // Write the sequence to the list.
+        if ( currentSequencePosition == sequence.size( ) - 1 )
+        {
+            listOfSequences.push_back( sequence );
+        }
+    }
 }
 
 } // namespace d2d

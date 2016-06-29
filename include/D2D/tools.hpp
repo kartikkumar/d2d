@@ -84,7 +84,7 @@ StateHistory sampleKeplerOrbit( const Vector6& initialState,
  * Samples a SGP4 orbit and generates a state-history stored in a STL map (key=epoch). The
  * SGP4 orbit is sampled by using FindPosition() provided with libsgp4.
  *
- * @param[in]  tle                    Two-line element data of the object to be propagated 
+ * @param[in]  tle                    Two-line element data of the object to be propagated
  * @param[in]  initialEpochJulian     Starting epoch for the SGP4 propagator
  *                                    (default = 0.0) [Julian date]
  * @param[in]  propagationTime        Total propagation time [s]
@@ -102,17 +102,17 @@ StateHistory sampleSGP4Orbit( const Tle& tle,
  * convertCartesianStateToTwoLineElements function in the Atom library.
  *
  * @sa atom::convertCartesianStateToTwoLineElements
- * @param[in]   propagatedCartesianState    The state obtained after propagating virtual TLE 
+ * @param[in]   propagatedCartesianState    The state obtained after propagating virtual TLE
  *                                          using SGP4 with time-of-flight = 0.0
- * @param[in]   trueCartesianState          The true cartesian state corresponding to zero 
+ * @param[in]   trueCartesianState          The true cartesian state corresponding to zero
  *                                          time-of-flight
- * @param[in]   relativeTolerance           Relative difference between the propagated and true 
- *                                          Cartesian state is checked against the relative 
+ * @param[in]   relativeTolerance           Relative difference between the propagated and true
+ *                                          Cartesian state is checked against the relative
  *                                          tolerance
- * @param[in]   absoluteTolerance           Absolute difference between the propagated and true 
- *                                          Cartesian state is checked against the absolute 
+ * @param[in]   absoluteTolerance           Absolute difference between the propagated and true
+ *                                          Cartesian state is checked against the absolute
  *                                          tolerance
- * @return                                  Returns boolean 'true' if the test passed, 
+ * @return                                  Returns boolean 'true' if the test passed,
  *                                          'false' otherwise
  */
 bool executeVirtualTleConvergenceTest( const Vector6& propagatedCartesianState,
@@ -227,6 +227,30 @@ void removeNewline( std::string& string );
  * @return                     Number of lines per TLE in catalog
  */
 int getTleCatalogType( const std::string& catalogFirstLine );
+
+//! List of TLE objects generated from TLE strings.
+typedef std::vector< Tle > TleObjects;
+//! Sequence of TLE Objects.
+typedef std::vector< Tle > Sequence;
+//! List of TLE object ID sequences.
+typedef std::vector< Sequence > ListOfSequences;
+
+//! Recurse leg-by-leg to generate list of TLE sequences.
+/*!
+ * Recurses through pool of TLE objects to generate list of sequences containing TLE IDs (NORAD
+ * number). The sequences are all of a specified length. The final list of sequences generated
+ * contains a full enumeration of all possible sequences using the TLE object pool.
+ *
+ * @sa executeLambertScanner
+ * @param[in]       currentSequencePosition     Current position in sequence
+ * @param[in]       tleObjects                  Pool of TLE objects to select from
+ * @param[in]       sequence                    Sequence of TLE object IDs
+ * @param[out]      listOfSequences             List of sequences generated
+ */
+void recurseSequences( const int            currentSequencePosition,
+                       const TleObjects&    tleObjects,
+                       Sequence&            sequence,
+                       ListOfSequences&     listOfSequences );
 
 } // namespace d2d
 
