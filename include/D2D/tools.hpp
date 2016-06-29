@@ -13,11 +13,14 @@
 #include <limits>
 #include <map>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include <boost/array.hpp>
 
 #include <catch.hpp>
 
+#include <libsgp4/DateTime.h>
 #include <libsgp4/Eci.h>
 #include <libsgp4/Tle.h>
 
@@ -251,6 +254,39 @@ void recurseSequences( const int            currentSequencePosition,
                        const TleObjects&    tleObjects,
                        Sequence&            sequence,
                        ListOfSequences&     listOfSequences );
+
+//! Departure-Arrival epoch pair.
+typedef std::pair< DateTime, DateTime > Epochs;
+//! List of departure-arrival epoch pairs.
+typedef std::vector< Epochs > ListOfEpochs;
+//! Collection of lists of departure-arrival epoch pairs.
+typedef std::map< int, ListOfEpochs > AllEpochs;
+
+//! Compute departure-arrival epoch pairs for all pork-chop plots.
+/*!
+ * Computes all departure and arrival epochs for each pork-chop plot at each leg. Since multiple
+ * combinations of departure epoch and time-of-flight can lead the same arrival epoch, the unique
+ * list of arrival epochs are extracted from each leg. A fixed stay time is added to each of these
+ * arrival epochs, yields the list of departure epochs for the subsequence leg. The function returns
+ * a map containing the departure-arrival epoch pairs belonging to the pork-chop plots for each leg.
+ *
+ * @param[in]       sequenceLength              Fixed length of multi-leg sequence
+ * @param[in]       stayTime                    Fixed stay time at arrival object [s]
+ * @param[in]       departureEpochInitial       Initial departure epoch at start of grid
+ * @param[in]       departureEpochSteps         Number of steps within departure epoch grid
+ * @param[in]       departureEpochStepSize      Step size within departure epoch grid [s]
+ * @param[in]       timeOfFlightMinimum         Minimum time-of-flight [s]
+ * @param[in]       timeOfFlightSteps           Number of steps within time-of-flight grid
+ * @param[in]       timeOfFlightStepSize        Step size within time-of-flight grid [s]
+ */
+AllEpochs computeAllPorkChopPlotEpochs( const int       sequenceLength,
+                                        const double    stayTime,
+                                        const DateTime& departureEpochInitial,
+                                        const int       departureEpochSteps,
+                                        const double    departureEpochStepSize,
+                                        const double    timeOfFlightMinimum,
+                                        const int       timeOfFlightSteps,
+                                        const double    timeOfFlightStepSize );
 
 } // namespace d2d
 

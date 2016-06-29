@@ -5,24 +5,18 @@
  * See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
  */
 
-#include <algorithm>
 #include <cmath>
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
 
-#include <libsgp4/DateTime.h>
-#include <libsgp4/Eci.h>
 #include <libsgp4/Globals.h>
 #include <libsgp4/SGP4.h>
 #include <libsgp4/TimeSpan.h>
-#include <libsgp4/Tle.h>
-
-#include "D2D/tools.hpp"
-
-#include <Astro/constants.hpp>
 
 #include <keplerian_toolbox.h>
+
+#include "D2D/tools.hpp"
 
 namespace d2d
 {
@@ -242,6 +236,78 @@ void recurseSequences( const int            currentSequencePosition,
             listOfSequences.push_back( sequence );
         }
     }
+}
+
+//! Compute departure-arrival epoch pairs for all pork-chop plots.
+AllEpochs computeAllPorkChopPlotEpochs( const int       sequenceLength,
+                                        const double    stayTime,
+                                        const DateTime& departureEpochInitial,
+                                        const int       departureEpochSteps,
+                                        const double    departureEpochStepSize,
+                                        const double    timeOfFlightMinimum,
+                                        const int       timeOfFlightSteps,
+                                        const double    timeOfFlightStepSize )
+{
+    // Create container of unique departure epochs that are used per leg to compute the pork-chop
+    // data set.
+    std::vector< DateTime > uniqueDepartureEpochs;
+    uniqueDepartureEpochs.push_back( departureEpochInitial );
+    for ( int i = 1; i < departureEpochSteps + 1; ++i )
+    {
+        DateTime departureEpoch = departureEpochInitial;
+        departureEpoch = departureEpoch.AddSeconds( departureEpochStepSize * i );
+        uniqueDepartureEpochs.push_back( departureEpoch );
+    }
+
+    AllEpochs allEpochs;
+
+    // Loop over each leg and generate the departure-arrival epoch pairs.
+    for ( unsigned int i = 0; i < sequenceLength - 1; ++i )
+    {
+        ListOfEpochs listOfEpochs;
+
+        // Loop over unique departure epochs.
+        for ( int j = 0; j < uniqueDepartureEpochs.size( ); ++j )
+        {
+            // Loop over time-of-flight grid.
+            for ( int k = 0; k < timeOfFlightSteps + 1; k++ )
+            {
+                const double timeOfFlight = timeOfFlightMinimum + k * timeOfFlightStepSize;
+                const DateTime departureEpoch = uniqueDepartureEpochs[ j ];
+                const DateTime arrivalEpoch = uniqueDepartureEpochs[ j ].AddSeconds( timeOfFlight );
+
+                // Store pair of departure and arrival epochs in the list.
+                listOfEpochs.push_back( std::make_pair< DateTime, DateTime >( departureEpoch,
+                                                                              arrivalEpoch ) );
+            }
+        }
+
+        // Store list of all departure and arrival epoch combinations for the current leg in the
+        // map.
+        allEpochs[ i + 1 ] = listOfEpochs;
+
+        // Extract all arrival epochs from list of epochs.
+        std::vector< DateTime > listOfArrivalEpochs;
+        for ( unsigned int j = 0; j < listOfEpochs.size( ); ++j )
+        {
+            listOfArrivalEpochs.push_back( listOfEpochs[ j ].second );
+        }
+
+        // Sort arrival epochs and only keep unique entries. The unique arrival epochs are saved as
+        // the departure epochs for the next leg after adding a fixed stay time.
+        std::sort( listOfArrivalEpochs.begin( ), listOfArrivalEpochs.end( ) );
+        std::vector< DateTime >::iterator arrivalEpochIterator
+            = std::unique( listOfArrivalEpochs.begin( ), listOfArrivalEpochs.end( ) );
+        listOfArrivalEpochs.resize( std::distance( listOfArrivalEpochs.begin( ),
+                                                   arrivalEpochIterator ) );
+        for ( unsigned int j = 0; j < listOfArrivalEpochs.size( ); ++j )
+        {
+            listOfArrivalEpochs[ j ] = listOfArrivalEpochs[ j ].AddSeconds( stayTime );
+        }
+        uniqueDepartureEpochs = listOfArrivalEpochs;
+    }
+
+    return allEpochs;
 }
 
 } // namespace d2d
