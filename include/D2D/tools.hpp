@@ -288,47 +288,6 @@ AllEpochs computeAllPorkChopPlotEpochs( const int       sequenceLength,
                                         const int       timeOfFlightSteps,
                                         const double    timeOfFlightStepSize );
 
-//! Grid point in pork-chop plot.
-/*!
- * Data struct containing all data pertaining to a grid point in a pork-chop plot, i.e., departure
- * epoch, time-of-flight and all data related to the computed transfer.
- *
- * @sa recurseTransfers
- */
-struct PorkChopPlotGridPoint
-{
-public:
-
-    //! Construct data struct.
-    /*!
-     * Constructs data struct based on departure epoch, time-of-flight and transfer data for grid
-     * point in pork-chop plot.
-     *
-     * @param[in] aDepartureEpoch   A departure epoch for the specified grid point
-     * @param[in] aTimeOfFlight     A time-of-flight for the specified grid point
-     * @param[in] aTransferDeltaV   Computed transfer \f$\Delta V\f$
-     */
-    PorkChopPlotGridPoint( const DateTime& aDepartureEpoch,
-                           const double    aTimeOfFlight,
-                           const double    aTransferDeltaV )
-        : departureEpoch( aDepartureEpoch ),
-          timeOfFlight( aTimeOfFlight ),
-          transferDeltaV( aTransferDeltaV )
-    { }
-
-    //! Departure epoch.
-    const DateTime departureEpoch;
-
-    //! Time of flight [s].
-    const double timeOfFlight;
-
-    //! Transfer \f$\Delta V\f$ [km/s].
-    const double transferDeltaV;
-
-protected:
-private:
-};
-
 //! Pork-chop plot leg, departure object and arrival object IDs.
 /*!
  * Data struct containing leg, departure object and arrival object IDs that define the location of a
@@ -367,11 +326,6 @@ public:
 protected:
 private:
 };
-
-//! Pork-chop plot, consisting of list of grid points.
-typedef std::vector< PorkChopPlotGridPoint > PorkChopPlot;
-//! Collection of all pork-chop plots with corresponding leg, departure object & arrival object IDs.
-typedef std::map< PorkChopPlotId, PorkChopPlot > AllPorkChopPlots;
 
 //! Overload ==-operator to compare PorkChopPlotId objects.
 /*!
