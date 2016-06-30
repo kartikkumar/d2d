@@ -288,6 +288,165 @@ AllEpochs computeAllPorkChopPlotEpochs( const int       sequenceLength,
                                         const int       timeOfFlightSteps,
                                         const double    timeOfFlightStepSize );
 
+//! Grid point in pork-chop plot.
+/*!
+ * Data struct containing all data pertaining to a grid point in a pork-chop plot, i.e., departure
+ * epoch, time-of-flight and all data related to the computed transfer.
+ *
+ * @sa recurseTransfers
+ */
+struct PorkChopPlotGridPoint
+{
+public:
+
+    //! Construct data struct.
+    /*!
+     * Constructs data struct based on departure epoch, time-of-flight and transfer data for grid
+     * point in pork-chop plot.
+     *
+     * @param[in] aDepartureEpoch   A departure epoch for the specified grid point
+     * @param[in] aTimeOfFlight     A time-of-flight for the specified grid point
+     * @param[in] aTransferDeltaV   Computed transfer \f$\Delta V\f$
+     */
+    PorkChopPlotGridPoint( const DateTime& aDepartureEpoch,
+                           const double    aTimeOfFlight,
+                           const double    aTransferDeltaV )
+        : departureEpoch( aDepartureEpoch ),
+          timeOfFlight( aTimeOfFlight ),
+          transferDeltaV( aTransferDeltaV )
+    { }
+
+    //! Departure epoch.
+    const DateTime departureEpoch;
+
+    //! Time of flight [s].
+    const double timeOfFlight;
+
+    //! Transfer \f$\Delta V\f$ [km/s].
+    const double transferDeltaV;
+
+protected:
+private:
+};
+
+//! Pork-chop plot leg, departure object and arrival object IDs.
+/*!
+ * Data struct containing leg, departure object and arrival object IDs that define the location of a
+ * given pork-chop plot along the sequence tree. These ID numbers serve to uniquely identify a
+ * pork-chop plot. The data struct is used as the key in a map to associate pork-chop plots along
+ * the sequence tree. This ensures that the pork-chop plots are only computed once.
+ *
+ * @sa recurseSequences, recurseTransfers, PorkChopPlotGridPoint
+ */
+struct PorkChopPlotId
+{
+public:
+
+    //! Construct data struct.
+    /*!
+     * Constructs data struct based on leg, departure object and arrival object IDs that define the
+     * location of a pork-chop plot within the sequence tree.
+     */
+    PorkChopPlotId( const int aLegID,
+                    const int aDepartureObjectId,
+                    const int anArrivalObjectId )
+        : legId( aLegID ),
+          departureObjectId( aDepartureObjectId ),
+          arrivalObjectId( anArrivalObjectId )
+    { }
+
+    //! Leg ID.
+    const int legId;
+
+    //! Departure object ID.
+    const int departureObjectId;
+
+    //! Arrival object ID
+    const int arrivalObjectId;
+
+protected:
+private:
+};
+
+//! Pork-chop plot, consisting of list of grid points.
+typedef std::vector< PorkChopPlotGridPoint > PorkChopPlot;
+//! Collection of all pork-chop plots with corresponding leg, departure object & arrival object IDs.
+typedef std::map< PorkChopPlotId, PorkChopPlot > AllPorkChopPlots;
+
+//! Overload ==-operator to compare PorkChopPlotId objects.
+/*!
+ * Overloads ==-operator to compare two PorkChopPlotId objects. The comparison is based on
+ * sequentially checking that the leg, departure object and arrival object IDs are equal in both
+ * objects.
+ *
+ * @sa PorkChopPlotId
+ * @param[in] id1 First PorkChopPlotId object
+ * @param[in] id2 Second PorkChopPlotId object
+ * @return        True if PorkChopPlotId objects are equal, false otherwise
+ */
+bool operator==( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
+
+//! Overload !=-operator to compare PorkChopPlotId objects.
+/*!
+ * Overloads !=-operator to compare two PorkChopPlotId objects. The comparison is based on
+ * negating the result obtained from calling the ==-operator on both objects.
+ *
+ * @sa PorkChopPlotId,
+ * @param[in] id1 First PorkChopPlotId object
+ * @param[in] id2 Second PorkChopPlotId object
+ * @return        False if PorkChopPlotId objects are equal, true otherwise
+ */
+bool operator!=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
+
+//! Overload <-operator to compare PorkChopPlotId objects.
+/*!
+ * Overloads <-operator to compare two PorkChopPlotId objects. The comparison is based on
+ * sequentially checking that the leg, departure object and arrival object IDs of the first
+ * PorkChopPlotId object (first argument) are less than the corresponding values stored in the
+ * second PorkChopPlotId object (second argument).
+ *
+ * @sa PorkChopPlotId
+ * @param[in] id1 First PorkChopPlotId object
+ * @param[in] id2 Second PorkChopPlotId object
+ * @return        True if id1 is less than id2, false otherwise
+ */
+bool operator<( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
+
+//! Overload >=-operator to compare PorkChopPlotId objects.
+/*!
+ * Overloads <=-operator to compare two PorkChopPlotId objects. The comparison is based on
+ * checking that the results obtained from calling the ==-operator or the <-operator are true.
+ *
+ * @sa PorkChopPlotId
+ * @param[in] id1 First PorkChopPlotId object
+ * @param[in] id2 Second PorkChopPlotId object
+ * @return        True if id1 is less than or equal to id2, false otherwise
+ */
+bool operator<=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
+
+//! Overload >-operator to compare PorkChopPlotId objects.
+/*!
+ * Overloads >-operator to compare two PorkChopPlotId objects. The comparison is based on
+ * checking negating the results obtained from calling the <=-operator on both objects.
+ *
+ * @sa PorkChopPlotId
+ * @param[in] id1 First PorkChopPlotId object
+ * @param[in] id2 Second PorkChopPlotId object
+ * @return        True if id1 is greater than id2, false otherwise
+ */
+bool operator>( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
+
+//! Overload >=-operator to compare PorkChopPlotId objects.
+/*!
+ * Overloads >=-operator to compare two PorkChopPlotId objects. The comparison is based on
+ * checking that the results obtained from calling the ==-operator or the >-operator are true.
+ *
+ * @sa PorkChopPlotId
+ * @param[in] id1 First PorkChopPlotId object
+ * @param[in] id2 Second PorkChopPlotId object
+ * @return        True if id1 is greater than or equal to id2, false otherwise
+ */
+bool operator>=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
 } // namespace d2d
 
 #endif // D2D_TOOLS_HPP

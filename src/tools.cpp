@@ -310,4 +310,72 @@ AllEpochs computeAllPorkChopPlotEpochs( const int       sequenceLength,
     return allEpochs;
 }
 
+//! Overload !=-operator to compare PorkChopPlotId objects.
+bool operator!=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
+{
+    return !(id1 == id2);
+}
+
+//! Overload <-operator to compare PorkChopPlotId objects.
+bool operator<( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
+{
+    bool isLessThan = false;
+    if ( id1.legId == id2.legId )
+    {
+        if ( id1.departureObjectId == id2.departureObjectId )
+        {
+            if ( id1.arrivalObjectId < id2.arrivalObjectId )
+            {
+                isLessThan = true;
+            }
+        }
+        else if ( id1.departureObjectId < id2.departureObjectId )
+        {
+            isLessThan = true;
+        }
+    }
+    else if ( id1.legId < id2.legId )
+    {
+        isLessThan = true;
+    }
+
+    return isLessThan;
+}
+
+//! Overload >=-operator to compare PorkChopPlotId objects.
+bool operator<=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
+{
+    bool isLessThanOrEqual = false;
+    if ( id1 < id2 )
+    {
+        isLessThanOrEqual = true;
+    }
+    else if ( id1 == id2 )
+    {
+        isLessThanOrEqual = true;
+    }
+    return isLessThanOrEqual;
+}
+
+//! Overload >-operator to compare PorkChopPlotId objects.
+bool operator>( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
+{
+    return !( id1 <= id2 );
+}
+
+//! Overload >=-operator to compare PorkChopPlotId objects.
+bool operator>=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
+{
+    bool isGreaterThanOrEqual = false;
+    if ( id1 > id2 )
+    {
+        isGreaterThanOrEqual = true;
+    }
+    else if ( id1 == id2 )
+    {
+        isGreaterThanOrEqual = true;
+    }
+    return isGreaterThanOrEqual;
+}
+
 } // namespace d2d
