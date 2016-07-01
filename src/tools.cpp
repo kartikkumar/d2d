@@ -211,7 +211,7 @@ void recurseSequences( const int            currentSequencePosition,
                        ListOfSequences&     listOfSequences )
 {
     // If current leg has reached the length of the sequence, then the sequence is complete.
-    if ( currentSequencePosition == sequence.size( ) )
+    if ( currentSequencePosition == static_cast< int >( sequence.size( ) ) )
     {
         return;
     }
@@ -262,12 +262,12 @@ AllEpochs computeAllPorkChopPlotEpochs( const int       sequenceLength,
     AllEpochs allEpochs;
 
     // Loop over each leg and generate the departure-arrival epoch pairs.
-    for ( unsigned int i = 0; i < sequenceLength - 1; ++i )
+    for ( int i = 0; i < sequenceLength - 1; ++i )
     {
         ListOfEpochs listOfEpochs;
 
         // Loop over unique departure epochs.
-        for ( int j = 0; j < uniqueDepartureEpochs.size( ); ++j )
+        for ( unsigned int j = 0; j < uniqueDepartureEpochs.size( ); ++j )
         {
             // Loop over time-of-flight grid.
             for ( int k = 0; k < timeOfFlightSteps + 1; k++ )
