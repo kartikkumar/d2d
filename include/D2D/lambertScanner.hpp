@@ -320,6 +320,45 @@ public:
           transferDeltaV( aTransferDeltaV )
     { }
 
+    //! Copy-construct data struct.
+    /*!
+     * Constructs data struct by making a copy of the object provided.
+     *
+     * @param[in] gridPoint Object to copy.
+     */
+    LambertPorkChopPlotGridPoint( const LambertPorkChopPlotGridPoint& gridPoint )
+        : departureEpoch( gridPoint.departureEpoch ),
+          arrivalEpoch( gridPoint.arrivalEpoch ),
+          timeOfFlight( gridPoint.timeOfFlight ),
+          revolutions( gridPoint.revolutions ),
+          isPrograde( gridPoint.isPrograde ),
+          departureState( gridPoint.departureState ),
+          departureStateKepler( gridPoint.departureStateKepler ),
+          arrivalState( gridPoint.arrivalState ),
+          arrivalStateKepler( gridPoint.arrivalStateKepler ),
+          transferStateKepler( gridPoint.transferStateKepler ),
+          departureDeltaV( gridPoint.departureDeltaV ),
+          arrivalDeltaV( gridPoint.arrivalDeltaV ),
+          transferDeltaV( gridPoint.transferDeltaV )
+    { }
+
+    //! Overload operator-=.
+    /*!
+     * Overloads operator-= to assign current object to object provided as input.
+     *
+     * WARNING: this is a dummy overload to get by the problem of adding a
+     *          LambertPorkChopPlotGridPoint object to a STL container! It not correctly assign the
+     *          current object to the dummy grid point provided!
+     *
+     * @sa executeLambertScanner
+     * @param[in] dummyGridPoint Dummy grid point that is ignored
+     * @return                   The current object
+     */
+    LambertPorkChopPlotGridPoint& operator=( const LambertPorkChopPlotGridPoint dummyGridPoint )
+    {
+        return *this;
+    }
+
     //! Departure epoch.
     const DateTime departureEpoch;
 
