@@ -231,7 +231,7 @@ void recurseSequences( const int            currentSequencePosition,
         recurseSequences( currentSequencePosition + 1, tleObjectsLocal, sequence, listOfSequences );
 
         // Write the sequence to the list.
-        if ( currentSequencePosition == sequence.size( ) - 1 )
+        if ( currentSequencePosition == static_cast< int >( sequence.size( ) ) - 1 )
         {
             listOfSequences.push_back( sequence );
         }
