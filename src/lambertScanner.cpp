@@ -112,7 +112,15 @@ void executeLambertScanner( const rapidjson::Document& config )
             << ":target_" << i << ",";
     }
     lambertScannerSequencesTableInsert
-        << ":target_" << input.sequenceLength - 1
+        << ":target_" << input.sequenceLength - 1 << ",";
+    for ( int i = 0; i < input.sequenceLength - 2; ++i )
+    {
+        lambertScannerSequencesTableInsert
+            << "0,";
+    }
+    lambertScannerSequencesTableInsert
+        << "0,"
+        << "0.0"
         << ");";
 
     SQLite::Statement sequencesQuery( database, lambertScannerSequencesTableInsert.str( ) );
@@ -481,14 +489,24 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
     std::ostringstream lambertScannerSequencesTableCreate;
     lambertScannerSequencesTableCreate
         << "CREATE TABLE lambert_scanner_sequences ("
-        << "\"sequence_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,";
+        << "\"sequence_id\"                               INTEGER PRIMARY KEY AUTOINCREMENT,";
     for ( int i = 0; i < sequenceLength - 1; ++i )
     {
         lambertScannerSequencesTableCreate
-            << "\"target_" << i << "\"                  INTEGER                          ,";
+            << "\"target_" << i << "\"                    INTEGER                          ,";
     }
     lambertScannerSequencesTableCreate
-        << "\"target_" << sequenceLength - 1 << "\"       INTEGER                         );";
+        << "\"target_" << sequenceLength - 1 << "\"       INTEGER                          ,";
+
+    for ( int i = 0; i < sequenceLength - 2; ++i )
+    {
+        lambertScannerSequencesTableCreate
+            << "\"transfer_id_" << i + 1 << "\"           INTEGER                          ,";
+    }
+    lambertScannerSequencesTableCreate
+        << "\"transfer_id_" << sequenceLength - 1 << "\"  INTEGER                          ,";
+    lambertScannerSequencesTableCreate
+        << "\"sequence_delta_v\"                          REAL                            );";
 
     // // Execute command to create table.
     database.exec( lambertScannerSequencesTableCreate.str( ).c_str( ) );
@@ -574,7 +592,7 @@ void recurseLambertTransfers( const int                       currentSequencePos
                               Sequence&                       sequence,
                               AllLambertPorkChopPlots&        allPorkChopPlots )
 {
-    if ( currentSequencePosition == sequence.size( ) )
+    if ( currentSequencePosition == static_cast< int >( sequence.size( ) ) )
     {
         return;
     }
