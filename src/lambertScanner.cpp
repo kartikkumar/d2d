@@ -171,7 +171,7 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     std::cout << "All departure-arrival epochs successfully computed!" << std::endl;
 
-    std::cout << "Compute all pork-chop plot transfers for each leg ... " << std::endl;
+    std::cout << "Computing all pork-chop plot transfers for each leg ... " << std::endl;
 
     // Compute pork-chop sets for 1-to-1 transfers on a leg-by-leg basis, by stepping through a
     // given sequence using recursion.
@@ -189,7 +189,7 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     std::cout << "All pork-chop plot transfers successfully computed! " << std::endl;
 
-    std::cout << "Populate database with pork-chop plot transfers ... " << std::endl;
+    std::cout << "populating database with pork-chop plot transfers ... " << std::endl;
 
     // Start SQL transaction to populate database with computed transfers.
     SQLite::Transaction transfersTransaction( database );
@@ -345,6 +345,15 @@ void executeLambertScanner( const rapidjson::Document& config )
     transfersTransaction.commit( );
 
     std::cout << "Database successfully populated with pork-chop plot transfers! " << std::endl;
+
+    std::cout << "Computing the best transfers per sequence ..." << std::endl;
+
+    std::cout << "The best transfers per sequence successfully computed!" << std::endl;
+
+    std::cout << "Populating the database with the best transfers per sequence ..."
+
+    std::cout << "Database successfully populated with the best transfers per sequence!"
+              << std::endl;
 }
 
 //! Check lambert_scanner input parameters.
@@ -759,24 +768,6 @@ LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObj
                                           *minimumDeltaVIterator ) );
     }
     return porkChopPlot;
-}
-
-//! Overload ==-operator to compare PorkChopPlotId objects.
-bool operator==( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
-{
-    bool isEqual = false;
-    if ( id1.legId == id2.legId )
-    {
-        if ( id1.departureObjectId == id2.departureObjectId )
-        {
-            if ( id1.arrivalObjectId == id2.arrivalObjectId )
-            {
-                isEqual = true;
-            }
-        }
-    }
-
-    return isEqual;
 }
 
 } // namespace d2d
