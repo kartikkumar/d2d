@@ -350,7 +350,7 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     std::cout << "The best transfers per sequence successfully computed!" << std::endl;
 
-    std::cout << "Populating the database with the best transfers per sequence ..."
+    std::cout << "Populating the database with the best transfers per sequence ..." << std::endl;
 
     std::cout << "Database successfully populated with the best transfers per sequence!"
               << std::endl;
