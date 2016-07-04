@@ -33,6 +33,20 @@
 namespace d2d
 {
 
+//! List of TLE objects generated from TLE strings.
+typedef std::vector< Tle > TleObjects;
+//! Sequence of TLE Objects.
+typedef std::vector< Tle > Sequence;
+//! List of TLE object ID sequences.
+typedef std::vector< Sequence > ListOfSequences;
+
+//! Departure-Arrival epoch pair.
+typedef std::pair< DateTime, DateTime > Epochs;
+//! List of departure-arrival epoch pairs.
+typedef std::vector< Epochs > ListOfEpochs;
+//! Collection of lists of departure-arrival epoch pairs (key=leg ID).
+typedef std::map< int, ListOfEpochs > AllEpochs;
+
 //! Create custom CATCH Approx object with tolerance for comparing doubles.
 /*!
  * Creates a custom CATCH Approx object that can be used for comparing doubles in unit tests. The
@@ -231,13 +245,6 @@ void removeNewline( std::string& string );
  */
 int getTleCatalogType( const std::string& catalogFirstLine );
 
-//! List of TLE objects generated from TLE strings.
-typedef std::vector< Tle > TleObjects;
-//! Sequence of TLE Objects.
-typedef std::vector< Tle > Sequence;
-//! List of TLE object ID sequences.
-typedef std::vector< Sequence > ListOfSequences;
-
 //! Recurse leg-by-leg to generate list of TLE sequences.
 /*!
  * Recurses through pool of TLE objects to generate list of sequences containing TLE IDs (NORAD
@@ -254,13 +261,6 @@ void recurseSequences( const int            currentSequencePosition,
                        const TleObjects&    tleObjects,
                        Sequence&            sequence,
                        ListOfSequences&     listOfSequences );
-
-//! Departure-Arrival epoch pair.
-typedef std::pair< DateTime, DateTime > Epochs;
-//! List of departure-arrival epoch pairs.
-typedef std::vector< Epochs > ListOfEpochs;
-//! Collection of lists of departure-arrival epoch pairs (key=leg ID).
-typedef std::map< int, ListOfEpochs > AllEpochs;
 
 //! Compute departure-arrival epoch pairs for all pork-chop plots.
 /*!
