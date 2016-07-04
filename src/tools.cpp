@@ -310,6 +310,24 @@ AllEpochs computeAllPorkChopPlotEpochs( const int       sequenceLength,
     return allEpochs;
 }
 
+//! Overload ==-operator to compare PorkChopPlotId objects.
+bool operator==( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
+{
+    bool isEqual = false;
+    if ( id1.legId == id2.legId )
+    {
+        if ( id1.departureObjectId == id2.departureObjectId )
+        {
+            if ( id1.arrivalObjectId == id2.arrivalObjectId )
+            {
+                isEqual = true;
+            }
+        }
+    }
+
+    return isEqual;
+}
+
 //! Overload !=-operator to compare PorkChopPlotId objects.
 bool operator!=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 )
 {

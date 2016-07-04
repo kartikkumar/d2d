@@ -259,7 +259,7 @@ void recurseSequences( const int            currentSequencePosition,
 typedef std::pair< DateTime, DateTime > Epochs;
 //! List of departure-arrival epoch pairs.
 typedef std::vector< Epochs > ListOfEpochs;
-//! Collection of lists of departure-arrival epoch pairs.
+//! Collection of lists of departure-arrival epoch pairs (key=leg ID).
 typedef std::map< int, ListOfEpochs > AllEpochs;
 
 //! Compute departure-arrival epoch pairs for all pork-chop plots.
@@ -401,6 +401,7 @@ bool operator>( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
  * @return        True if id1 is greater than or equal to id2, false otherwise
  */
 bool operator>=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
+
 } // namespace d2d
 
 #endif // D2D_TOOLS_HPP
