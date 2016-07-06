@@ -33,6 +33,9 @@
 namespace d2d
 {
 
+//! Forward declarations
+struct MultiLegTransfer;
+
 //! List of TLE objects generated from TLE strings.
 typedef std::vector< Tle > TleObjects;
 //! Sequence of TLE Objects.
@@ -46,6 +49,11 @@ typedef std::pair< DateTime, DateTime > Epochs;
 typedef std::vector< Epochs > ListOfEpochs;
 //! Collection of lists of departure-arrival epoch pairs (key=leg ID).
 typedef std::map< int, ListOfEpochs > AllEpochs;
+
+//! List of multi-leg transfers.
+typedef std::vector< MultiLegTransfer > ListOfMultiLegTransfers;
+//! Collection of all multi-leg transfers for all sequences (key=sequence ID).
+typedef std::map< int, ListOfMultiLegTransfers > AllMultiLegTransfers;
 
 //! Create custom CATCH Approx object with tolerance for comparing doubles.
 /*!
@@ -403,6 +411,46 @@ bool operator>( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
  * @return        True if id1 is greater than or equal to id2, false otherwise
  */
 bool operator>=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
+
+//! Data for multi-leg Lambert transfer.
+/*!
+ * Data struct based on a multi-leg transfer. The launch epoch is set as the departure epoch for the
+ * first leg. The list of time-of-flights and transfer \f$\Delta V\f$ are built up using the
+ * intermediate values for each leg of a given sequence.
+ */
+struct MultiLegTransfer
+{
+public:
+
+    //! Construct data struct.
+    /*!
+     * Constructs data struct based on launch epoch from departure epoch window for the first leg,
+     * time-of-flight for all legs and \f$\Delta V\f$ for all legs.
+     *
+     * @param[in] aLaunchEpoch          A launch epoch for a multi-leg transfer
+     * @param[in] aListOfTimeOfFlights  A list of time-of-flight values for each leg
+     * @param[in] aListOfDeltaVs        A list of \f$\Delta V\f$ values for each leg
+     */
+    MultiLegTransfer( const DateTime& aLaunchEpoch,
+                      const std::vector< double >& aListOfTimeOfFlights,
+                      const std::vector< double >& aListOfDeltaVs )
+        : launchEpoch( aLaunchEpoch ),
+          timeOfFlights( aListOfTimeOfFlights ),
+          deltaVs( aListOfDeltaVs )
+    { }
+
+    //! Launch epoch (departure epoch for first leg).
+    DateTime launchEpoch;
+
+    //! List of time-of-flight per leg.
+    std::vector< double > timeOfFlights;
+
+    //! List of transfer \f$\Delta V\f$ per leg [km/s].
+    std::vector< double > deltaVs;
+
+protected:
+private:
+};
 
 } // namespace d2d
 
