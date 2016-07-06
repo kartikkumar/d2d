@@ -37,8 +37,8 @@ namespace d2d
 typedef std::vector< Tle > TleObjects;
 //! Sequence of TLE Objects.
 typedef std::vector< Tle > Sequence;
-//! List of TLE object ID sequences.
-typedef std::vector< Sequence > ListOfSequences;
+//! List of TLE object ID sequences (key=sequence ID).
+typedef std::map< int, Sequence > ListOfSequences;
 
 //! Departure-Arrival epoch pair.
 typedef std::pair< DateTime, DateTime > Epochs;
@@ -255,12 +255,14 @@ int getTleCatalogType( const std::string& catalogFirstLine );
  * @param[in]       currentSequencePosition     Current position in sequence
  * @param[in]       tleObjects                  Pool of TLE objects to select from
  * @param[in]       sequence                    Sequence of TLE object IDs
+ * @param[in]       sequenceId                  Counter for unique ID assigned to sequences
  * @param[out]      listOfSequences             List of sequences generated
  */
-void recurseSequences( const int            currentSequencePosition,
-                       const TleObjects&    tleObjects,
-                       Sequence&            sequence,
-                       ListOfSequences&     listOfSequences );
+void recurseSequences( const int                    currentSequencePosition,
+                       const TleObjects&            tleObjects,
+                             Sequence&              sequence,
+                             int&                   sequenceId,
+                             ListOfSequences&       listOfSequences );
 
 //! Compute departure-arrival epoch pairs for all pork-chop plots.
 /*!

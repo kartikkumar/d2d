@@ -205,10 +205,11 @@ int getTleCatalogType( const std::string& catalogFirstLine )
 }
 
 //! Recurse leg-by-leg to generate list of TLE sequences.
-void recurseSequences( const int            currentSequencePosition,
-                       const TleObjects&    tleObjects,
-                       Sequence&            sequence,
-                       ListOfSequences&     listOfSequences )
+void recurseSequences( const int                    currentSequencePosition,
+                       const TleObjects&            tleObjects,
+                             Sequence&              sequence,
+                             int&                   sequenceId,
+                             ListOfSequences&       listOfSequences )
 {
     // If current leg has reached the length of the sequence, then the sequence is complete.
     if ( currentSequencePosition == static_cast< int >( sequence.size( ) ) )
@@ -228,12 +229,17 @@ void recurseSequences( const int            currentSequencePosition,
         tleObjectsLocal.erase( tleObjectsLocal.begin( ) + i );
 
         // Proceed to the next leg in the sequence through recursion.
-        recurseSequences( currentSequencePosition + 1, tleObjectsLocal, sequence, listOfSequences );
+        recurseSequences( currentSequencePosition + 1,
+                          tleObjectsLocal,
+                          sequence,
+                          sequenceId,
+                          listOfSequences );
 
         // Write the sequence to the list.
         if ( currentSequencePosition == static_cast< int >( sequence.size( ) ) - 1 )
         {
-            listOfSequences.push_back( sequence );
+            listOfSequences[ sequenceId ] = sequence;
+            sequenceId++;
         }
     }
 }
