@@ -147,6 +147,42 @@ LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObj
                                                 const int           revolutionsMaximum,
                                                       int&          transferId );
 
+//! Recurse through sequence leg-by-leg and compute multi-leg transfers.
+/*!
+ * Recurses leg-by-leg through a given sequence and computes multi-leg transfers, taking into
+ * account matching between the arrival epoch from the previous leg, stay time at target and
+ * departure epoch for next leg. All possible multi-leg transfers are computed by traversing the
+ * tree of pork-chop plots for each leg.
+ *
+ * All of the multi-leg transfers for the specified transfer are stored in a list.
+ *
+ * The multiLegTransferData, launchEpoch and lastArrivalEpoch input parameters are storage variables
+ * that are used during the recursion to keep track of values whilst traversing the sequence tree.
+ * The multiLegTransferData parameter should be passed to the function without any values. The
+ * launchEpoch and lastArrivalEpoch parameters are set to default values and should not be passed
+ * by the user.
+ *
+ * @sa executeLambertScanner, ListOfSequences, AllPorkChopPlots, ListOfMultiLegTransfers
+ * @param[in]   currentSequencePosition     Current position along sequence
+ * @param[in]   sequence                    Sequence of TLE objects
+ * @param[in]   allPorkChopPlots            Collection of all pork-chop plots for all sequences
+ * @param[in]   stayTime                    Fixed stay time at each target
+ * @param[out]  listOfMultiLegTransfers     List of all multi-leg transfers for given sequence
+ * @param[out]  multiLegTransferData        Storage container for multi-leg transfer data (for
+ *                                          internal use)
+ * @param[in]   launchEpoch                 Storage variable for launch epoch (default: DateTime( ))
+ * @param[in]   lastArrivalEpoch            Storage variable for arrival epoch from previous leg
+ *                                          (default: DateTime( ))
+ */
+void recurseMuiltiLegLambertTransfers(  const int                 currentSequencePosition,
+                                        const Sequence&           sequence,
+                                        AllLambertPorkChopPlots&  allPorkChopPlots,
+                                        const double              stayTime,
+                                        ListOfMultiLegTransfers&  listOfMultiLegTransfers,
+                                        MultiLegTransferData&     multiLegTransferData,
+                                        DateTime                  launchEpoch      = DateTime( ),
+                                        DateTime                  lastArrivalEpoch = DateTime( ) );
+
 //! Input for lambert_scanner application mode.
 /*!
  * Data struct containing all valid lambert_scanner input parameters. This struct is populated by
@@ -339,7 +375,7 @@ public:
      * @param[in] dummyGridPoint Dummy grid point that is ignored
      * @return                   The current object
      */
-    LambertPorkChopPlotGridPoint& operator=( const LambertPorkChopPlotGridPoint dummyGridPoint )
+    LambertPorkChopPlotGridPoint& operator=( const LambertPorkChopPlotGridPoint& dummyGridPoint )
     {
         return *this;
     }

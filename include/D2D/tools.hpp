@@ -35,6 +35,7 @@ namespace d2d
 
 //! Forward declarations
 struct MultiLegTransfer;
+struct TransferData;
 
 //! List of TLE objects generated from TLE strings.
 typedef std::vector< Tle > TleObjects;
@@ -50,6 +51,8 @@ typedef std::vector< Epochs > ListOfEpochs;
 //! Collection of lists of departure-arrival epoch pairs (key=leg ID).
 typedef std::map< int, ListOfEpochs > AllEpochs;
 
+//! List of multi-leg transfer data.
+typedef std::vector< TransferData > MultiLegTransferData;
 //! List of multi-leg transfers.
 typedef std::vector< MultiLegTransfer > ListOfMultiLegTransfers;
 //! Collection of all multi-leg transfers for all sequences (key=sequence ID).
@@ -412,11 +415,70 @@ bool operator>( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
  */
 bool operator>=( const PorkChopPlotId& id1, const PorkChopPlotId& id2 );
 
-//! Data for multi-leg Lambert transfer.
+
+//! Data for single transfer.
+/*!
+ * Data struct based on a single transfer leg. The transfer ID is set using the value stored in a
+ * pork-chop plot. The time-of-flight and transfer \f$\Delta V\f$ are extracting from the pork-chop
+ * plot.
+ */
+struct TransferData
+{
+public:
+
+    //! Construct data struct.
+    /*!
+     * Constructs data based on transfer ID for specified transfer in pork-chop plot and
+     * corresponding time-of-flight and \f$\Delta V\f$.
+     *
+     * @sa MultiLegTransfer
+     * @param[in] aTransferId       A transfer ID extracted from a pork-chop plot
+     * @param[in] aTimeOfFlight     Time-of-flight associated with a given transfer ID
+     * @param[in] aTransferDeltaV   \f$\Delta V\f$ associated with a given transfer ID
+     */
+    TransferData( const int     aTransferId,
+                  const double  aTimeOfFlight,
+                  const double  aTransferDeltaV )
+        : transferId( aTransferId ),
+          timeOfFlight( aTimeOfFlight ),
+          transferDeltaV( aTransferDeltaV )
+    { }
+
+    //! Overload operator-=.
+    /*!
+     * Overloads operator-= to assign current object to object provided as input.
+     *
+     * WARNING: this is a dummy overload to get by the problem of adding a TransferData object to a
+     *          STL container! It does not correctly assign the current object to the dummy transfer
+     *          data object provided!
+     *
+     * @sa MultiLegTransferData, MultiLegTransfer
+     * @param[in] dummyTransferData Dummy transfer data object that is ignored
+     * @return                      The current object
+     */
+    TransferData& operator=( const TransferData& dummyTransferData )
+    {
+        return *this;
+    }
+
+    //! Transfer ID.
+    const int transferId;
+
+    //! Time-of-flight [s].
+    const double timeOfFlight;
+
+    //! Transfer \f$\Delta V\f$ [km/s]
+    const double transferDeltaV;
+
+protected:
+private:
+};
+
+//! Data for multi-leg transfer.
 /*!
  * Data struct based on a multi-leg transfer. The launch epoch is set as the departure epoch for the
- * first leg. The list of time-of-flights and transfer \f$\Delta V\f$ are built up using the
- * intermediate values for each leg of a given sequence.
+ * first leg. The list of transfer data is based on the transfer IDs for the individual legs and the
+ * associated time-of-flight and transfer \f$\Delta V\f$ values.
  */
 struct MultiLegTransfer
 {
@@ -425,28 +487,24 @@ public:
     //! Construct data struct.
     /*!
      * Constructs data struct based on launch epoch from departure epoch window for the first leg,
-     * time-of-flight for all legs and \f$\Delta V\f$ for all legs.
+     * and a list of transfer data based on the transfer IDs for individual legs and associated
+     * time-of-flight and \f$\Delta V\f$ values.
      *
-     * @param[in] aLaunchEpoch          A launch epoch for a multi-leg transfer
-     * @param[in] aListOfTimeOfFlights  A list of time-of-flight values for each leg
-     * @param[in] aListOfDeltaVs        A list of \f$\Delta V\f$ values for each leg
+     * @param[in] aLaunchEpoch                  A launch epoch for a multi-leg transfer
+     * @param[in] someMultiLegTransferData      A list of multiple transfers IDs and associated
+     *                                          time-of-flight and \f$\Delta V\f$ values
      */
-    MultiLegTransfer( const DateTime& aLaunchEpoch,
-                      const std::vector< double >& aListOfTimeOfFlights,
-                      const std::vector< double >& aListOfDeltaVs )
+    MultiLegTransfer( const DateTime&               aLaunchEpoch,
+                      const MultiLegTransferData&   someMultiLegTransferData )
         : launchEpoch( aLaunchEpoch ),
-          timeOfFlights( aListOfTimeOfFlights ),
-          deltaVs( aListOfDeltaVs )
+          multiLegTransferData( someMultiLegTransferData )
     { }
 
     //! Launch epoch (departure epoch for first leg).
     DateTime launchEpoch;
 
-    //! List of time-of-flight per leg.
-    std::vector< double > timeOfFlights;
-
-    //! List of transfer \f$\Delta V\f$ per leg [km/s].
-    std::vector< double > deltaVs;
+    //! List of data per leg.
+    MultiLegTransferData multiLegTransferData;
 
 protected:
 private:

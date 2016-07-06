@@ -354,14 +354,36 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     std::cout << "Database successfully populated with pork-chop plot transfers! " << std::endl;
 
-    std::cout << "Computing the best transfers per sequence ..." << std::endl;
+    std::cout << "Computing all multi-leg transfers for each sequence ..." << std::endl;
 
-    std::cout << "The best transfers per sequence successfully computed!" << std::endl;
+    AllMultiLegTransfers allMultiLegTransfers;
+    ListOfMultiLegTransfers listOfMultiLegTransfers;
+    MultiLegTransferData multiLegTransferData;
 
-    std::cout << "Populating the database with the best transfers per sequence ..." << std::endl;
+    // Loop over all sequences and call recursive function to compute multi-leg transfers.
+    for ( ListOfSequences::iterator iteratorSequences = listOfSequences.begin( );
+          iteratorSequences != listOfSequences.end( );
+          iteratorSequences++ )
+    {
+        recurseMuiltiLegLambertTransfers( 0,
+                                          iteratorSequences->second,
+                                          allPorkChopPlots,
+                                          input.stayTime,
+                                          listOfMultiLegTransfers,
+                                          multiLegTransferData  );
 
-    std::cout << "Database successfully populated with the best transfers per sequence!"
-              << std::endl;
+        allMultiLegTransfers[ iteratorSequences->first ] = listOfMultiLegTransfers;
+
+        listOfMultiLegTransfers.clear( );
+        multiLegTransferData.clear( );
+    }
+
+    std::cout << "All multi-leg transfers per sequence successfully computed!" << std::endl;
+
+    // std::cout << "Populating the database with the best transfers per sequence ..." << std::endl;
+
+    // std::cout << "Database successfully populated with the best transfers per sequence!"
+    //           << std::endl;
 }
 
 //! Check lambert_scanner input parameters.
@@ -610,6 +632,7 @@ void recurseLambertTransfers( const int                currentSequencePosition,
                               int&                     transferId,
                               AllLambertPorkChopPlots& allPorkChopPlots )
 {
+    // Check if the end of the sequence has been reached.
     if ( currentSequencePosition == static_cast< int >( sequence.size( ) ) )
     {
         return;
@@ -783,6 +806,96 @@ LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObj
 
     }
     return porkChopPlot;
+}
+
+//! Recurse through sequence leg-by-leg and compute multi-leg transfers.
+void recurseMuiltiLegLambertTransfers(  const int                 currentSequencePosition,
+                                        const Sequence&           sequence,
+                                        AllLambertPorkChopPlots&  allPorkChopPlots,
+                                        const double              stayTime,
+                                        ListOfMultiLegTransfers&  listOfMultiLegTransfers,
+                                        MultiLegTransferData&     multiLegTransferData,
+                                        DateTime                  launchEpoch,
+                                        DateTime                  lastArrivalEpoch )
+{
+    // Check if the end of the sequence has been reached.
+    if ( currentSequencePosition + 1 == static_cast< int >( sequence.size( ) ) )
+    {
+        // Add transfer to list.
+        listOfMultiLegTransfers.push_back( MultiLegTransfer( launchEpoch, multiLegTransferData ) );
+
+        return;
+    }
+
+    // Extract pork-chop plot based on current position in sequence.
+    const PorkChopPlotId porkChopPlotId( currentSequencePosition + 1,
+                                         sequence[ currentSequencePosition ].NoradNumber( ),
+                                         sequence[ currentSequencePosition + 1 ].NoradNumber( ) );
+    LambertPorkChopPlot porkChopPlot = allPorkChopPlots[ porkChopPlotId ];
+    LambertPorkChopPlot porkChopPlotMatched;
+
+    // If we are beyond the first leg, the pork-chop plot needs to be filtered to ensure that only
+    // the departure epochs that match the last arrival epoch + stay time are retained.
+    if ( currentSequencePosition > 0 )
+    {
+        // Declare list of indices in pork-chop plot list to keep based on matching the arrival
+        // epoch from the previous leg with the departure epochs for the current leg.
+        std::vector< int > matchIndices;
+
+        // Loop over pork-chop plot list and save indices where the last arrival epoch + stay time
+        // matches the departure epochs for the current leg.
+        for ( unsigned int i = 0; i < porkChopPlot.size( ); ++i )
+        {
+            DateTime matchEpoch = lastArrivalEpoch;
+            matchEpoch.AddSeconds( stayTime );
+            if ( porkChopPlot[ i ].departureEpoch == matchEpoch )
+            {
+                matchIndices.push_back( i );
+            }
+        }
+
+        // Loop over the matched indices and copy the pork-chop plot grid points to the matched
+        // list.
+        for ( unsigned int i = 0; i < matchIndices.size( ); ++i )
+        {
+            porkChopPlotMatched.push_back( porkChopPlot[ matchIndices[ i ] ] );
+        }
+    }
+    else
+    {
+        porkChopPlotMatched = porkChopPlot;
+    }
+
+    // Loop over all departure-arrival epoch pairs in pork-chop plot.
+    for ( unsigned int i = 0; i < porkChopPlotMatched.size( ); ++i )
+    {
+        // If the current position is the start of the first leg, set the launch epoch to the
+        // departure epoch for the multi-leg transfer.
+        if ( currentSequencePosition == 0 )
+        {
+            launchEpoch = porkChopPlotMatched[ i ].departureEpoch;
+        }
+
+        // Add the time-of-flight and Delta V of the current transfer to the data container.
+        multiLegTransferData.push_back( TransferData( porkChopPlotMatched[ i ].transferId,
+                            porkChopPlotMatched[ i ].timeOfFlight,
+                            porkChopPlotMatched[ i ].transferDeltaV ) );
+
+        // Update the last arrival epoch to the current arrival epoch.
+        lastArrivalEpoch = porkChopPlotMatched[ i ].arrivalEpoch;
+
+        recurseMuiltiLegLambertTransfers( currentSequencePosition + 1,
+                                          sequence,
+                                          allPorkChopPlots,
+                                          stayTime,
+                                          listOfMultiLegTransfers,
+                                          multiLegTransferData,
+                                          launchEpoch,
+                                          lastArrivalEpoch );
+
+        // Remove last entry in multi-leg transfer;
+        multiLegTransferData.pop_back( );
+    }
 }
 
 } // namespace d2d
