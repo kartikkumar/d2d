@@ -104,8 +104,8 @@ void executeLambertScanner( const rapidjson::Document& config )
     // Set up insert query to add sequences to table in database.
     std::ostringstream lambertScannerSequencesTableInsert;
     lambertScannerSequencesTableInsert
-        << "INSERT INTO lambert_scanner_sequences VALUES ("
-        << "NULL,";
+        << "INSERT INTO sequences VALUES ("
+        << ":sequence_id,";
     for ( int i = 0; i < input.sequenceLength - 1; ++i )
     {
         lambertScannerSequencesTableInsert
@@ -127,22 +127,27 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     // Enumerate all sequences for the given pool of TLE objects using a recursive function that
     // generates IDs leg-by-leg.
-    ListOfSequences listOfSequences( 0 );
-
+    ListOfSequences listOfSequences;
     Sequence sequence( input.sequenceLength );
-
     int currentSequencePosition = 0;
-    recurseSequences( currentSequencePosition, tleObjects, sequence, listOfSequences );
+    int sequenceId = 1;
 
-    // Write list of sequences to lambert_scanner_sequences table in database.
-    for ( unsigned int i = 0; i < listOfSequences.size( ); ++i )
+    recurseSequences( currentSequencePosition, tleObjects, sequence, sequenceId, listOfSequences );
+
+    // Write list of sequences to table in database.
+    for ( ListOfSequences::iterator iteratorSequences = listOfSequences.begin( );
+          iteratorSequences != listOfSequences.end( );
+          ++iteratorSequences )
     {
+        sequencesQuery.bind( ":sequence_id", iteratorSequences->first );
+
         for ( unsigned int j = 0; j < sequence.size( ); ++j )
         {
             std::ostringstream sequencesQueryTargetNumber;
             sequencesQueryTargetNumber << ":target_" << j;
-            sequencesQuery.bind( sequencesQueryTargetNumber.str( ),
-                                 static_cast< int >( listOfSequences[ i ][ j ].NoradNumber( ) ) );
+            sequencesQuery.bind(
+                sequencesQueryTargetNumber.str( ),
+                static_cast< int >( iteratorSequences->second[ j ].NoradNumber( ) ) );
         }
 
         // Execute insert query.
@@ -179,17 +184,19 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     // Compute total set of all Lambert pork-chop data.
     AllLambertPorkChopPlots allPorkChopPlots;
+    int transferId = 1;
     recurseLambertTransfers( currentSequencePosition,
                              tleObjects,
                              allEpochs,
                              input.isPrograde,
                              input.revolutionsMaximum,
                              sequence,
+                             transferId,
                              allPorkChopPlots );
 
     std::cout << "All pork-chop plot transfers successfully computed! " << std::endl;
 
-    std::cout << "populating database with pork-chop plot transfers ... " << std::endl;
+    std::cout << "Populating database with pork-chop plot transfers ... " << std::endl;
 
     // Start SQL transaction to populate database with computed transfers.
     SQLite::Transaction transfersTransaction( database );
@@ -197,8 +204,8 @@ void executeLambertScanner( const rapidjson::Document& config )
     // Set up insert query to add transfer data to table in database.
     std::ostringstream lambertScannerResultsTableInsert;
     lambertScannerResultsTableInsert
-        << "INSERT INTO lambert_scanner_results VALUES ("
-        << "NULL,"
+        << "INSERT INTO lambert_scanner_transfers VALUES ("
+        << ":transfer_id,"
         << ":departure_object_id,"
         << ":arrival_object_id,"
         << ":departure_epoch,"
@@ -257,6 +264,7 @@ void executeLambertScanner( const rapidjson::Document& config )
         for ( unsigned int i = 0; i < porkChopPlot.size( ); ++i )
         {
             // Bind values to SQL insert query.
+            resultsQuery.bind( ":transfer_id",          porkChopPlot[ i ].transferId );
             resultsQuery.bind( ":departure_object_id",  porkChopId.departureObjectId );
             resultsQuery.bind( ":arrival_object_id",    porkChopId.arrivalObjectId );
             resultsQuery.bind( ":departure_epoch",
@@ -491,14 +499,14 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
 void createLambertScannerTables( SQLite::Database& database, const int sequenceLength )
 {
     // Drop table from database if it exists.
-    database.exec( "DROP TABLE IF EXISTS lambert_scanner_sequences;" );
-    database.exec( "DROP TABLE IF EXISTS lambert_scanner_results;" );
+    database.exec( "DROP TABLE IF EXISTS sequences;" );
+    database.exec( "DROP TABLE IF EXISTS lambert_scanner_transfers;" );
 
     // Set up SQL command to create table to store lambert_sequences.
     std::ostringstream lambertScannerSequencesTableCreate;
     lambertScannerSequencesTableCreate
-        << "CREATE TABLE lambert_scanner_sequences ("
-        << "\"sequence_id\"                               INTEGER PRIMARY KEY AUTOINCREMENT,";
+        << "CREATE TABLE sequences ("
+        << "\"sequence_id\"                               INTEGER PRIMARY KEY              ,";
     for ( int i = 0; i < sequenceLength - 1; ++i )
     {
         lambertScannerSequencesTableCreate
@@ -515,21 +523,21 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
     lambertScannerSequencesTableCreate
         << "\"transfer_id_" << sequenceLength - 1 << "\"  INTEGER                          ,";
     lambertScannerSequencesTableCreate
-        << "\"sequence_delta_v\"                          REAL                            );";
+        << "\"cumulative_delta_v\"                        REAL                            );";
 
     // // Execute command to create table.
     database.exec( lambertScannerSequencesTableCreate.str( ).c_str( ) );
 
-    if ( !database.tableExists( "lambert_scanner_sequences" ) )
+    if ( !database.tableExists( "sequences" ) )
     {
-        throw std::runtime_error( "ERROR: Creating table 'lambert_scanner_sequences' failed!" );
+        throw std::runtime_error( "ERROR: Creating table 'sequences' failed!" );
     }
 
     // Set up SQL command to create table to store lambert_scanner results.
     std::ostringstream lambertScannerResultsTableCreate;
     lambertScannerResultsTableCreate
-        << "CREATE TABLE lambert_scanner_results ("
-        << "\"transfer_id\"                             INTEGER PRIMARY KEY AUTOINCREMENT,"
+        << "CREATE TABLE lambert_scanner_transfers ("
+        << "\"transfer_id\"                             INTEGER PRIMARY KEY,"
         << "\"departure_object_id\"                     INTEGER,"
         << "\"arrival_object_id\"                       INTEGER,"
         << "\"departure_epoch\"                         REAL,"
@@ -583,23 +591,24 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
     // Execute command to create index on transfer Delta-V column.
     std::ostringstream transferDeltaVIndexCreate;
     transferDeltaVIndexCreate << "CREATE INDEX IF NOT EXISTS \"transfer_delta_v\" on "
-                              << "lambert_scanner_results (transfer_delta_v ASC);";
+                              << "lambert_scanner_transfers (transfer_delta_v ASC);";
     database.exec( transferDeltaVIndexCreate.str( ).c_str( ) );
 
-    if ( !database.tableExists( "lambert_scanner_results" ) )
+    if ( !database.tableExists( "lambert_scanner_transfers" ) )
     {
-        throw std::runtime_error( "ERROR: Creating table 'lambert_scanner_results' failed!" );
+        throw std::runtime_error( "ERROR: Creating table 'lambert_scanner_transfers' failed!" );
     }
 }
 
 //! Recurse through sequences leg-by-leg and compute pork-chop plots.
-void recurseLambertTransfers( const int                       currentSequencePosition,
-                              const TleObjects&               tleObjects,
-                              const AllEpochs&                allEpochs,
-                              const bool                      isPrograde,
-                              const int                       revolutionsMaximum,
-                              Sequence&                       sequence,
-                              AllLambertPorkChopPlots&        allPorkChopPlots )
+void recurseLambertTransfers( const int                currentSequencePosition,
+                              const TleObjects&        tleObjects,
+                              const AllEpochs&         allEpochs,
+                              const bool               isPrograde,
+                              const int                revolutionsMaximum,
+                              Sequence&                sequence,
+                              int&                     transferId,
+                              AllLambertPorkChopPlots& allPorkChopPlots )
 {
     if ( currentSequencePosition == static_cast< int >( sequence.size( ) ) )
     {
@@ -631,7 +640,8 @@ void recurseLambertTransfers( const int                       currentSequencePos
                                                   arrivalObject,
                                                   allEpochs.at( currentLeg ),
                                                   isPrograde,
-                                                  revolutionsMaximum );
+                                                  revolutionsMaximum,
+                                                  transferId );
             }
         }
 
@@ -645,6 +655,7 @@ void recurseLambertTransfers( const int                       currentSequencePos
                                  isPrograde,
                                  revolutionsMaximum,
                                  sequence,
+                                 transferId,
                                  allPorkChopPlots );
     }
 }
@@ -654,7 +665,8 @@ LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObj
                                                 const Tle&          arrivalObject,
                                                 const ListOfEpochs& listOfEpochs,
                                                 const bool          isPrograde,
-                                                const int           revolutionsMaximum )
+                                                const int           revolutionsMaximum,
+                                                      int&          transferId )
 {
     LambertPorkChopPlot porkChopPlot;
 
@@ -753,7 +765,8 @@ LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObj
                                                           earthGravitationalParameter );
 
         porkChopPlot.push_back(
-            LambertPorkChopPlotGridPoint( departureEpoch,
+            LambertPorkChopPlotGridPoint( transferId,
+                                          departureEpoch,
                                           arrivalEpoch,
                                           timeOfFlight,
                                           revolutionsMaximum,
@@ -766,6 +779,8 @@ LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObj
                                           departureDeltaVs[ minimumDeltaVIndex ],
                                           arrivalDeltaVs[ minimumDeltaVIndex ],
                                           *minimumDeltaVIterator ) );
+        transferId++;
+
     }
     return porkChopPlot;
 }

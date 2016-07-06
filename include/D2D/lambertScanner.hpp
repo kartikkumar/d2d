@@ -105,6 +105,7 @@ void writeTransferShortlist( SQLite::Database& database,
  *                                              computed (false = retrograde)
  * @param[in]       revolutionsMaximum          Maximum number of revolutions
  * @param[out]      sequence                    Sequence of TLE objects
+ * @param[in]       transferId                  Counter for unique ID assigned to transfers
  * @param[out]      allPorkChopPlots            Set of all Lambert pork-chop plots
  */
 void recurseLambertTransfers( const int                currentSequencePosition,
@@ -113,6 +114,7 @@ void recurseLambertTransfers( const int                currentSequencePosition,
                               const bool               isPrograde,
                               const int                revolutionsMaximum,
                               Sequence&                sequence,
+                              int&                     transferId,
                               AllLambertPorkChopPlots& allPorkChopPlots );
 
 //! Compute Lambert pork-chop plot.
@@ -135,13 +137,15 @@ void recurseLambertTransfers( const int                currentSequencePosition,
  * @param[in] isPrograde          Flag indicating if prograde Lambert transfer should be computed
  *                                (false = retrograde)
  * @param[in] revolutionsMaximum  Maximum number of revolutions
+ * @param[in]       transferId    Counter for unique ID assigned to transfers
  * @return                        List of LambertPorkChopPlotGridPoint objects
  */
 LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObject,
                                                 const Tle&          arrivalObject,
                                                 const ListOfEpochs& listOfEpochs,
                                                 const bool          isPrograde,
-                                                const int           revolutionsMaximum );
+                                                const int           revolutionsMaximum,
+                                                      int&          transferId );
 
 //! Input for lambert_scanner application mode.
 /*!
@@ -275,6 +279,7 @@ public:
      * Constructs data struct based on departure epoch, time-of-flight and transfer data for grid
      * point in pork-chop plot.
      *
+     * @param[in] aTransferId           A unique transfer ID
      * @param[in] aDepartureEpoch       A departure epoch corresponding to a grid point
      * @param[in] anArrivalEpoch        An arrival epoch corresponding to a grid point
      * @param[in] aTimeOfFlight         A time-of-flight (arrival-departure epoch) for a grid point
@@ -292,7 +297,8 @@ public:
      * @param[in] anArrivalDeltaV       Computed arrival \f$\Delta V\f$
      * @param[in] aTransferDeltaV       Total computed transfer \f$\Delta V\f$
      */
-    LambertPorkChopPlotGridPoint( const DateTime& aDepartureEpoch,
+    LambertPorkChopPlotGridPoint( const int       aTransferId,
+                                  const DateTime& aDepartureEpoch,
                                   const DateTime& anArrivalEpoch,
                                   const double    aTimeOfFlight,
                                   const int       someRevolutions,
@@ -305,7 +311,8 @@ public:
                                   const Vector3&  aDepartureDeltaV,
                                   const Vector3&  anArrivalDeltaV,
                                   const double    aTransferDeltaV )
-        : departureEpoch( aDepartureEpoch ),
+        : transferId( aTransferId ),
+          departureEpoch( aDepartureEpoch ),
           arrivalEpoch( anArrivalEpoch ),
           timeOfFlight( aTimeOfFlight ),
           revolutions( someRevolutions ),
@@ -336,6 +343,9 @@ public:
     {
         return *this;
     }
+
+    //! Unique transfer ID.
+    const int transferId;
 
     //! Departure epoch.
     const DateTime departureEpoch;
