@@ -120,6 +120,7 @@ void executeLambertScanner( const rapidjson::Document& config )
     }
     lambertScannerSequencesTableInsert
         << "0,"
+        << "0.0,"
         << "0.0"
         << ");";
 
@@ -451,10 +452,46 @@ void executeLambertScanner( const rapidjson::Document& config )
 
     std::cout << "Database successfully populated with all multi-leg transfers!" << std::endl;
 
-    // std::cout << "Populate database with best multi-leg transfers per sequence ... " << std::endl;
+    std::cout << "Update sequences table with best multi-leg transfers ... " << std::endl;
 
-    // std::cout << "Database successfully populated with best multi-leg transfers per sequence"
-    //           << std::endl;
+    std::ostringstream bestMultiLegTransfersReplace;
+    bestMultiLegTransfersReplace
+        << "REPLACE INTO sequences "
+        << "SELECT       sequence_id, ";
+    for ( unsigned int i = 0; i < input.sequenceLength; ++i )
+    {
+        bestMultiLegTransfersReplace
+            << "         target_" << i << ", ";
+    }
+    for ( unsigned int i = 0; i < input.sequenceLength - 1; ++i )
+    {
+        bestMultiLegTransfersReplace
+            << "         transfer_id_" << i + 1 << "_, ";
+    }
+    bestMultiLegTransfersReplace
+            << "        transfer_delta_v_, "
+            << "        mission_duration_ "
+            << "FROM    (SELECT *  "
+            << "         FROM   sequences "
+            << "         AS     SEQ "
+            << "         JOIN   (SELECT   sequence_id                 AS \"sequence_id_match\", ";
+    for ( unsigned int i = 0; i < input.sequenceLength - 1; ++i )
+    {
+        bestMultiLegTransfersReplace
+            << "                          transfer_id_" << i + 1 << " AS transfer_id_"
+                                                                 << i + 1 << "_, ";
+    }
+    bestMultiLegTransfersReplace
+            << "                          min(total_transfer_delta_v) AS \"transfer_delta_v_\", "
+            << "                          mission_duration            AS \"mission_duration_\" "
+            << "                 FROM     lambert_scanner_multi_leg_transfers "
+            << "                 GROUP BY lambert_scanner_multi_leg_transfers.sequence_id) "
+            << "         AS MULTI "
+            << "         ON SEQ.sequence_id = MULTI.sequence_id_match);";
+
+    database.exec( bestMultiLegTransfersReplace.str( ).c_str( ) );
+
+    std::cout << "Sequences table successfully updated with best multi-leg transfers!" << std::endl;
 }
 
 //! Check lambert_scanner input parameters.
@@ -617,7 +654,9 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
     lambertScannerSequencesTableCreate
         << "\"transfer_id_" << sequenceLength - 1 << "\"  INTEGER                          ,";
     lambertScannerSequencesTableCreate
-        << "\"cumulative_delta_v\"                        REAL                            );";
+        << "\"total_transfer_delta_v\"                    REAL                             ,"
+        << "\"mission_duration\"                          REAL                            );";
+
 
     // // Execute command to create table.
     database.exec( lambertScannerSequencesTableCreate.str( ).c_str( ) );
