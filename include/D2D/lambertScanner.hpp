@@ -71,21 +71,20 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
  */
 void createLambertScannerTables( SQLite::Database& database, const int sequenceLength );
 
-//! Write transfer shortlist to file.
+//! Write best multi-leg Lambert transfers for each sequence to file.
 /*!
- * Writes shortlist of debris-to-debris Lambert transfers to file. The shortlist is based on the
- * requested number of transfers with the lowest transfer \f$\Delta V\f$, retrieved by sorting the
- * transfers in the SQLite database.
+ * Writes list of best multi-leg Lambert transfers for each sequence to file. The list is based on
+ * retrieving the multi-leg transfers with the lowest \f$\Delta V\f$ for each sequence from the
+ * "sequences" tables in the database. The list is sorted from lowest to highest \f$\Delta V\f$.
  *
- * @sa executeLambertScanner, createLambertScannerTable
+ * @sa executeLambertScanner, createLambertScannerTables
  * @param[in] database        SQLite database handle
- * @param[in] shortlistNumber Number of entries to include in shortlist (if it exceeds number of
- *                            entries in database table, the whole table is written to file)
- * @param[in] shortlistPath   Path to shortlist file
+ * @param[in] sequencesPath   Path to sequences file
+ * @param[in] sequenceLength  Length of each sequence
  */
-void writeTransferShortlist( SQLite::Database& database,
-                             const int shortlistNumber,
-                             const std::string& shortlistPath );
+void writeSequencesToFile( SQLite::Database&    database,
+                           const std::string&   sequencesPath,
+                           const int            sequenceLength  );
 
 //! Recurse through sequences leg-by-leg and compute pork-chop plots.
 /*!
@@ -214,8 +213,7 @@ public:
      * @param[in] progradeFlag             Flag indicating if prograde transfer should be computed
      *                                     (false = retrograde)
      * @param[in] aRevolutionsMaximum      Maximum number of revolutions
-     * @param[in] aShortlistLength         Number of transfers to include in shortlist
-     * @param[in] aShortlistPath           Path to shortlist file
+     * @param[in] aSequencesPath           Path to sequences file
      */
     LambertScannerInput( const std::string& aCatalogPath,
                          const std::string& aDatabasePath,
@@ -230,8 +228,7 @@ public:
                          const double       aStayTime,
                          const bool         progradeFlag,
                          const int          aRevolutionsMaximum,
-                         const int          aShortlistLength,
-                         const std::string& aShortlistPath )
+                         const std::string& aSequencesPath )
         : catalogPath( aCatalogPath ),
           databasePath( aDatabasePath ),
           sequenceLength( aSequenceLength ),
@@ -245,8 +242,7 @@ public:
           stayTime( aStayTime ),
           isPrograde( progradeFlag ),
           revolutionsMaximum( aRevolutionsMaximum ),
-          shortlistLength( aShortlistLength ),
-          shortlistPath( aShortlistPath )
+          sequencesPath( aSequencesPath )
     { }
 
     //! Path to TLE catalog.
@@ -288,11 +284,8 @@ public:
     //! Maximum number of revolutions (N) for transfer. Number of revolutions is 2*N+1.
     const int revolutionsMaximum;
 
-    //! Number of entries (lowest transfer \f$\Delta V\f$) to include in shortlist.
-    const int shortlistLength;
-
-    //! Path to shortlist file.
-    const std::string shortlistPath;
+    //! Path to sequences file.
+    const std::string sequencesPath;
 
 protected:
 

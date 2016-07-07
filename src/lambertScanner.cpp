@@ -492,6 +492,11 @@ void executeLambertScanner( const rapidjson::Document& config )
     database.exec( bestMultiLegTransfersReplace.str( ).c_str( ) );
 
     std::cout << "Sequences table successfully updated with best multi-leg transfers!" << std::endl;
+
+    // Write sequences file.
+    std::cout << "Writing best multi-leg transfers for each sequence to file ... " << std::endl;
+    writeSequencesToFile( database, input.sequencesPath, input.sequenceLength );
+    std::cout << "Sequences file created successfully!" << std::endl;
 }
 
 //! Check lambert_scanner input parameters.
@@ -598,15 +603,8 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
     const int revolutionsMaximum = find( config, "revolutions_maximum" )->value.GetInt( );
     std::cout << "Maximum revolutions           " << revolutionsMaximum << std::endl;
 
-    const int shortlistLength = find( config, "shortlist" )->value[ 0 ].GetInt( );
-    std::cout << "# of shortlist transfers      " << shortlistLength << std::endl;
-
-    std::string shortlistPath = "";
-    if ( shortlistLength > 0 )
-    {
-        shortlistPath = find( config, "shortlist" )->value[ 1 ].GetString( );
-        std::cout << "Shortlist                     " << shortlistPath << std::endl;
-    }
+    const std::string sequencesPath = find( config, "sequences" )->value.GetString( );
+    std::cout << "Sequences file                 " << sequencesPath << std::endl;
 
     return LambertScannerInput( catalogPath,
                                 databasePath,
@@ -621,8 +619,7 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
                                 stayTime,
                                 isPrograde,
                                 revolutionsMaximum,
-                                shortlistLength,
-                                shortlistPath );
+                                sequencesPath );
 }
 
 //! Create lambert_scanner tables.
@@ -638,21 +635,16 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
     lambertScannerSequencesTableCreate
         << "CREATE TABLE sequences ("
         << "\"sequence_id\"                               INTEGER PRIMARY KEY              ,";
-    for ( int i = 0; i < sequenceLength - 1; ++i )
+    for ( int i = 0; i < sequenceLength; ++i )
     {
         lambertScannerSequencesTableCreate
             << "\"target_" << i << "\"                    INTEGER                          ,";
     }
-    lambertScannerSequencesTableCreate
-        << "\"target_" << sequenceLength - 1 << "\"       INTEGER                          ,";
-
-    for ( int i = 0; i < sequenceLength - 2; ++i )
+    for ( int i = 0; i < sequenceLength - 1; ++i )
     {
         lambertScannerSequencesTableCreate
             << "\"transfer_id_" << i + 1 << "\"           INTEGER                          ,";
     }
-    lambertScannerSequencesTableCreate
-        << "\"transfer_id_" << sequenceLength - 1 << "\"  INTEGER                          ,";
     lambertScannerSequencesTableCreate
         << "\"total_transfer_delta_v\"                    REAL                             ,"
         << "\"mission_duration\"                          REAL                            );";
@@ -763,6 +755,67 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
         throw std::runtime_error(
             "ERROR: Creating table 'lambert_scanner_multi_leg_transfers' failed!" );
     }
+}
+
+//! Write best multi-leg Lambert transfers for each sequence to file.
+void writeSequencesToFile( SQLite::Database&    database,
+                           const std::string&   sequencesPath,
+                           const int            sequenceLength  )
+{
+    // Fetch sequences tables from database and sort from lowest to highest Delta-V.
+    std::ostringstream sequencesSelect;
+    sequencesSelect << "SELECT * FROM sequences ORDER BY total_transfer_delta_v ASC;";
+    SQLite::Statement query( database, sequencesSelect.str( ) );
+
+    // Write sequences to file.
+    std::ofstream sequencesFile( sequencesPath.c_str( ) );
+
+    // Print file header.
+    sequencesFile << "sequence_id,";
+    for ( unsigned int i = 0; i < sequenceLength; ++i )
+    {
+        sequencesFile << "target_" << i << ",";
+    }
+    for ( unsigned int i = 0; i < sequenceLength - 1; ++i )
+    {
+        sequencesFile << "transfer_id_" << i + 1 << ",";
+    }
+    sequencesFile << "total_transfer_delta_v,"
+                  << "mission_duration"
+                  << std::endl;
+
+    // Loop through data retrieved from database and write to file.
+    while( query.executeStep( ) )
+    {
+        const int       sequenceId                     = query.getColumn( 0 );
+        std::vector< int > targets( sequenceLength );
+        for ( unsigned int i = 0; i < targets.size( ); ++i )
+        {
+            targets[ i ]                               = query.getColumn( i + 1 );
+        }
+        std::vector< int > transferIds( sequenceLength - 1 );
+        for ( unsigned int i = 0; i < transferIds.size( ); ++i )
+        {
+            transferIds[ i ]                           = query.getColumn( i + sequenceLength + 1 );
+        }
+        const double    totalTransferDeltaV            = query.getColumn( 2 * sequenceLength );
+        const double    missionDuration                = query.getColumn( 2 * sequenceLength + 1 );
+
+        sequencesFile << sequenceId                    << ",";
+        for ( unsigned int i = 0; i < targets.size( ); ++i )
+        {
+            sequencesFile << targets[ i ]              << ",";
+        }
+        for ( unsigned int i = 0; i < transferIds.size( ); ++i )
+        {
+            sequencesFile << transferIds[ i ]          << ",";
+        }
+        sequencesFile << totalTransferDeltaV           << ","
+                      << missionDuration
+                      << std::endl;
+    }
+
+    sequencesFile.close( );
 }
 
 //! Recurse through sequences leg-by-leg and compute pork-chop plots.

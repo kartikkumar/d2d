@@ -46,8 +46,7 @@
     // Set maximum number of transfer revolutions (N).
     "revolutions_maximum"       : ,
 
-    // Set number of transfers to include in shortlist and absolute path to output file [N, file].
-    // The shortlist is based on the N transfers specified with the lowest transfers Delta-V.
-    // If N is set to 0 no output will be written to file.
-    "shortlist"                 : [0,""]
+    // Set path to sequences file with summary of best multi-leg transfers for each sequence.
+    // The sequences are sorted from lowest to highest Delta-V.
+    "sequences"                 : ""
 }
