@@ -121,6 +121,7 @@ void executeLambertScanner( const rapidjson::Document& config )
     lambertScannerSequencesTableInsert
         << "0,"
         << "0.0,"
+        << "0.0,"
         << "0.0"
         << ");";
 
@@ -399,6 +400,7 @@ void executeLambertScanner( const rapidjson::Document& config )
             << ":transfer_id_" << i + 1 << ",";
     }
     lambertScannerMultiLegTransfersTableInsert
+        << ":launch_epoch,"
         << ":mission_duration,"
         << ":total_transfer_delta_v"
         << ");";
@@ -418,6 +420,8 @@ void executeLambertScanner( const rapidjson::Document& config )
 
             // Bind values to SQL insert query.
             multiLegTransferQuery.bind( ":sequence_id",            sequenceId );
+            multiLegTransferQuery.bind(
+                ":launch_epoch", listOfMultiLegTransfers[ i ].launchEpoch.ToJulian( ) );
 
             double missionDuration = 0.0;
             double totalTransferDeltaV = 0.0;
@@ -469,6 +473,7 @@ void executeLambertScanner( const rapidjson::Document& config )
             << "         transfer_id_" << i + 1 << "_, ";
     }
     bestMultiLegTransfersReplace
+            << "        launch_epoch_, "
             << "        transfer_delta_v_, "
             << "        mission_duration_ "
             << "FROM    (SELECT *  "
@@ -482,6 +487,7 @@ void executeLambertScanner( const rapidjson::Document& config )
                                                                  << i + 1 << "_, ";
     }
     bestMultiLegTransfersReplace
+            << "                          launch_epoch                AS \"launch_epoch_\", "
             << "                          min(total_transfer_delta_v) AS \"transfer_delta_v_\", "
             << "                          mission_duration            AS \"mission_duration_\" "
             << "                 FROM     lambert_scanner_multi_leg_transfers "
@@ -646,6 +652,7 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
             << "\"transfer_id_" << i + 1 << "\"           INTEGER                          ,";
     }
     lambertScannerSequencesTableCreate
+        << "\"launch_epoch\"                              REAL                             ,"
         << "\"total_transfer_delta_v\"                    REAL                             ,"
         << "\"mission_duration\"                          REAL                            );";
 
@@ -736,6 +743,7 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
             << "\"transfer_id_" << i + 1 << "\"         INTEGER,";
     }
     lambertScannerMultiLegTransfersTableCreate
+        << "\"launch_epoch\"                            REAL,"
         << "\"mission_duration\"                        REAL,"
         << "\"total_transfer_delta_v\"                  REAL"
         <<                                              ");";
@@ -780,7 +788,8 @@ void writeSequencesToFile( SQLite::Database&    database,
     {
         sequencesFile << "transfer_id_" << i + 1 << ",";
     }
-    sequencesFile << "total_transfer_delta_v,"
+    sequencesFile << "launch_epoch,"
+                  << "total_transfer_delta_v,"
                   << "mission_duration"
                   << std::endl;
 
@@ -798,8 +807,9 @@ void writeSequencesToFile( SQLite::Database&    database,
         {
             transferIds[ i ]                           = query.getColumn( i + sequenceLength + 1 );
         }
-        const double    totalTransferDeltaV            = query.getColumn( 2 * sequenceLength );
-        const double    missionDuration                = query.getColumn( 2 * sequenceLength + 1 );
+        const double    launchEpoch                    = query.getColumn( 2 * sequenceLength );
+        const double    totalTransferDeltaV            = query.getColumn( 2 * sequenceLength + 1 );
+        const double    missionDuration                = query.getColumn( 2 * sequenceLength + 2 );
 
         sequencesFile << sequenceId                    << ",";
         for ( unsigned int i = 0; i < targets.size( ); ++i )
@@ -810,7 +820,8 @@ void writeSequencesToFile( SQLite::Database&    database,
         {
             sequencesFile << transferIds[ i ]          << ",";
         }
-        sequencesFile << totalTransferDeltaV           << ","
+        sequencesFile << launchEpoch                   << ","
+                      << totalTransferDeltaV           << ","
                       << missionDuration
                       << std::endl;
     }
