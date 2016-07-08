@@ -502,11 +502,11 @@ void executeLambertScanner( const rapidjson::Document& config )
 //! Check lambert_scanner input parameters.
 LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config )
 {
-    const std::string catalogPath  = find( config, "catalog" )->value.GetString( );
-    std::cout << "Catalog                       " << catalogPath << std::endl;
+    const std::string catalogPath  = find( config, "catalog_path" )->value.GetString( );
+    std::cout << "Catalog path                  " << catalogPath << std::endl;
 
-    const std::string databasePath = find( config, "database" )->value.GetString( );
-    std::cout << "Database                      " << databasePath << std::endl;
+    const std::string databasePath = find( config, "database_path" )->value.GetString( );
+    std::cout << "Database path                 " << databasePath << std::endl;
 
     const int sequenceLength       = find( config, "sequence_length" )->value.GetInt( );
     std::cout << "Sequence length               " << sequenceLength << std::endl;
@@ -603,8 +603,8 @@ LambertScannerInput checkLambertScannerInput( const rapidjson::Document& config 
     const int revolutionsMaximum = find( config, "revolutions_maximum" )->value.GetInt( );
     std::cout << "Maximum revolutions           " << revolutionsMaximum << std::endl;
 
-    const std::string sequencesPath = find( config, "sequences" )->value.GetString( );
-    std::cout << "Sequences file                 " << sequencesPath << std::endl;
+    const std::string sequencesPath = find( config, "sequences_path" )->value.GetString( );
+    std::cout << "Sequences path                 " << sequencesPath << std::endl;
 
     return LambertScannerInput( catalogPath,
                                 databasePath,

@@ -7,11 +7,11 @@
     "mode"                      : "lambert_scanner",
 
     // Set path to TLE catalog file.
-    "catalog"                   : "../data/test_catalog.txt",
+    "catalog_path"              : "../data/test_catalog.txt",
 
     // Set path to output database (SQLite).
     // WARNING: if the database file already exists, it will be overwritten!
-    "database"                  : "../data/test_catalog_lambert_scanner.db",
+    "database_path"             : "../data/test_catalog_lambert_scanner.db",
 
     // Set length of sequence.
     // The scanner will generate a sequence of grid searches to map the transfer costs for a
@@ -48,5 +48,5 @@
 
     // Set path to sequences file with summary of best multi-leg transfers for each sequence.
     // The sequences are sorted from lowest to highest Delta-V.
-    "sequences"                 : ""
+    "sequences_path"            : ""
 }
