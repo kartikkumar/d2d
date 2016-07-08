@@ -392,7 +392,7 @@ void executeLambertScanner( const rapidjson::Document& config )
         << "INSERT INTO lambert_scanner_multi_leg_transfers VALUES ("
         << "NULL,"
         << ":sequence_id,";
-    for ( unsigned int i = 0; i < input.sequenceLength - 1; ++i )
+    for ( int i = 0; i < input.sequenceLength - 1; ++i )
     {
 
         lambertScannerMultiLegTransfersTableInsert
@@ -422,7 +422,7 @@ void executeLambertScanner( const rapidjson::Document& config )
             double missionDuration = 0.0;
             double totalTransferDeltaV = 0.0;
 
-            for ( unsigned int j = 0; j < input.sequenceLength - 1; ++j )
+            for ( int j = 0; j < input.sequenceLength - 1; ++j )
             {
                 std::ostringstream multiLegTransfersQueryTransferNumber;
                 multiLegTransfersQueryTransferNumber << ":transfer_id_" << j + 1;
@@ -458,12 +458,12 @@ void executeLambertScanner( const rapidjson::Document& config )
     bestMultiLegTransfersReplace
         << "REPLACE INTO sequences "
         << "SELECT       sequence_id, ";
-    for ( unsigned int i = 0; i < input.sequenceLength; ++i )
+    for ( int i = 0; i < input.sequenceLength; ++i )
     {
         bestMultiLegTransfersReplace
             << "         target_" << i << ", ";
     }
-    for ( unsigned int i = 0; i < input.sequenceLength - 1; ++i )
+    for ( int i = 0; i < input.sequenceLength - 1; ++i )
     {
         bestMultiLegTransfersReplace
             << "         transfer_id_" << i + 1 << "_, ";
@@ -475,7 +475,7 @@ void executeLambertScanner( const rapidjson::Document& config )
             << "         FROM   sequences "
             << "         AS     SEQ "
             << "         JOIN   (SELECT   sequence_id                 AS \"sequence_id_match\", ";
-    for ( unsigned int i = 0; i < input.sequenceLength - 1; ++i )
+    for ( int i = 0; i < input.sequenceLength - 1; ++i )
     {
         bestMultiLegTransfersReplace
             << "                          transfer_id_" << i + 1 << " AS transfer_id_"
@@ -730,7 +730,7 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
         << "CREATE TABLE lambert_scanner_multi_leg_transfers ("
         << "\"multi_leg_transfer_id\"                   INTEGER PRIMARY KEY AUTOINCREMENT,"
         << "\"sequence_id\"                             INTEGER,";
-    for ( unsigned int i = 0; i < sequenceLength - 1; ++i )
+    for ( int i = 0; i < sequenceLength - 1; ++i )
     {
         lambertScannerMultiLegTransfersTableCreate
             << "\"transfer_id_" << i + 1 << "\"         INTEGER,";
@@ -772,11 +772,11 @@ void writeSequencesToFile( SQLite::Database&    database,
 
     // Print file header.
     sequencesFile << "sequence_id,";
-    for ( unsigned int i = 0; i < sequenceLength; ++i )
+    for ( int i = 0; i < sequenceLength; ++i )
     {
         sequencesFile << "target_" << i << ",";
     }
-    for ( unsigned int i = 0; i < sequenceLength - 1; ++i )
+    for ( int i = 0; i < sequenceLength - 1; ++i )
     {
         sequencesFile << "transfer_id_" << i + 1 << ",";
     }
