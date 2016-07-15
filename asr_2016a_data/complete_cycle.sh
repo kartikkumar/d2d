@@ -1,4 +1,8 @@
 #!/bin/bash
+mkdir SSO
+mkdir GEO
+mkdir HEO
+mkdir figures
 
 # Run catalog pruner for all regimes
 ./../build/bin/d2d ./config/catalog_pruner/catalog_pruner_sso.json
