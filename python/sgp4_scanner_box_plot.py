@@ -187,7 +187,7 @@ for errorTypeIndex in range( len( errorType ) ):
   #                  verticalalignment='center' )
 
   # Save figure to file.
-  plt.savefig( output_path_prefix + config['figure_name'] + ' ' + figureNameLabel
+  plt.savefig( output_path_prefix + config['figure_name'] + '_' + figureNameLabel
                + config["figure_format"], dpi=300 )
   plt.close( )
 
