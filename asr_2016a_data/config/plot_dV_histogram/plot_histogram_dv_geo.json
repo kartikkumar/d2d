@@ -15,7 +15,7 @@
 
     // Filename for scan figure.
     // Files are saved as png.
-    "scan_figure"               : "Figure_3_histogram_dv_geo",
+    "scan_figure"               : "Figure_3_histogram_dV_geo",
 
     // Give dV cutoff to be added to the minimum dV in the porkchopplot to display
     // more or less details. If 0 no cutoff is assumed.
