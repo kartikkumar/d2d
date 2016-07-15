@@ -122,6 +122,7 @@ void executeLambertScanner( const rapidjson::Document& config )
         << "0,"
         << "0.0,"
         << "0.0,"
+        << "0.0,"
         << "0.0"
         << ");";
 
@@ -474,8 +475,9 @@ void executeLambertScanner( const rapidjson::Document& config )
     }
     bestMultiLegTransfersReplace
             << "        launch_epoch_, "
-            << "        transfer_delta_v_, "
-            << "        mission_duration_ "
+            << "        lambert_delta_v_, "
+            << "        mission_duration_, "
+            << "        atom_transfer_delta_v "
             << "FROM    (SELECT *  "
             << "         FROM   sequences "
             << "         AS     SEQ "
@@ -487,13 +489,14 @@ void executeLambertScanner( const rapidjson::Document& config )
                                                                  << i + 1 << "_, ";
     }
     bestMultiLegTransfersReplace
-            << "                          launch_epoch                AS \"launch_epoch_\", "
-            << "                          min(total_transfer_delta_v) AS \"transfer_delta_v_\", "
-            << "                          mission_duration            AS \"mission_duration_\" "
+            << "                          launch_epoch                  AS \"launch_epoch_\", "
+            << "                          min(total_transfer_delta_v)   AS \"lambert_delta_v_\", "
+            << "                          mission_duration              AS \"mission_duration_\" "
             << "                 FROM     lambert_scanner_multi_leg_transfers "
             << "                 GROUP BY lambert_scanner_multi_leg_transfers.sequence_id) "
             << "         AS MULTI "
             << "         ON SEQ.sequence_id = MULTI.sequence_id_match);";
+
 
     database.exec( bestMultiLegTransfersReplace.str( ).c_str( ) );
 
@@ -653,9 +656,9 @@ void createLambertScannerTables( SQLite::Database& database, const int sequenceL
     }
     lambertScannerSequencesTableCreate
         << "\"launch_epoch\"                              REAL                             ,"
-        << "\"total_transfer_delta_v\"                    REAL                             ,"
-        << "\"mission_duration\"                          REAL                            );";
-
+        << "\"lambert_transfer_delta_v\"                  REAL                             ,"
+        << "\"mission_duration\"                          REAL                             ,"
+        << "\"atom_transfer_delta_v\"                     REAL                             );";
 
     // // Execute command to create table.
     database.exec( lambertScannerSequencesTableCreate.str( ).c_str( ) );
@@ -772,7 +775,7 @@ void writeSequencesToFile( SQLite::Database&    database,
 {
     // Fetch sequences tables from database and sort from lowest to highest Delta-V.
     std::ostringstream sequencesSelect;
-    sequencesSelect << "SELECT * FROM sequences ORDER BY total_transfer_delta_v ASC;";
+    sequencesSelect << "SELECT * FROM sequences ORDER BY lambert_transfer_delta_v ASC;";
     SQLite::Statement query( database, sequencesSelect.str( ) );
 
     // Write sequences to file.
@@ -789,7 +792,7 @@ void writeSequencesToFile( SQLite::Database&    database,
         sequencesFile << "transfer_id_" << i + 1 << ",";
     }
     sequencesFile << "launch_epoch,"
-                  << "total_transfer_delta_v,"
+                  << "lambert_transfer_delta_v,"
                   << "mission_duration"
                   << std::endl;
 
@@ -808,7 +811,7 @@ void writeSequencesToFile( SQLite::Database&    database,
             transferIds[ i ]                           = query.getColumn( i + sequenceLength + 1 );
         }
         const double    launchEpoch                    = query.getColumn( 2 * sequenceLength );
-        const double    totalTransferDeltaV            = query.getColumn( 2 * sequenceLength + 1 );
+        const double    lambertTransferDeltaV          = query.getColumn( 2 * sequenceLength + 1 );
         const double    missionDuration                = query.getColumn( 2 * sequenceLength + 2 );
 
         sequencesFile << sequenceId                    << ",";
@@ -821,7 +824,7 @@ void writeSequencesToFile( SQLite::Database&    database,
             sequencesFile << transferIds[ i ]          << ",";
         }
         sequencesFile << launchEpoch                   << ","
-                      << totalTransferDeltaV           << ","
+                      << lambertTransferDeltaV         << ","
                       << missionDuration
                       << std::endl;
     }
