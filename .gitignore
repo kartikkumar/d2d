@@ -47,6 +47,7 @@ external
 
 # Config & data files
 *.json
+!asr_2016a_data/*/*.json
 config/*
 !config/*.json.empty
 data/*
