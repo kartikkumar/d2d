@@ -22,10 +22,10 @@
 
 
     // Set departure epoch grid: [range (s), # of steps]
-    "departure_epoch_grid"      : [10800,5],
+    "departure_epoch_grid"      : [10800,50],
 
     // Set time-of-flight grid: [min (s), max (s), # of steps].
-    "time_of_flight_grid"       : [100,32400,5],
+    "time_of_flight_grid"       : [100,32400,50],
 
 
     // Set flag indicating if transfers are prograde. If set to false, retrograde transfers are
