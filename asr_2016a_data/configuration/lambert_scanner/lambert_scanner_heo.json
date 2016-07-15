@@ -1,0 +1,44 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "lambert_scanner" application mode.
+{
+    "mode"                      : "lambert_scanner",
+
+    // Set path to TLE catalog file.
+    "catalog"                   : "../asr_2016a_data/HEO/heo_rocket_bodies_catalog.txt",
+
+    // Set path to output database (SQLite).
+    // WARNING: if the database file already exists, it will be overwritten!
+    "database"                  : "../asr_2016a_data/HEO/heo_rocket_bodies.db",
+
+    // Set departure epoch grid.
+    // Format: [first departure epoch ([year,month,day,hours,minutes,seconds]), range (s), # of steps].
+    // All elements in the array first departure epoch must be integers. The elements year, month
+    // and day are required. The others are optional but must be included from left to right.
+    // If first departure epoch is left empty, the TLE epoch for the departure object is assumed.
+    "departure_epoch"           : [2016,1,12],
+
+
+    // Set departure epoch grid: [range (s), # of steps]
+    "departure_epoch_grid"      : [72000,5],
+
+    // Set time-of-flight grid: [min (s), max (s), # of steps].
+    "time_of_flight_grid"       : [100,216000,5],
+
+
+    // Set flag indicating if transfers are prograde. If set to false, retrograde transfers are
+    // computed.
+    // N.B.: Since SQLite doesn't have a boolean type, the flag is stored as an integer
+    // (0=false, 1=true)
+    "is_prograde"               : true,
+
+    // Set maximum number of transfer revolutions (N).
+    "revolutions_maximum"       : 5,
+
+    // Set number of transfers to include in shortlist and absolute path to output file [N, file].
+    // The shortlist is based on the N transfers specified with the lowest transfers Delta-V.
+    // If N is set to 0 no output will be written to file.
+    "shortlist"                 : [100,"../asr_2016a_data/HEO/shortlist_heo.csv"]
+}

@@ -1,0 +1,27 @@
+// Copyright (c) 2014-2015 Kartik Kumar (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+
+// Configuration file for D2D "catalog_pruner" application mode.
+{
+    "mode"                      : "catalog_pruner",
+
+    // Set path to TLE catalog file.
+    "catalog"                   : "../asr_2016a_data/3le.txt",
+
+    // Set filters.
+    // Set semi-major axis filter bounds (with Earth radius subtracted) [km].
+    "semi_major_axis_filter"    : [30000.0,40000.0],
+    // Set eccentricity filter bounds (lower bound >= 0.0; upper bound <= 1.0) [-].
+    "eccentricity_filter"       : [0.0,0.1],
+    // Set inclination filter bounds (lower bound >= 0.0; upper bound <= 180.0) [deg].
+    "inclination_filter"        : [0.0,45.0],
+    // Set regex filter based on TLE object .
+    "name_regex"                : "(INTELSAT|GALAXY)",
+    // Set maximum number of objects in list.
+    // This cutoff is switched off if set to 0.
+    "catalog_cutoff"            : 100,
+
+    // Set output file for pruned TLE catalog.
+    "catalog_pruned"            : "../asr_2016a_data/GEO/GEO_intelsat_tle.txt"
+}
