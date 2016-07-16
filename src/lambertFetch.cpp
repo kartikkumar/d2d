@@ -12,6 +12,8 @@
 
 #include <SQLiteCpp/SQLiteCpp.h>
 
+#include <sqlite3.h>
+
 #include <Astro/astro.hpp>
 
 #include "D2D/lambertFetch.hpp"

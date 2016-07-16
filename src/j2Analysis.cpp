@@ -17,9 +17,11 @@
 #include <stdexcept>
 #include <vector>
 
-#include <Astro/astro.hpp>
-
 #include <boost/progress.hpp>
+
+#include <sqlite3.h>
+
+#include <Astro/astro.hpp>
 
 #include "D2D/j2Analysis.hpp"
 #include "D2D/tools.hpp"

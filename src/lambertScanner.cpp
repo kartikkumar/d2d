@@ -18,6 +18,8 @@
 #include <libsgp4/Globals.h>
 #include <libsgp4/SGP4.h>
 
+#include <sqlite3.h>
+
 #include <SML/sml.hpp>
 #include <Astro/astro.hpp>
 

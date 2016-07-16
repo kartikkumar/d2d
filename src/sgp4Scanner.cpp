@@ -27,6 +27,8 @@
 #include <libsgp4/Tle.h>
 #include <libsgp4/Vector.h>
 
+#include <sqlite3.h>
+
 #include <Atom/atom.hpp>
 
 #include <Astro/astro.hpp>
