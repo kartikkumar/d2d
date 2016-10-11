@@ -17,6 +17,8 @@
 #include <stdexcept>
 #include <vector>
 
+#include <sqlite3.h>
+
 #include <Astro/astro.hpp>
 
 #include <boost/progress.hpp>
