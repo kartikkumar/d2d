@@ -152,8 +152,8 @@ rcParams.update({'font.size': fontSize})
 # Plot distribution of eccentricity [-] against semi-major axis [km].
 figure = plt.figure()
 axis = figure.add_subplot(111)
-plt.xlabel("Semi-major axis altitude [km]")
-plt.ylabel("Eccentricity [-]")
+plt.xlabel("$a_H$ [km]")
+plt.ylabel("$e$ [-]")
 plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 plt.plot(sma['all'],ecc3['all'], 																  \
 		 	marker='.', markersize=1, color='k', linestyle='none')
@@ -195,8 +195,8 @@ plt.close()
 # Plot distribution of inclination [deg] against semi-major axis [km].
 figure = plt.figure()
 axis = figure.add_subplot(111)
-plt.xlabel("Semi-major axis altitude [km]")
-plt.ylabel("Inclination [deg]")
+plt.xlabel("$a_H$ [km]")
+plt.ylabel("$i$ [deg]")
 plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
 plt.plot(sma['all'],incl5['all'], 																  \
 		 	marker='.', markersize=1, color='k', linestyle='none')
