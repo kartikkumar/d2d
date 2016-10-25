@@ -170,7 +170,7 @@ for errorTypeIndex in range( len( errorType ) ):
   plt.setp( plotOut['whiskers'], color='black' )
   plt.setp( plotOut['medians'], color='black' )
   plt.setp( plotOut['fliers'], color='black' )
-  plt.xticks( [1, 2, 3], ['LEO', 'GTO', 'GEO'] )
+  plt.xticks( [1, 2, 3], ['LEO', 'GTO', 'GSO'] )
   plt.xlabel( 'Orbital regime' )
   plt.ylabel( yLabel )
 
