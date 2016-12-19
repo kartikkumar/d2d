@@ -1004,7 +1004,7 @@ LambertPorkChopPlot computeLambertPorkChopPlot( const Tle&          departureObj
                                           departureEpoch,
                                           arrivalEpoch,
                                           timeOfFlight,
-                                          revolutionsMaximum,
+                                          revolutions,
                                           isPrograde,
                                           departureState,
                                           departureStateKepler,
