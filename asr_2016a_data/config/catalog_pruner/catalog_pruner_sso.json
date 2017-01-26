@@ -17,7 +17,7 @@
     // Set inclination filter bounds (lower bound >= 0.0; upper bound <= 180.0) [deg].
     "inclination_filter"        : [98,99],
     // Set regex filter based on TLE object.
-    "name_regex"                : "",
+    "name_regex"                : "(R/B | DEB)",
     // Set maximum number of objects in list.
     // This cutoff is switched off if set to 0.
     "catalog_cutoff"            : 100,

@@ -15,7 +15,7 @@
     // Set eccentricity filter bounds (lower bound >= 0.0; upper bound <= 1.0) [-].
     "eccentricity_filter"       : [0.0,0.1],
     // Set inclination filter bounds (lower bound >= 0.0; upper bound <= 180.0) [deg].
-    "inclination_filter"        : [0.0,45.0],
+    "inclination_filter"        : [0.0,1.0],
     // Set regex filter based on TLE object .
     "name_regex"                : "(INTELSAT|GALAXY)",
     // Set maximum number of objects in list.

@@ -126,7 +126,6 @@ cmap = plt.get_cmap('jet')
 fig=plt.figure()
 ax1 = fig.add_subplot(111)
 ax1.scatter(times_of_flight,transfer_delta_vs, color='black')
-# ax1.plot(times_of_flight,transfer_delta_vs, color='black')
 
 formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
 ax1.xaxis.set_major_formatter(formatter)
@@ -137,12 +136,6 @@ if config['cutoff']!=0:
 plt.xlim([-0.001,520000.0001])
 ax1.set_xlabel('T$_{ToF}$ [s]', fontsize=13)
 ax1.set_ylabel('Total transfer $\Delta V$ [km/s]', fontsize=13)
-# ax2 = ax1.twinx()
-# ax2.step(times_of_flight, revolutions,color='r', alpha=0.5)
-# ax2.set_ylabel('Amount of revolutions [-]', fontsize=13)
-# plt.ylim(0,5)
-# # plt.title("Porkchop plot of TLE elements " +str(a) + " to " + str(b) + " at departure epoch "  \
-#           # + str(c) + " [mjd]", fontsize=10, y=1.02)
 plt.tight_layout()
 
 plt.savefig(config["output_directory"] + "/" + config["scan_figure"] + ".png",                    \

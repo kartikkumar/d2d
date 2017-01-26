@@ -63,9 +63,10 @@ python ./../python/sgp4_scanner_box_plot.py ./config/plot_sgp4_error_box_plot/sg
 
 # Table 4
 # All data can be found in:
-# ./config/catalog_pruner/catalog_pruner_sso.json
-# ./config/catalog_pruner/catalog_pruner_heo_rocket_bodies.json
-# ./config/catalog_pruner/catalog_pruner_geo_intelsat.json
+# ./config/lambert_scanner/lambert_scanner_sso.json
+# ./config/lambert_scanner/lambert_scanner_heo.json
+# ./config/lambert_scanner/lambert_scanner_geo.json
+
 
 # Table 5
 # All data can be found in:

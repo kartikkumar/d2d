@@ -134,7 +134,6 @@ for i in xrange(0,1):
     # Plot axis ordering.
     ax2 = plt.subplot2grid((15,15), (0, 0),rowspan=2,colspan=14,sharex=ax1)
     ax2.step(np.arange(0.5,scan_map.shape[1]+.5),scan_order[str(map_order)],'k',linewidth=2.0)
-    # ax2.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%.2e'))
     ax2.tick_params(axis='both', which='major', labelsize=config['tick_label_size'])
     plt.setp(ax2.get_xticklabels(), visible=False)
     ax2.set_ylabel(config['map_order_axis_label'],fontsize=config['axis_label_size'])

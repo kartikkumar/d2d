@@ -90,21 +90,13 @@ scan_data.columns = [ 'transfer_delta_v' ]
 
 # The histogram of the data
 x = scan_data[ 'transfer_delta_v']
-# print x
-# (mu, sigma) = norm.fit(x)
 n, bins, patches = plt.hist( x, bins=50, facecolor='grey', alpha=0.75)
-
-# y = mlab.normpdf( bins, mu, sigma)
-# l = plt.plot(bins, y, 'r--', linewidth=2)
 
 
 # Figure properties
 plt.xlabel('Total dV magnitude [km/s]')
 plt.ylabel('Frequency')
 plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-# plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
-# plt.axis([40, 160, 0, 0.03])
-# plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=%.3f,\ \sigma=%.3f$' %(mu, sigma))
 plt.grid(True)
 
 # Save figure to file.
