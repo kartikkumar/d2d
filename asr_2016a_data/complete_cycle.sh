@@ -25,7 +25,7 @@ python ./../python/plot_tle_catalogs.py
 # Figure 2a
 python ./../python/plot_porkchop.py ./config/plot_pork_chop_plot/plot_pork_chop_geo.json
 
-# Figure 2b
+# Figure 2b: Version in paper was resampled on a denser grid of 500 data points to highlight all singularities. 
 python ./../python/plot_porkchop_slice.py ./config/plot_pork_chop_slice/plot_porkchop_slice_geo.json
 
 # Figure 3
@@ -34,17 +34,44 @@ python ./../python/plot_histogram_dV.py ./config/plot_dV_histogram/plot_histogra
 # Figure 4
 python ./../python/plot_lambert_scan_maps.py ./config/plot_lambert_scan_map/plot_lambert_scan_maps_geo.json
 
+# Figure 5
+# Schematic illustration of the Cartesian-to-TLE conversion algorithm
+
 # Figure 6abcd
-python ./../python/plot_sgp4_error_histogram.py ./config/sgp4_error_histogram/plot_sgp4_error_histogram_sso.json
+python ./../python/sgp4_error_histogram_stacked.py ./config/sgp4_error_histogram/plot_sgp4_error_histogram_sso.json
 
 # Figure 7abcd
-python ./../python/plot_sgp4_error_histogram.py ./config/sgp4_error_histogram/plot_sgp4_error_histogram_heo.json
+python ./../python/sgp4_error_histogram_stacked.py ./config/sgp4_error_histogram/plot_sgp4_error_histogram_heo.json
 
 # Figure 8abcd
-python ./../python/plot_sgp4_error_histogram.py ./config/sgp4_error_histogram/plot_sgp4_error_histogram_geo.json
+python ./../python/sgp4_error_histogram_stacked.py ./config/sgp4_error_histogram/plot_sgp4_error_histogram_geo.json
 
 # Figure 9ab
 python ./../python/sgp4_scanner_box_plot.py ./config/plot_sgp4_error_box_plot/sgp4_scanner_box_plot.json
+
+# Table 1
+# All data can be found in:
+# ./config/catalog_pruner/catalog_pruner_sso.json
+
+# Table 2
+# All data can be found in:
+# ./config/catalog_pruner/catalog_pruner_heo_rocket_bodies.json
+
+# Table 3
+# All data can be found in:
+# ./config/catalog_pruner/catalog_pruner_geo_intelsat.json
+
+# Table 4
+# All data can be found in:
+# ./config/catalog_pruner/catalog_pruner_sso.json
+# ./config/catalog_pruner/catalog_pruner_heo_rocket_bodies.json
+# ./config/catalog_pruner/catalog_pruner_geo_intelsat.json
+
+# Table 5
+# All data can be found in:
+# ./config/sgp4_scanner/sgp4_scanner_sso.json
+# ./config/sgp4_scanner/sgp4_scanner_heo.json
+# ./config/sgp4_scanner/sgp4_scanner_geo.json
 
 # Tables 6/8/10
 python ./../python/extract_top_lists.py ./config/extract_ranking_tables/extract_top_lists.json

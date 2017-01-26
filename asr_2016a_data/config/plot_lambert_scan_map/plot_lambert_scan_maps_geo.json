@@ -14,10 +14,10 @@
     // - longitude_of_ascending_node
     // The map order is generated based on the corresponding departure column in the
     // lambert_scanner_results table in the SQLite database.
-    "map_order"                 : "longitude_of_ascending_node",
+    "map_order"                 : "inclination",
 
     // Directory where scan figure is stored.
-    "output_directory"          : "../asr_2016a_data/GEO/",
+    "output_directory"          : "../asr_2016a_data/figures/",
 
     // Filename for scan figure.
     // Files are saved as PDF.
@@ -27,6 +27,6 @@
     "figure_dpi"                : 300,
     "tick_label_size"           : 4,
     "axis_label_size"           : 10,
-    "map_order_axis_label"      : "$\\Omega$ [rad]",
+    "map_order_axis_label"      : "$i$ [deg]",
     "colormap"                  : "jet"
 }

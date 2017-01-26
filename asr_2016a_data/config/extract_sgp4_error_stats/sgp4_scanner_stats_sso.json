@@ -12,5 +12,5 @@
 
     // Relative path to output CSV file containing the statistical data.
     // Provide the file name with the .csv extension as well.
-    "output"                    : "./SSO/statistical_data_sso.csv"
+    "output"                    : "./figures/Table_7_statistical_data_sso.csv"
 }

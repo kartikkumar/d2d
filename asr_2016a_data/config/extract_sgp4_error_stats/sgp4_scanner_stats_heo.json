@@ -12,5 +12,5 @@
 
     // Relative path to output CSV file containing the statistical data.
     // Provide the file name with the .csv extension as well.
-    "output"                    : "./HEO/statistical_data_heo_after_error.csv"
+    "output"                    : "./figures/Table_9_statistical_data_heo.csv"
 }

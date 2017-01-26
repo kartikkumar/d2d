@@ -84,33 +84,79 @@ except sqlite3.Error, e:
     sys.exit(1)
 
 # Fetch scan data.
-scan_data = pd.read_sql( "SELECT transfer_delta_v FROM lambert_scanner_results WHERE transfer_delta_v < " + str(config['cutoff']) + ";",
-                              database )
-scan_data.columns = [ 'transfer_delta_v' ]
+# scan_data = pd.read_sql( "SELECT transfer_delta_v FROM lambert_scanner_results WHERE transfer_delta_v < 30;",
+#                               database )
+scan_data = pd.read_sql( "SELECT    sgp4_scanner_results.arrival_position_error,        \
+									sgp4_scanner_results.arrival_velocity_error,         \
+									lambert_scanner_results.revolutions \
+						  FROM          lambert_scanner_results                           \
+						  INNER JOIN    sgp4_scanner_results                              \
+						  ON            lambert_scanner_results.transfer_id =             \
+										sgp4_scanner_results.lambert_transfer_id          \
+					      AND           sgp4_scanner_results.success = 1;",
+						  database )
 
-# The histogram of the data
-x = scan_data[ 'transfer_delta_v']
-# print x
-# (mu, sigma) = norm.fit(x)
-n, bins, patches = plt.hist( x, bins=50, facecolor='grey', alpha=0.75)
 
-# y = mlab.normpdf( bins, mu, sigma)
-# l = plt.plot(bins, y, 'r--', linewidth=2)
+scan_data.columns = [ 	'position_error',
+						'velocity_error',
+						'revolutions' ]
+
+scan_0 = scan_data[scan_data['revolutions'] == 0]["position_error"]
+scan_1 = scan_data[scan_data['revolutions'] == 1]["position_error"]
+scan_2 = scan_data[scan_data['revolutions'] == 2]["position_error"]
+scan_3 = scan_data[scan_data['revolutions'] == 3]["position_error"]
+scan_4 = scan_data[scan_data['revolutions'] == 4]["position_error"]
+scan_5 = scan_data[scan_data['revolutions'] == 5]["position_error"]
+
+print config['set_axes_position_magnitude'][1]
+plt.figure()
+result = plt.hist([scan_0,scan_1,scan_2,scan_3,scan_4,scan_5], 50, stacked=True,  range=( 0,config['set_axes_position_magnitude'][1]))
 
 
-# Figure properties
-plt.xlabel('Total dV magnitude [km/s]')
-plt.ylabel('Frequency')
-plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
-# plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=100,\ \sigma=15$')
-# plt.axis([40, 160, 0, 0.03])
-# plt.title(r'$\mathrm{Histogram\ of\ IQ:}\ \mu=%.3f,\ \sigma=%.3f$' %(mu, sigma))
-plt.grid(True)
+# hatches = ['/', '+', '*', '\\', 'x', '.', '-', 'o']
+
+# # print result
+# plist1 = result[2][0]
+# plist2 = result[2][1]
+# for h, p1, p2 in zip(hatches, plist1, plist2):
+#     p1.set_hatch(h)
+# 	# print p1
+#     p2.set_hatch(h)
+# plt.title("GEO")
+
+
+
+plt.legend(("0 revolutions","1 revolutions","2 revolutions","3 revolutions","4 revolutions","5 revolutions"),loc=1)
+plt.ylabel( 'Frequency' )
+plt.xlabel('Arrival position error [km]')
 
 # Save figure to file.
-plt.savefig(config["output_directory"] + "/" + config["scan_figure"] +                 \
+plt.savefig(config["output_directory"] + "/" + config["histogram_figure"] +   "_position_stacked" + 	\
                        ".png", dpi=config["figure_dpi"])
 plt.close()
+
+
+
+scan_0 = scan_data[scan_data['revolutions'] == 0]["velocity_error"]
+scan_1 = scan_data[scan_data['revolutions'] == 1]["velocity_error"]
+scan_2 = scan_data[scan_data['revolutions'] == 2]["velocity_error"]
+scan_3 = scan_data[scan_data['revolutions'] == 3]["velocity_error"]
+scan_4 = scan_data[scan_data['revolutions'] == 4]["velocity_error"]
+scan_5 = scan_data[scan_data['revolutions'] == 5]["velocity_error"]
+
+plt.figure()
+plt.hist([scan_0,scan_1,scan_2,scan_3,scan_4,scan_5], 50, stacked=True,  range=( 0,config['set_axes_velocity_magnitude'][1]))
+# plt.title("GEO")
+
+plt.legend(("0 revolutions","1 revolutions","2 revolutions","3 revolutions","4 revolutions","5 revolutions"),loc=1)
+plt.ylabel( 'Frequency' )
+plt.xlabel('Arrival velocity error [km/s]')
+
+# Save figure to file.
+plt.savefig(config["output_directory"] + "/" + config["histogram_figure"] +   "_velocity_stacked" + 	\
+                       ".png", dpi=config["figure_dpi"])
+plt.close()
+
 
 print "Figure generated successfully!"
 print ""

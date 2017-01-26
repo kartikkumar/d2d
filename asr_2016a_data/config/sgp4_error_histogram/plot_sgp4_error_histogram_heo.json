@@ -9,7 +9,7 @@
 
     // Directory where the histogram is stored.
     // Do not add a '/' at the end of the output dierectory.
-    "output_directory"          : "./HEO",
+    "output_directory"          : "./figures/",
 
     // Filename for histogram.
     // Do not mention error type in the file name, it will automatically be included by the python
@@ -76,8 +76,8 @@
     // inside the square bracket are made zero.
     "set_axes_position_component"       : [-1000,1000,0,0.5],
     "set_axes_velocity_component"       : [-0.1,0.1,0,0.5],
-    "set_axes_position_magnitude"       : [0,1000,0,0.14],
-    "set_axes_velocity_magnitude"       : [0,0.15,0,0.2],
+    "set_axes_position_magnitude"       : [0,800,0,0.14],
+    "set_axes_velocity_magnitude"       : [0,0.1,0,0.2],
 
     // Characteristics for figures.
     "figure_dpi"                : 300,

@@ -56,10 +56,10 @@ pprint(config)
 import matplotlib
 
 # If user's computer does not have a GUI/display then the TKAgg will not be used
-if config['display'] == 'True':
-    matplotlib.use('TkAgg')
-else:
-    matplotlib.use('Agg')
+# if config['display'] == 'True':
+#     matplotlib.use('TkAgg')
+# else:
+#     matplotlib.use('Agg')
 
 import matplotlib.colors
 import matplotlib.axes

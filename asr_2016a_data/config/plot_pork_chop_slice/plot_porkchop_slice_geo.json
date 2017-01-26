@@ -7,7 +7,7 @@
      "database"                  : "../asr_2016a_data/GEO/geo_intelsat.db",
 
      // Directory where scan figure is stored.
-    "output_directory"          : "../asr_2016a_data/GEO/",
+    "output_directory"          : "../asr_2016a_data/figures/",
 
     // Departure and arrival objects.
     // If empty the departure and arrival objects of the lowest dV in the database is chosen.

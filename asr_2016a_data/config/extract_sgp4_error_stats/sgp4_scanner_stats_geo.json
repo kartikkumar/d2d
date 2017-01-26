@@ -12,5 +12,5 @@
 
     // Relative path to output CSV file containing the statistical data.
     // Provide the file name with the .csv extension as well.
-    "output"                    : "./GEO/statistical_data_geo.csv"
+    "output"                    : "./figures/Table_11_statistical_data_geo.csv"
 }

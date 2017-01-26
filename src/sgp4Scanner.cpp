@@ -19,6 +19,8 @@
 
 #include <boost/progress.hpp>
 
+#include <sqlite3.h>
+
 #include <libsgp4/DateTime.h>
 #include <libsgp4/Eci.h>
 #include <libsgp4/Globals.h>

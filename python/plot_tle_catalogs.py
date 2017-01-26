@@ -233,7 +233,7 @@ plt.axis('equal')
 axis.set_xlim(xmin=-110.0, xmax=110.0)
 axis.set_ylim(ymin=-110.0, ymax=110.0)
 figure.set_tight_layout(True)
-plt.savefig(outputPath + "/Figure_1c_debrisPopulation_inclinationVector.pdf", dpi = figureDPI)
+plt.savefig(outputPath + "/Figure_1d_debrisPopulation_inclinationVector.pdf", dpi = figureDPI)
 plt.close()
 
 
