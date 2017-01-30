@@ -8,6 +8,8 @@
 #include <iostream>
 #include <sstream>
 
+#include <sqlite3.h>
+
 #include <keplerian_toolbox.h>
 
 #include <SQLiteCpp/SQLiteCpp.h>

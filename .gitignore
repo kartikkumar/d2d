@@ -47,12 +47,14 @@ external
 
 # Config & data files
 *.json
+!asr_2016a_data/config/*/*.json
 config/*
 !config/*.json.empty
 data/*
 !data/catalog/
 data/catalog/*
 !data/catalog/test_catalog.txt
+*.db
 
 # Project files
 *.sublime*

@@ -12,6 +12,8 @@
 
 #include <keplerian_toolbox.h>
 
+#include <sqlite3.h>
+
 #include <libsgp4/Eci.h>
 #include <libsgp4/Globals.h>
 #include <libsgp4/SGP4.h>

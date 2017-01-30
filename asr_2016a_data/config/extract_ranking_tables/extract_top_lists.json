@@ -1,0 +1,17 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+{
+    // Path to SQLite database containing scan data.
+    "database"          : ["../asr_2016a_data/SSO/sso_debris.db",
+                           "../asr_2016a_data/HEO/heo_rocket_bodies.db",
+                           "../asr_2016a_data/GEO/geo_intelsat.db"],
+
+    // Identifier for each database as the shortlist will be written per database.
+    "database_tag"      : ["Table_6_SSO",
+                           "Table_8_HEO",
+                           "Table_10_GEO"],
+
+    // Directory where shortlists are stored.
+    "output_directory"          : "../asr_2016a_data/figures/"
+}

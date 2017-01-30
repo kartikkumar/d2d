@@ -1,0 +1,27 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Copyright (c) 2016 Enne Hekma, Delft University of Technology (ennehekma@gmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+{
+    // Path to SQLite database containing scan data.
+    "database"                  : "./GEO/geo_intelsat.db",
+
+     // Directory where scan figure is stored.
+    "output_directory"          : "./figures/",
+
+    // Departure and arrival objects. If empty the departure and arrival objects of the lowest dV
+    // in the database is chosen. Format: [departure object id, arrival object id] in integers.
+    "objects"                   : [],
+
+    // Filename for scan figure.
+    // Files are saved as png.
+    "scan_figure"               : "Figure_3_histogram_dV_geo",
+
+    // Give dV cutoff to be added to the minimum dV in the porkchopplot to display
+    // more or less details. If 0 no cutoff is assumed.
+    "cutoff"                    : 16,
+
+    // Set parameters for figures.
+    "figure_dpi"                : 300,
+    "colormap"                  : "Greys"
+}

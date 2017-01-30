@@ -7,7 +7,7 @@ See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
 # Set up modules and packages
 # Plotting
 import matplotlib
-matplotlib.use('TkAgg')
+# matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 from matplotlib import gridspec
 from matplotlib import cm
@@ -78,10 +78,12 @@ except sqlite3.Error, e:
 departure_epochs = pd.read_sql("SELECT DISTINCT departure_epoch                                   \
                                     FROM lambert_scanner_results;",                               \
                                 database)
-for i in xrange(0,departure_epochs.size):
+
+# for i in xrange(0,departure_epochs.size):
+for i in xrange(0,1):
     c = departure_epochs['departure_epoch'][i]
     print "Plotting scan map with departure epoch: ",c,"Julian Date"
-                      
+
     # Fetch scan data.
     map_order = "departure_" + config['map_order']
     scan_data = pd.read_sql("SELECT departure_object_id, arrival_object_id,                       \
@@ -93,16 +95,19 @@ for i in xrange(0,departure_epochs.size):
                             database)
     scan_data.columns = ['departure_object_id','arrival_object_id',                               \
                          'transfer_delta_v',str(map_order)]
+    scan_data['departure_inclination'] = scan_data['departure_inclination'] * 180 / np.pi
     scan_order = scan_data.sort_values(str(map_order))                                            \
                           .drop_duplicates('departure_object_id')[                                \
                               ['departure_object_id',str(map_order)]]
 
+
+
     scan_map = scan_data.pivot(index='departure_object_id',                                       \
-                               columns='arrival_object_id',                                       
+                               columns='arrival_object_id',
                                values='transfer_delta_v')
     scan_map = scan_map.reindex(index=scan_order['departure_object_id'],                          \
                                 columns=scan_order['departure_object_id'])
-    
+
     # Set up color map.
     bins = np.linspace(scan_data['transfer_delta_v'].min(),                                       \
                        scan_data['transfer_delta_v'].max(), 10)
@@ -111,7 +116,7 @@ for i in xrange(0,departure_epochs.size):
     levels = groups.mean().values
     cmap_lin = plt.get_cmap(config['colormap'])
     cmap = nlcmap(cmap_lin, levels)
-    
+
     # Plot heat map.
     ax1 = plt.subplot2grid((15,15), (2, 0),rowspan=13,colspan=14)
     heatmap = ax1.pcolormesh(scan_map.values, cmap=cmap,                                          \
@@ -129,7 +134,6 @@ for i in xrange(0,departure_epochs.size):
     # Plot axis ordering.
     ax2 = plt.subplot2grid((15,15), (0, 0),rowspan=2,colspan=14,sharex=ax1)
     ax2.step(np.arange(0.5,scan_map.shape[1]+.5),scan_order[str(map_order)],'k',linewidth=2.0)
-    ax2.get_yaxis().set_major_formatter(plt.FormatStrFormatter('%.2e'))
     ax2.tick_params(axis='both', which='major', labelsize=config['tick_label_size'])
     plt.setp(ax2.get_xticklabels(), visible=False)
     ax2.set_ylabel(config['map_order_axis_label'],fontsize=config['axis_label_size'])

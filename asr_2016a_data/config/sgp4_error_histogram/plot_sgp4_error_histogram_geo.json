@@ -1,0 +1,88 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Copyright (c) 2014-2016 Abhishek Agrawal, Delft University of Technology
+//                                           (abhishek.agrawal@protonmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+{
+    // Path to SQLite database containing scan data.
+    "database"                  : "./GEO/geo_intelsat.db",
+
+    // Directory where the histogram is stored.
+    // Do not add a '/' at the end of the output dierectory.
+    "output_directory"          : "./figures/",
+
+    // Filename for histogram.
+    // Do not mention error type in the file name, it will automatically be included by the python
+    // plotting script.
+    "histogram_figure"          : "Figure_8_error_histogram_geo",
+
+    // Add or remove j2 analysis curve in position and velocity error histogram plots.
+    // Put True to add the j2 curve, else False.
+    "add_j2"                    : "False",
+
+    // Set reference frame for histogram plot of the error components.
+    // For Earth-Centered Inertial, use "ECI".
+    // For Radial-Tangen-Normal reference frame, use "RTN"
+    // "frame"                     : "ECI",
+    "frame"                     : "RTN",
+
+     // Set plot style for error component plots
+    // Set to "True" for plot with lines and markers
+    // Set to "False" for a histogram step plot with small bin size
+    "component_marker"          : "True",
+    // "component_marker"          : "False",
+
+    // Set output format for the figure (example: ".pdf", ".png")
+    "figure_format"             : ".png",
+
+    // Add or remove figure title.
+    // To add a title to the figure, put True otherwise False.
+    "add_title"                 : "False",
+
+    // Check for GUI
+    // If user machine has a display/GUI then put True, else False
+    "display"                   : "True",
+
+    // Set colortype for the figures.
+    // For grayscale, put True otherwise False
+    "grayscale"                 : "True",
+
+    // Normed histogram plots
+    // Set 'True' if the histogram plots (magnitude and components) have to be normed
+    // Set 'False' otherwise
+    "normed"                            : "True",
+
+    // Choose plot type for which axes limits have to be set manually.
+    // Ensure that if any of the options below is "TRUE", then set non zero limits for the
+    // corresponding "set_axes_position" and "set_axes_velocity" parameters in the next section.
+    // Set "set_axes_component_position_flag" and/or "set_axes_component_velocity_flag" to "True"
+    // if manual limits have to be applied to the components plots, set "False" otherwise.
+    // Set "set_axes_magnitude_position_flag" and/or "set_axes_magnitude_velocity_flag" to "True"
+    // if manual limits have to be applied to the magnitude plots, set "False" otherwise
+    "set_axes_position_component_flag"  : "False",
+    "set_axes_velocity_component_flag"  : "False",
+    "set_axes_position_magnitude_flag"  : "False",
+    "set_axes_velocity_magnitude_flag"  : "False",
+
+
+    // "set_axes_position_component_flag"  : "True",
+    // "set_axes_velocity_component_flag"  : "True",
+    // "set_axes_position_magnitude_flag"  : "True",
+    // "set_axes_velocity_magnitude_flag"  : "True",
+
+    // Set axes limit for the position and velocity error plots (magnitude and/or component)
+    // Format: [xmin, xmax, ymin, ymax]
+    // Auto sizing feature for the axes will be used if all the fields
+    // inside the square bracket are made zero.
+    "set_axes_position_component"       : [-5000,5000,0,200000],
+    "set_axes_velocity_component"       : [-0.25,0.25,0,200000],
+    "set_axes_position_magnitude"       : [0,120,0,60000],
+    "set_axes_velocity_magnitude"       : [0,0.008,0,80000],
+
+    // Characteristics for figures.
+    "figure_dpi"                : 300,
+    "tick_label_size"           : 4,
+    "axis_label_size"           : 10,
+    "colormap"                  : "jet"
+}
+

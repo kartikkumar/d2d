@@ -23,6 +23,8 @@
 #include <libsgp4/SGP4.h>
 #include <libsgp4/Tle.h>
 
+#include <sqlite3.h>
+
 #include <SML/sml.hpp>
 
 #include <Atom/atom.hpp>
