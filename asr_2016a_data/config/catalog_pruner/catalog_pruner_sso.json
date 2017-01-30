@@ -13,11 +13,11 @@
     // Set semi-major axis filter bounds (with Earth radius subtracted) [km].
     "semi_major_axis_filter"    : [750,850],
     // Set eccentricity filter bounds (lower bound >= 0.0; upper bound <= 1.0) [-].
-    "eccentricity_filter"       : [0,0.001],
+    "eccentricity_filter"       : [0,0.01],
     // Set inclination filter bounds (lower bound >= 0.0; upper bound <= 180.0) [deg].
     "inclination_filter"        : [98,99],
     // Set regex filter based on TLE object.
-    "name_regex"                : "(R/B | DEB)",
+    "name_regex"                : "(R/B|DEB)",
     // Set maximum number of objects in list.
     // This cutoff is switched off if set to 0.
     "catalog_cutoff"            : 100,

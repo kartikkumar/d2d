@@ -70,10 +70,13 @@ for i in xrange(0,len(config['database'])):
 
 
     toplist_lambert = pd.read_sql("SELECT *, min(transfer_delta_v)        \
-                           FROM lambert_scanner_results                                           \
-                           GROUP BY departure_object_id,                  \
-                                    arrival_object_id                     \
-                           ORDER BY transfer_delta_v                      \
+                                   FROM          lambert_scanner_results                           \
+                                   INNER JOIN    sgp4_scanner_results                              \
+                                   ON            lambert_scanner_results.transfer_id =             \
+                                                 sgp4_scanner_results.lambert_transfer_id          \
+                           GROUP BY lambert_scanner_results.departure_object_id,                  \
+                                    lambert_scanner_results.arrival_object_id                     \
+                           ORDER BY lambert_scanner_results.transfer_delta_v                      \
                            ASC                                                           \
                            LIMIT 10000000                                                         \
                            ;",                                                                    \
@@ -86,6 +89,8 @@ for i in xrange(0,len(config['database'])):
                                    toplist_lambert['time_of_flight'],
                                    toplist_lambert['revolutions'],
                                    # toplist_lambert['time_of_flight'],
+                                   toplist_lambert['arrival_position_error'],
+                                   toplist_lambert['arrival_velocity_error'],
                                    toplist_lambert['transfer_delta_v'] ], axis=1)
 
     toplist_lambert2['lambert_dv_ranking'] = toplist_lambert2['transfer_delta_v'].rank('min')
