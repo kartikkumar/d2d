@@ -1,0 +1,25 @@
+// Copyright (c) 2014-2016 Kartik Kumar, Dinamica Srl (me@kartikkumar.com)
+// Copyright (c) 2016 Enne Hekma, Delft University of Technology (ennehekma@gmail.com)
+// Distributed under the MIT License.
+// See accompanying file LICENSE.md or copy at http://opensource.org/licenses/MIT
+{
+    // Path to SQLite database containing scan data.
+    "database"                  : "",
+   
+    // Directory where scan figure is stored.
+    "output_directory"          : ".",
+
+    // The cutoff delta V.
+    "dV_cutoff"                 : 3,
+
+    // Number of bins used for histogram.
+    "bins"                      : 100,
+
+    // Filename for scan figure.
+    // Files are saved as png.
+    "scan_figure"               : "dv_histo",
+
+    // Set parameters for figures.
+    "figure_dpi"                : 300,
+    "colormap"                  : "jet"
+}
